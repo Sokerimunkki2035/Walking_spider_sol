@@ -3,16 +3,340 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spider Solitaire</title>
+  <title>Spider + 1 km striikki</title>
   <style>
-    html,body{height:100%;margin:0;background:#004d40}
-    iframe{width:100%;height:100%;border:0}
+    :root { --bg:#004d40; --card:#ffffff; --txt:#0b1b17; --muted:#496460; }
+    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:white; }
+    .wrap{ max-width:720px; margin:0 auto; padding:16px; }
+    .card{ background:var(--card); color:var(--txt); border-radius:16px; padding:16px; box-shadow:0 10px 24px rgba(0,0,0,.25); }
+    h1{ font-size:20px; margin:0 0 8px; }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; }
+    button, a.btn{
+      display:inline-block; border:0; padding:12px 14px; border-radius:12px;
+      font-weight:700; cursor:pointer; text-decoration:none;
+      background:#0b5; color:#062;
+    }
+    button.secondary, a.secondary{ background:#e9eef0; color:#1b2b2a; }
+    button.danger{ background:#ffebee; color:#7a1f1f; }
+    .kpi{ font-size:28px; font-weight:800; }
+    .muted{ color:var(--muted); }
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; background:#e9eef0; color:#1b2b2a; font-weight:700; }
+    hr{ border:0; height:1px; background:#e9eef0; margin:14px 0; }
+    .ok{ color:#0a6; font-weight:800; }
+    .warn{ color:#a60; font-weight:800; }
+    .small{ font-size:13px; }
   </style>
 </head>
 <body>
-  <iframe
-    allowfullscreen
-    src="https://zv1y2i8p.play.gamezop.com/g/B1MfIa4QCg">
-  </iframe>
+  <div class="wrap">
+    <div class="card">
+      <h1>Spider + 1 km striikki</h1>
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div class="muted small">Päivä</div>
+          <div class="pill" id="todayLabel">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="muted small">Striikki</div>
+          <div class="kpi"><span id="streak">0</span> 🔥</div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <!-- Peli avataan uutena välilehtenä (varma toimivuus) -->
+        <a class="btn secondary" target="_blank" rel="noopener"
+           href="https://solitaire.com/spider-solitaire/">
+          Avaa Spider (uusi välilehti)
+        </a>
+
+        <!-- Tähän voidaan myöhemmin tehdä oma peli -->
+        <button class="secondary" id="markPlayedBtn" title="Jos haluat, voit merkitä 'pelattu tänään' käsin">
+          Merkitse pelattu tänään
+        </button>
+      </div>
+
+      <p class="muted small" style="margin-top:8px;">
+        Redo/Undo/botti ei toimi ulkopuolisessa pelissä. Ne vaatii oman pelin koodin tänne sivulle.
+      </p>
+    </div>
+
+    <div style="height:12px"></div>
+
+    <div class="card">
+      <h1>1 km kävely (GPS)</h1>
+      <div class="row" style="align-items:flex-end; justify-content:space-between;">
+        <div>
+          <div class="muted small">Tänään kävelty</div>
+          <div class="kpi"><span id="meters">0</span> m</div>
+          <div class="muted small">Tavoite: 1000 m</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted small">Tila</div>
+          <div id="walkStatus" class="warn">Ei vielä valmis</div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <button id="startBtn">Aloita mittaus</button>
+        <button id="stopBtn" class="secondary" disabled>Lopeta</button>
+        <button id="resetTodayBtn" class="danger" title="Nollaa vain tämän päivän matka (striikki ei muutu)">
+          Nollaa päivän matka
+        </button>
+      </div>
+
+      <p class="muted small">
+        Vinkki: ulkona, puhelimen sijainti “tarkka” päälle. Jos mittaus hyppii, se voi laskea vähän väärin.
+      </p>
+    </div>
+
+    <div style="height:12px"></div>
+
+    <div class="card">
+      <h1>Päivän säännöt</h1>
+      <ul class="muted" style="margin:8px 0 0 18px;">
+        <li>Kun 1 km täyttyy, päivä merkitään “tehty”.</li>
+        <li>Striikki kasvaa, jos teet 1 km myös seuraavana päivänä.</li>
+        <li>Jos päivä jää väliin, striikki nollautuu seuraavana päivänä.</li>
+        <li>Tiedot tallentuu tähän selaimeen (localStorage).</li>
+      </ul>
+      <hr>
+      <div class="row">
+        <button class="danger" id="wipeAllBtn" title="Nollaa kaikki (striikki + historia)">
+          Nollaa kaikki tiedot
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // --- Helpers ---
+  const $ = (id) => document.getElementById(id);
+
+  // Use local date (Finland time on device)
+  function ymd(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function haversineMeters(a, b) {
+    const R = 6371000;
+    const toRad = (x) => x * Math.PI / 180;
+    const dLat = toRad(b.lat - a.lat);
+    const dLon = toRad(b.lon - a.lon);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+    const s = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+
+  // --- Storage keys ---
+  const K = {
+    streak: "spwalk.streak",
+    lastDoneDate: "spwalk.lastDoneDate",
+    today: "spwalk.today",            // ymd
+    todayMeters: "spwalk.todayMeters",
+    todayDone: "spwalk.todayDone",
+    todayPlayed: "spwalk.todayPlayed",
+    lastPos: "spwalk.lastPos"
+  };
+
+  // --- UI refs ---
+  const todayLabel = $("todayLabel");
+  const streakEl = $("streak");
+  const metersEl = $("meters");
+  const walkStatus = $("walkStatus");
+
+  const startBtn = $("startBtn");
+  const stopBtn = $("stopBtn");
+  const resetTodayBtn = $("resetTodayBtn");
+  const wipeAllBtn = $("wipeAllBtn");
+  const markPlayedBtn = $("markPlayedBtn");
+
+  // --- State ---
+  let watchId = null;
+
+  function loadInt(key, fallback=0) {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : parseInt(v, 10) || fallback;
+  }
+  function loadBool(key, fallback=false) {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : v === "1";
+  }
+  function saveBool(key, val) {
+    localStorage.setItem(key, val ? "1" : "0");
+  }
+
+  function ensureToday() {
+    const today = ymd();
+    const storedToday = localStorage.getItem(K.today);
+
+    if (storedToday !== today) {
+      // Day changed. If yesterday was not done, reset streak.
+      const lastDoneDate = localStorage.getItem(K.lastDoneDate);
+      let streak = loadInt(K.streak, 0);
+
+      // If we have a streak running, and lastDoneDate is not yesterday, we reset.
+      // If lastDoneDate equals yesterday and user continues today -> ok (streak stays until done today).
+      // If missed a day -> reset now.
+      if (streak > 0) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const y = ymd(yesterday);
+        if (lastDoneDate !== y) {
+          streak = 0;
+          localStorage.setItem(K.streak, String(streak));
+        }
+      }
+
+      // Initialize new day values
+      localStorage.setItem(K.today, today);
+      localStorage.setItem(K.todayMeters, "0");
+      saveBool(K.todayDone, false);
+      saveBool(K.todayPlayed, false);
+      localStorage.removeItem(K.lastPos);
+    }
+  }
+
+  function render() {
+    ensureToday();
+    const today = localStorage.getItem(K.today) || ymd();
+    todayLabel.textContent = today;
+
+    const streak = loadInt(K.streak, 0);
+    streakEl.textContent = String(streak);
+
+    const meters = loadInt(K.todayMeters, 0);
+    metersEl.textContent = String(meters);
+
+    const done = loadBool(K.todayDone, false);
+    walkStatus.textContent = done ? "Valmis ✅" : "Ei vielä valmis";
+    walkStatus.className = done ? "ok" : "warn";
+  }
+
+  function setDoneToday() {
+    // Mark done and update streak
+    const today = localStorage.getItem(K.today) || ymd();
+    const alreadyDone = loadBool(K.todayDone, false);
+    if (alreadyDone) return;
+
+    saveBool(K.todayDone, true);
+    localStorage.setItem(K.lastDoneDate, today);
+
+    // Increase streak: if yesterday done -> +1 else -> 1
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const y = ymd(yesterday);
+    const lastDoneDate = localStorage.getItem(K.lastDoneDate);
+
+    // lastDoneDate was just set to today; we need previous done date:
+    // We'll infer from current streak: if streak was 0 => becomes 1; if >0 and not reset => +1
+    let streak = loadInt(K.streak, 0);
+    streak = (streak <= 0) ? 1 : (streak + 1);
+    localStorage.setItem(K.streak, String(streak));
+
+    render();
+  }
+
+  // --- Geolocation tracking ---
+  function onPos(pos) {
+    const acc = pos.coords.accuracy ?? 9999;
+    // Ignore very inaccurate points to reduce jumps
+    if (acc > 50) return;
+
+    const p = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+
+    const lastPosRaw = localStorage.getItem(K.lastPos);
+    if (!lastPosRaw) {
+      localStorage.setItem(K.lastPos, JSON.stringify(p));
+      return;
+    }
+
+    const last = JSON.parse(lastPosRaw);
+    const d = haversineMeters({lat:last.lat, lon:last.lon}, {lat:p.lat, lon:p.lon});
+
+    // Filter tiny jitter and insane jumps
+    if (d < 2) {
+      localStorage.setItem(K.lastPos, JSON.stringify(p));
+      return;
+    }
+    if (d > 60) {
+      // likely GPS jump; update last pos but don't count
+      localStorage.setItem(K.lastPos, JSON.stringify(p));
+      return;
+    }
+
+    let meters = loadInt(K.todayMeters, 0);
+    meters += Math.round(d);
+    localStorage.setItem(K.todayMeters, String(meters));
+    localStorage.setItem(K.lastPos, JSON.stringify(p));
+
+    if (meters >= 1000) setDoneToday();
+    render();
+  }
+
+  function start() {
+    if (!navigator.geolocation) {
+      alert("Selaimesi ei tue geolocationia.");
+      return;
+    }
+    ensureToday();
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    watchId = navigator.geolocation.watchPosition(onPos, (err) => {
+      console.log(err);
+      alert("Sijainti ei toimi. Tarkista lupa + tarkka sijainti.");
+      stop();
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
+    });
+  }
+
+  function stop() {
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  }
+
+  // --- Buttons ---
+  startBtn.addEventListener("click", start);
+  stopBtn.addEventListener("click", stop);
+
+  resetTodayBtn.addEventListener("click", () => {
+    ensureToday();
+    localStorage.setItem(K.todayMeters, "0");
+    saveBool(K.todayDone, false);
+    localStorage.removeItem(K.lastPos);
+    render();
+  });
+
+  wipeAllBtn.addEventListener("click", () => {
+    if (!confirm("Nollataanko kaikki tiedot (striikki + historia)?")) return;
+    Object.values(K).forEach(k => localStorage.removeItem(k));
+    stop();
+    render();
+  });
+
+  markPlayedBtn.addEventListener("click", () => {
+    ensureToday();
+    saveBool(K.todayPlayed, true);
+    alert("Merkattu: pelattu tänään ✅ (tämä ei vaikuta striikkiin, vain omaan seurantaan)");
+  });
+
+  // init
+  render();
+})();
+</script>
 </body>
 </html>
