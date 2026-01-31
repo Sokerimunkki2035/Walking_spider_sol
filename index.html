@@ -6,7 +6,7 @@
   <title>Spider Solitaire Fitness</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
       padding: 20px;
@@ -24,27 +24,27 @@
       font-weight: bold;
     }
 
-    #game-board {
+    #game-container {
       width: 100%;
       max-width: 800px;
-      height: 500px;
       margin: 20px auto;
-      background-color: #4CAF50;
+      background-color: #2E7D32;
       border-radius: 10px;
+      padding: 10px;
+    }
+
+    #ad-space {
+      margin: 20px auto;
+      width: 100%;
+      max-width: 728px;
+      height: 90px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: white;
-      font-size: 1.5em;
-    }
-
-    #ad-container {
-      width: 100%;
-      max-width: 728px;
-      margin: 20px auto;
-      padding: 10px;
-      background-color: #f9f9f9;
-      border-radius: 5px;
+      font-size: 14px;
+      color: #666;
     }
 
     button {
@@ -68,33 +68,25 @@
   <p id="distance">Kävelty matka: 0 m</p>
   <p id="level">Taso: 1</p>
 
-  <div id="game-board">
-    Tässä tulee Spider Solitaire -peli.
+  <div id="game-container"></div>
+
+  <button id="start-btn">Aloita peli ja seuranta</button>
+
+  <div id="ad-space">
+    Tässä näkyy mainos, kun lisäät AdSense-koodin.
   </div>
 
-  <button id="start-btn">Aloita peli</button>
-
-  <div id="ad-container">
-    <!-- Google AdSense mainos -->
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-TUNNEISTUSI"
-         data-ad-slot="1234567890"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-  </div>
-
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TUNNEISTUSI"
-    crossorigin="anonymous"></script>
+  <!-- Spider Solitaire JS -kirjasto -->
+  <script src="https://cdn.jsdelivr.net/npm/spider-solitaire-js@latest/dist/spider-solitaire.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/spider-solitaire-js@latest/dist/spider-solitaire.min.css">
 
   <script>
     // Alustukset
     let totalDistance = 0;
     let currentLevel = 1;
     let lastLocation = null;
+    let game;
+    let watchId = null;
 
     // Päivitä näkymä
     function updateUI() {
@@ -112,7 +104,7 @@
 
     // Laske etäisyys kahden sijainnin välillä (metreissä)
     function calculateDistance(lat1, lng1, lat2, lng2) {
-      const R = 6371000;
+      const R = 6371000; // Maan säde metreissä
       const dLat = toRad(lat2 - lat1);
       const dLng = toRad(lng2 - lng1);
       const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -126,10 +118,16 @@
       return degrees * (Math.PI / 180);
     }
 
-    // Aloita sijainnin seuranta
+    // Aloita peli ja sijainnin seuranta
     document.getElementById("start-btn").addEventListener("click", () => {
+      // Aloita peli
+      const gameContainer = document.getElementById("game-container");
+      game = new SpiderSolitaire.Game({ container: gameContainer });
+      game.start();
+
+      // Aloita sijainnin seuranta
       if ("geolocation" in navigator) {
-        const watchId = navigator.geolocation.watchPosition(
+        watchId = navigator.geolocation.watchPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
             if (lastLocation) {
