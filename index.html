@@ -2,72 +2,27 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spider Solitaire - Testiversio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spider Solitaire</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        body, html {
             margin: 0;
             padding: 0;
-            background-color: #2D5A27; /* Klassinen verka-vihreä */
-            color: white;
-            overflow: hidden; /* Estetään turha skrollaus */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        header {
-            background-color: rgba(0,0,0,0.3);
             width: 100%;
-            padding: 10px 0;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            height: 100%;
+            overflow: hidden;
+            background-color: #004d40;
         }
-
-        #game-frame {
-            width: 100vw;
-            height: calc(100vh - 120px);
+        iframe {
+            width: 100%;
+            height: 100%;
             border: none;
-        }
-
-        .ad-placeholder {
-            width: 100%;
-            max-width: 728px;
-            height: 90px;
-            background: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px 0;
-            border: 1px dashed #666;
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        .controls {
-            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Spider Solitaire</h1>
-    <div class="status">Testitila: Sijaintiseuranta ohitettu</div>
-</header>
-
-<iframe id="game-frame" src="https://solitaire.com/spider-solitaire/embed/"></iframe>
-
-<div class="ad-placeholder">
-    TÄHÄN TULEE MAINOS (AdSense / Video-palkinto)
-</div>
-
-<script>
-    // Tähän tiedostoon on helppo lisätä myöhemmin se kilometrilogiikka takaisin.
-    // Nyt se on poistettu, jotta voit testata pelin toimivuutta lämpimässä.
-    console.log("Peli ladattu onnistuneesti!");
-</script>
+    <iframe src="https://solitaire.com/spider-solitaire/embed/"></iframe>
 
 </body>
 </html>
