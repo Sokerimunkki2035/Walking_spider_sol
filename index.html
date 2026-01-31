@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spider Solitaire Fitness</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    h1 {
+      color: #4CAF50;
+    }
+
+    #distance, #level {
+      font-size: 1.2em;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    #game-board {
+      width: 100%;
+      max-width: 800px;
+      height: 500px;
+      margin: 20px auto;
+      background-color: #4CAF50;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.5em;
+    }
+
+    #ad-container {
+      width: 100%;
+      max-width: 728px;
+      margin: 20px auto;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>Spider Solitaire Fitness</h1>
+  <p id="distance">Kävelty matka: 0 m</p>
+  <p id="level">Taso: 1</p>
+
+  <div id="game-board">
+    Tässä tulee Spider Solitaire -peli.
+  </div>
+
+  <button id="start-btn">Aloita peli</button>
+
+  <div id="ad-container">
+    <!-- Google AdSense mainos -->
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-TUNNEISTUSI"
+         data-ad-slot="1234567890"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TUNNEISTUSI"
+    crossorigin="anonymous"></script>
+
+  <script>
+    // Alustukset
+    let totalDistance = 0;
+    let currentLevel = 1;
+    let lastLocation = null;
+
+    // Päivitä näkymä
+    function updateUI() {
+      document.getElementById("distance").textContent = `Kävelty matka: ${totalDistance.toFixed(2)} m`;
+      document.getElementById("level").textContent = `Taso: ${currentLevel}`;
+    }
+
+    // Avaa uusi taso
+    function unlockNewLevel() {
+      currentLevel++;
+      updateUI();
+      alert(`Onneksi olkoon! Olet kävellyt 1 km ja noussut tasolle ${currentLevel}!`);
+      totalDistance = 0;
+    }
+
+    // Laske etäisyys kahden sijainnin välillä (metreissä)
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+      const R = 6371000;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function toRad(degrees) {
+      return degrees * (Math.PI / 180);
+    }
+
+    // Aloita sijainnin seuranta
+    document.getElementById("start-btn").addEventListener("click", () => {
+      if ("geolocation" in navigator) {
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            if (lastLocation) {
+              const distance = calculateDistance(
+                lastLocation.lat, lastLocation.lng,
+                latitude, longitude
+              );
+              totalDistance += distance;
+              updateUI();
+
+              if (totalDistance >= 1000) {
+                unlockNewLevel();
+              }
+            }
+            lastLocation = { lat: latitude, lng: longitude };
+          },
+          (error) => {
+            console.error("Sijainnin seuranta epäonnistui:", error);
+            alert("Sijaintisi seuranta epäonnistui. Varmista, että sijaintipalvelut ovat päällä.");
+          },
+          { enableHighAccuracy: true }
+        );
+      } else {
+        alert("Selaimesi ei tue sijaintipalveluja.");
+      }
+    });
+
+    // Alusta näkymä
+    updateUI();
+  </script>
+</body>
+</html>
