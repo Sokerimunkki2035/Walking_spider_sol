@@ -1,162 +1,73 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spider Solitaire Fitness</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-      background-color: #f4f4f9;
-      color: #333;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spider Solitaire - Testiversio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #2D5A27; /* Klassinen verka-vihreä */
+            color: white;
+            overflow: hidden; /* Estetään turha skrollaus */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    h1 {
-      color: #4CAF50;
-    }
+        header {
+            background-color: rgba(0,0,0,0.3);
+            width: 100%;
+            padding: 10px 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
 
-    #distance, #level {
-      font-size: 1.2em;
-      margin: 10px 0;
-      font-weight: bold;
-    }
+        #game-frame {
+            width: 100vw;
+            height: calc(100vh - 120px);
+            border: none;
+        }
 
-    #game-container {
-      width: 100%;
-      max-width: 800px;
-      margin: 20px auto;
-      background-color: #2E7D32;
-      border-radius: 10px;
-      padding: 10px;
-    }
+        .ad-placeholder {
+            width: 100%;
+            max-width: 728px;
+            height: 90px;
+            background: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            border: 1px dashed #666;
+            font-size: 12px;
+            color: #aaa;
+        }
 
-    #ad-space {
-      margin: 20px auto;
-      width: 100%;
-      max-width: 728px;
-      height: 90px;
-      background-color: #f0f0f0;
-      border-radius: 5px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 14px;
-      color: #666;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin: 10px;
-      border-radius: 5px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-  </style>
+        .controls {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Spider Solitaire Fitness</h1>
-  <p id="distance">Kävelty matka: 0 m</p>
-  <p id="level">Taso: 1</p>
 
-  <div id="game-container"></div>
+<header>
+    <h1>Spider Solitaire</h1>
+    <div class="status">Testitila: Sijaintiseuranta ohitettu</div>
+</header>
 
-  <button id="start-btn">Aloita peli ja seuranta</button>
+<iframe id="game-frame" src="https://solitaire.com/spider-solitaire/embed/"></iframe>
 
-  <div id="ad-space">
-    Tässä näkyy mainos, kun lisäät AdSense-koodin.
-  </div>
+<div class="ad-placeholder">
+    TÄHÄN TULEE MAINOS (AdSense / Video-palkinto)
+</div>
 
-  <!-- Spider Solitaire JS -kirjasto -->
-  <script src="https://cdn.jsdelivr.net/npm/spider-solitaire-js@latest/dist/spider-solitaire.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/spider-solitaire-js@latest/dist/spider-solitaire.min.css">
+<script>
+    // Tähän tiedostoon on helppo lisätä myöhemmin se kilometrilogiikka takaisin.
+    // Nyt se on poistettu, jotta voit testata pelin toimivuutta lämpimässä.
+    console.log("Peli ladattu onnistuneesti!");
+</script>
 
-  <script>
-    // Alustukset
-    let totalDistance = 0;
-    let currentLevel = 1;
-    let lastLocation = null;
-    let game;
-    let watchId = null;
-
-    // Päivitä näkymä
-    function updateUI() {
-      document.getElementById("distance").textContent = `Kävelty matka: ${totalDistance.toFixed(2)} m`;
-      document.getElementById("level").textContent = `Taso: ${currentLevel}`;
-    }
-
-    // Avaa uusi taso
-    function unlockNewLevel() {
-      currentLevel++;
-      updateUI();
-      alert(`Onneksi olkoon! Olet kävellyt 1 km ja noussut tasolle ${currentLevel}!`);
-      totalDistance = 0;
-    }
-
-    // Laske etäisyys kahden sijainnin välillä (metreissä)
-    function calculateDistance(lat1, lng1, lat2, lng2) {
-      const R = 6371000; // Maan säde metreissä
-      const dLat = toRad(lat2 - lat1);
-      const dLng = toRad(lng2 - lng1);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    function toRad(degrees) {
-      return degrees * (Math.PI / 180);
-    }
-
-    // Aloita peli ja sijainnin seuranta
-    document.getElementById("start-btn").addEventListener("click", () => {
-      // Aloita peli
-      const gameContainer = document.getElementById("game-container");
-      game = new SpiderSolitaire.Game({ container: gameContainer });
-      game.start();
-
-      // Aloita sijainnin seuranta
-      if ("geolocation" in navigator) {
-        watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            if (lastLocation) {
-              const distance = calculateDistance(
-                lastLocation.lat, lastLocation.lng,
-                latitude, longitude
-              );
-              totalDistance += distance;
-              updateUI();
-
-              if (totalDistance >= 1000) {
-                unlockNewLevel();
-              }
-            }
-            lastLocation = { lat: latitude, lng: longitude };
-          },
-          (error) => {
-            console.error("Sijainnin seuranta epäonnistui:", error);
-            alert("Sijaintisi seuranta epäonnistui. Varmista, että sijaintipalvelut ovat päällä.");
-          },
-          { enableHighAccuracy: true }
-        );
-      } else {
-        alert("Selaimesi ei tue sijaintipalveluja.");
-      }
-    });
-
-    // Alusta näkymä
-    updateUI();
-  </script>
 </body>
 </html>
