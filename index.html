@@ -1,275 +1,733 @@
 <!doctype html>
 <html lang="fi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434"
-     crossorigin="anonymous"></script>
-<title>Spider Walk – reilu peli</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Walking Spider Sol – minuutit avaa pelin</title>
 
-<style>
-:root{
-  --bg:#004d40;
-  --card:#ffffff;
-  --txt:#10211e;
-  --muted:#5b6f6b;
-}
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
 
-html,body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background:var(--bg);
-  color:white;
-}
+  <style>
+    :root{
+      --bg:#004d40;
+      --card:#ffffff;
+      --txt:#10211e;
+      --muted:#5b6f6b;
+      --accent:#17b26a;
+      --danger:#b42318;
+      --soft:#eef6f4;
+      --shadow:0 10px 24px rgba(0,0,0,.20);
+      --r:18px;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:#fff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap{max-width:820px;margin:0 auto;padding:14px}
+    .topbar{
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      margin:6px 0 12px;
+      flex-wrap:wrap;
+    }
+    .linkbtn{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:10px 12px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.25);
+      background:transparent;color:#fff;
+      font-weight:900;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .card{
+      background:var(--card);
+      color:var(--txt);
+      border-radius:var(--r);
+      padding:14px;
+      box-shadow:var(--shadow);
+      margin:12px 0;
+    }
+    h1,h2{margin:0 0 10px}
+    h1{font-size:28px}
+    h2{font-size:22px}
+    .muted{color:var(--muted);line-height:1.45}
+    .small{font-size:13px;color:var(--muted);line-height:1.45}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:190px}
+    .btn{
+      appearance:none;border:0;cursor:pointer;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:950;
+      font-size:16px;
+      background:#0b5f52;
+      color:#fff;
+      width:100%;
+    }
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn2{background:#1f8b63}
+    .btnGhost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,.35);
+      color:#fff;
+    }
+    .pill{
+      display:inline-block;
+      padding:8px 12px;
+      border-radius:999px;
+      background:var(--soft);
+      font-weight:900;
+      color:#0d3f35;
+    }
+    .statRow{
+      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin:8px 0 6px;
+    }
+    .big{
+      font-size:44px;
+      font-weight:1000;
+      letter-spacing:-1px;
+    }
+    .right{text-align:right;margin-left:auto}
+    .dangerBox{
+      background:#ffe8e8;border:1px solid #ffd0d0;color:#7a0a0a;
+      border-radius:14px;padding:12px;font-weight:950;
+    }
 
-.wrap{
-  max-width:720px;
-  margin:0 auto;
-  padding:14px;
-}
+    /* Mainokset */
+    #ads-wrap{margin:12px 0}
+    .adcard{
+      background:#0b5f52;
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:18px;
+      padding:12px;
+      color:#fff;
+    }
+    .adtitle{font-weight:1000;margin:0 0 8px}
+    .tiny{font-size:12px;opacity:.85;line-height:1.35}
+    .adslots{display:grid;gap:10px}
+    .adslot{
+      background:rgba(255,255,255,.08);
+      border:1px dashed rgba(255,255,255,.28);
+      border-radius:14px;
+      padding:10px;
+      min-height:90px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;
+      opacity:.95;
+      text-align:center;
+    }
+    @media(min-width:700px){
+      .adslots{grid-template-columns:1fr 1fr}
+      .adslot{min-height:120px}
+    }
 
-.card{
-  background:var(--card);
-  color:var(--txt);
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 10px 26px rgba(0,0,0,.25);
-}
-
-h1{
-  font-size:20px;
-  margin:0 0 10px;
-}
-
-.muted{ color:var(--muted); }
-.small{ font-size:13px; }
-
-.row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-button{
-  padding:12px 14px;
-  border-radius:12px;
-  border:0;
-  font-weight:800;
-  cursor:pointer;
-}
-
-button.primary{ background:#18b17a;color:#062; }
-button.secondary{ background:#e8eeef;color:#233; }
-button.locked{ background:#ccc;color:#666; cursor:not-allowed; }
-
-.kpi{ font-size:28px;font-weight:900; }
-
-hr{
-  border:0;
-  height:1px;
-  background:#e7eded;
-  margin:14px 0;
-}
-
-/* === MAINOKSET === */
-.adCard{
-  background:#fff;
-  border-radius:16px;
-  padding:10px;
-  box-shadow:0 6px 16px rgba(0,0,0,.18);
-}
-.adLabel{
-  font-size:11px;
-  font-weight:800;
-  color:#6a7c79;
-  margin-bottom:6px;
-}
-.adBox{
-  min-height:90px;
-  border:2px dashed #c8d2d6;
-  border-radius:12px;
-  display:grid;
-  place-items:center;
-  background:#f7fafb;
-  color:#2a3b3a;
-  font-weight:900;
-}
-.spacer{ height:12px; }
-
-.ok{ color:#0a7; font-weight:900; }
-.warn{ color:#b60; font-weight:900; }
-
-</style>
+    /* Liike-tila overlay (kosketus lukkoon) */
+    #lockOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index:9999;
+      background:rgba(0,0,0,.78);
+      color:#fff;
+      pointer-events:auto;
+    }
+    .lockWrap{
+      max-width:760px;
+      margin:0 auto;
+      padding:18px 14px 14px;
+      height:100%;
+      box-sizing:border-box;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .lockCard{
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 10px 28px rgba(0,0,0,.25);
+    }
+    .lockTitle{
+      font-size:22px;
+      font-weight:1000;
+      margin:0 0 8px;
+    }
+    .lockBig{
+      font-size:44px;
+      font-weight:1100;
+      margin:6px 0 4px;
+      letter-spacing:-1px;
+    }
+    .progressOuter{
+      width:100%;
+      height:16px;
+      border-radius:999px;
+      background:rgba(255,255,255,.18);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.22);
+    }
+    .progressInner{
+      height:100%;
+      width:0%;
+      background:rgba(23,178,106,.95);
+    }
+    .holdBtn{
+      width:100%;
+      border-radius:18px;
+      padding:14px;
+      border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      font-weight:1000;
+      font-size:16px;
+    }
+    .footer{
+      text-align:center;
+      color:rgba(255,255,255,.75);
+      font-size:13px;
+      margin:18px 0 8px;
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="wrap">
-
-<!-- MAINOS HEADER -->
-<div class="adCard">
-  <div class="adLabel">Mainos</div>
-  <div class="adBox" data-ad="header"></div>
-</div>
-<div class="spacer"></div>
-
-<!-- SPIDER -->
-<div class="card">
-  <h1>Spider Solitaire</h1>
-
-  <p class="muted small">
-    Pelaaminen avautuu vasta kun päivän 1 km kävely on tehty.
-  </p>
-
-  <div class="row">
-    <button id="playBtn" class="locked">Avaa Spider (lukossa)</button>
-  </div>
-
-  <p id="playHint" class="muted small"></p>
-</div>
-
-<div class="spacer"></div>
-
-<!-- MAINOS SPIDER JÄLKEEN -->
-<div class="adCard">
-  <div class="adLabel">Mainos</div>
-  <div class="adBox" data-ad="after-spider"></div>
-</div>
-<div class="spacer"></div>
-
-<!-- KÄVELY -->
-<div class="card">
-  <h1>1 km kävely (päivän haaste)</h1>
-
-  <div class="row" style="justify-content:space-between">
-    <div>
-      <div class="muted small">Tänään kävelty</div>
-      <div class="kpi"><span id="meters">0</span> m</div>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="linkbtn" href="./blog/">Blogi</a>
+      <a class="linkbtn" href="./privacy.html">Tietosuoja</a>
     </div>
-    <div>
-      <div class="muted small">Tila</div>
-      <div id="walkStatus" class="warn">Ei valmis</div>
+
+    <!-- MAINOKSET (piilotetaan liike-tilassa automaattisesti) -->
+    <div id="ads-wrap">
+      <div class="adcard">
+        <div class="row" style="align-items:center">
+          <div>
+            <div class="adtitle">Mainokset</div>
+            <div class="tiny">Liike-tilassa mainokset piilotetaan hetkeksi ja palautetaan varmasti.</div>
+          </div>
+          <div class="row">
+            <button class="btn btnGhost" onclick="adsOffFor(120)">Piilota 2 min</button>
+            <button class="btn btn2" onclick="adsForceOn()">Päälle heti</button>
+          </div>
+        </div>
+        <div class="adslots" style="margin-top:10px">
+          <div class="adslot">Auto Ads – paikka A</div>
+          <div class="adslot">Auto Ads – paikka B</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PÄÄ -->
+    <div class="card">
+      <h1>Walking Spider Sol</h1>
+      <p class="muted" style="margin:0">
+        Päivän tavoite mitataan <b>minuutteina</b>. Kun tavoite täyttyy, Spider aukeaa.
+      </p>
+
+      <div class="statRow" style="margin-top:12px">
+        <div>
+          <div class="small">Päivä</div>
+          <div class="pill" id="todayPill">—</div>
+        </div>
+        <div class="right">
+          <div class="small">Striikki</div>
+          <div class="big"><span id="streak">0</span> 🔥</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn2" onclick="startMovementMode()">Aloita liike-tila</button>
+        <button class="btn btnGhost" onclick="markPlayed()">Merkitse pelattu tänään</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="openSpiderBtn" onclick="openSpider()" disabled>Avaa Spider (uusi välilehti)</button>
+        <button class="btn btnGhost" onclick="toggleSound()"><span id="soundLabel">Ääni: ON</span></button>
+      </div>
+
+      <div class="dangerBox" id="lockBanner" style="display:none;margin-top:12px">
+        Lukossa: tee ensin päivän liike (3 / 5 / 7 min), niin Spider aukeaa.
+      </div>
+
+      <div class="small" id="statusLine" style="margin-top:10px"></div>
+    </div>
+
+    <!-- PÄIVÄN MINUUTIT -->
+    <div class="card">
+      <h2>Päivän liike</h2>
+
+      <div class="statRow">
+        <div>
+          <div class="small">Tänään tehty</div>
+          <div class="big"><span id="doneMin">0</span> min</div>
+          <div class="small">Tavoite: <b><span id="targetMin">5</span> min</b></div>
+        </div>
+
+        <div class="right">
+          <div class="small">Tila</div>
+          <div class="big" style="font-size:22px"><span id="dayState">—</span></div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="setTargetMin(3)">Tavoite 3 min</button>
+        <button class="btn" onclick="setTargetMin(5)">Tavoite 5 min</button>
+        <button class="btn" onclick="setTargetMin(7)">Tavoite 7 min</button>
+      </div>
+
+      <div style="height:10px"></div>
+      <button class="btn" style="background:#b42318" onclick="resetToday()">Nollaa tämän päivän minuutit</button>
+
+      <div class="small" style="margin-top:10px">
+        Liike voi olla kävelyä paikallaan, portaissa, kyykkyjä tai mitä tahansa kevyttä liikettä.
+        Pidä puhelinta kädessä → liike-tila “lukitsee kosketukset”, pitää näytön hereillä ja kehuu ääneen.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Päivän säännöt</h2>
+      <ul class="muted" style="margin:8px 0 0 18px">
+        <li>Kun päivän tavoiteminuutit täyttyy, päivä merkitään tehdyksi ja striikki päivittyy.</li>
+        <li>Mainokset piilotetaan liike-tilassa ja palautuvat varmasti lopuksi.</li>
+        <li>Tiedot tallentuu tähän selaimeen (localStorage).</li>
+      </ul>
+      <div style="height:10px"></div>
+      <button class="btn" style="background:#6b7280" onclick="resetAll()">Nollaa kaikki tiedot</button>
+    </div>
+
+    <div class="footer">
+      Sovellus · <a style="color:#eafff5;text-decoration:none;font-weight:900" href="./privacy.html">Tietosuoja</a>
     </div>
   </div>
 
-  <hr>
+  <!-- LIIKE-TILA OVERLAY -->
+  <div id="lockOverlay" aria-hidden="true">
+    <div class="lockWrap">
+      <div class="lockCard">
+        <div class="lockTitle">Liike-tila käynnissä</div>
+        <div class="tiny">Kosketus on lukossa, jotta et vahingossa näppäile. Liiku vapaasti.</div>
+      </div>
 
-  <div class="row">
-    <button id="startBtn" class="primary">Aloita mittaus</button>
-    <button id="stopBtn" class="secondary" disabled>Lopeta</button>
+      <div class="lockCard">
+        <div class="tiny">Aikaa jäljellä</div>
+        <div class="lockBig"><span id="mmRemain">—</span> s</div>
+        <div class="progressOuter">
+          <div class="progressInner" id="mmBar"></div>
+        </div>
+        <div class="tiny" id="mmHint" style="margin-top:8px">Hyvä! Jatka.</div>
+      </div>
+
+      <div class="lockCard">
+        <div class="tiny">Liikehavainto</div>
+        <div class="lockBig" style="font-size:34px"><span id="mmMotion">—</span></div>
+        <div class="tiny">Jos sensori ei toimi, ajastin riittää silti.</div>
+      </div>
+
+      <div class="lockCard" style="margin-top:auto">
+        <button class="holdBtn" id="holdStopBtn">Lopeta (pidä pohjassa 2 s)</button>
+        <div class="tiny" style="margin-top:8px">
+          Liike-tilassa mainokset ovat piilossa ja palautuvat automaattisesti.
+        </div>
+      </div>
+    </div>
   </div>
-</div>
-
-<div class="spacer"></div>
-
-<!-- MAINOS KÄVELY JÄLKEEN -->
-<div class="adCard">
-  <div class="adLabel">Mainos</div>
-  <div class="adBox" data-ad="after-walk"></div>
-</div>
-<div class="spacer"></div>
-
-<!-- LEADERBOARD (valmiina myöhemmälle) -->
-<div class="card">
-  <h1>Leaderboard</h1>
-  <p class="muted small">
-    Tulossa: reilu daily deal, botti vastaan ja kävely-ranking.
-  </p>
-</div>
-
-<div class="spacer"></div>
-
-<!-- MAINOS FOOTER -->
-<div class="adCard">
-  <div class="adLabel">Mainos</div>
-  <div class="adBox" data-ad="footer"></div>
-</div>
-
-</div>
 
 <script>
-/* =====================
-   MAINOS DEMO
-===================== */
-document.querySelectorAll(".adBox").forEach(b=>{
-  b.innerHTML = `
-    <div style="text-align:center">
-      <div>📢 MAINOS</div>
-      <div style="font-size:12px;opacity:.7">AdSense tähän</div>
-    </div>
-  `;
-});
+/* =========
+   STORAGE
+========= */
+const LS = {
+  streak: "ws_streak",
+  lastDone: "ws_lastDoneDate",
+  todayDate: "ws_todayDate",
+  doneSeconds: "ws_doneSeconds",
+  targetMinutes: "ws_targetMinutes",
+  playedToday: "ws_playedToday",
+  soundOn: "ws_soundOn"
+};
 
-/* =====================
-   KÄVELY + LUKITUS
-===================== */
-const metersEl = document.getElementById("meters");
-const walkStatus = document.getElementById("walkStatus");
-const playBtn = document.getElementById("playBtn");
-const playHint = document.getElementById("playHint");
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
+function todayISO(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function loadInt(key, fallback=0){
+  const v = localStorage.getItem(key);
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+function saveInt(key, val){ localStorage.setItem(key, String(Math.trunc(val))); }
+function loadStr(key, fallback=""){ return localStorage.getItem(key) ?? fallback; }
+function saveStr(key, val){ localStorage.setItem(key, String(val)); }
+function loadBool(key, fallback=false){
+  const v = localStorage.getItem(key);
+  if(v === null) return fallback;
+  return v === "1";
+}
+function saveBool(key, val){ localStorage.setItem(key, val ? "1" : "0"); }
 
-let watchId = null;
-let meters = 0;
-let lastPos = null;
+function daysBetween(aISO, bISO){
+  const a = new Date(aISO+"T00:00:00");
+  const b = new Date(bISO+"T00:00:00");
+  return Math.round((b - a) / (1000*60*60*24));
+}
 
-function updateUI(){
-  metersEl.textContent = meters;
-  if(meters >= 1000){
-    walkStatus.textContent = "Valmis ✅";
-    walkStatus.className = "ok";
-    playBtn.className = "primary";
-    playBtn.textContent = "Avaa Spider";
-    playHint.textContent = "Päivän kävely tehty – peli auki.";
-  }else{
-    playBtn.className = "locked";
-    playBtn.textContent = "Avaa Spider (lukossa)";
-    playHint.textContent = "Kävele 1 km avataksesi pelin.";
+function ensureToday(){
+  const t = todayISO();
+  document.getElementById("todayPill").textContent = t;
+
+  const stored = loadStr(LS.todayDate, "");
+  if(stored !== t){
+    saveStr(LS.todayDate, t);
+    saveInt(LS.doneSeconds, 0);
+    saveStr(LS.playedToday, "0");
+
+    const lastDone = loadStr(LS.lastDone, "");
+    if(lastDone){
+      const diff = daysBetween(lastDone, t);
+      if(diff >= 2) saveInt(LS.streak, 0);
+    }
+  }
+
+  const tgt = loadInt(LS.targetMinutes, 5);
+  // clamp 3/5/7 only
+  const fixed = (tgt === 3 || tgt === 5 || tgt === 7) ? tgt : 5;
+  saveInt(LS.targetMinutes, fixed);
+
+  if(localStorage.getItem(LS.soundOn) === null){
+    saveBool(LS.soundOn, true);
   }
 }
 
-playBtn.onclick = ()=>{
-  if(meters < 1000) return;
-  window.open("https://solitaire.com/spider-solitaire/","_blank","noopener");
-};
-
-function dist(a,b){
-  const R=6371000;
-  const toRad=x=>x*Math.PI/180;
-  const dLat=toRad(b.lat-a.lat);
-  const dLon=toRad(b.lon-a.lon);
-  const s=Math.sin(dLat/2)**2+
-    Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
-  return 2*R*Math.asin(Math.sqrt(s));
+function targetSeconds(){
+  return loadInt(LS.targetMinutes, 5) * 60;
+}
+function doneSeconds(){
+  return loadInt(LS.doneSeconds, 0);
+}
+function isDayDone(){
+  return doneSeconds() >= targetSeconds();
 }
 
-startBtn.onclick=()=>{
-  if(!navigator.geolocation){ alert("GPS ei tuettu"); return; }
-  startBtn.disabled=true; stopBtn.disabled=false;
-  watchId=navigator.geolocation.watchPosition(p=>{
-    if(p.coords.accuracy>50) return;
-    const cur={lat:p.coords.latitude,lon:p.coords.longitude};
-    if(lastPos){
-      const d=dist(lastPos,cur);
-      if(d>2 && d<60) meters+=Math.round(d);
+function markDayDoneIfNeeded(){
+  if(!isDayDone()) return;
+
+  const t = todayISO();
+  const lastDone = loadStr(LS.lastDone, "");
+  let streak = loadInt(LS.streak, 0);
+
+  if(!lastDone){
+    streak = 1;
+  } else {
+    const diff = daysBetween(lastDone, t);
+    if(diff === 1) streak = streak + 1;
+    else if(diff === 0) streak = streak;
+    else streak = 1;
+  }
+
+  saveStr(LS.lastDone, t);
+  saveInt(LS.streak, streak);
+}
+
+function updateUI(){
+  const streak = loadInt(LS.streak, 0);
+  document.getElementById("streak").textContent = streak;
+
+  const tgtMin = loadInt(LS.targetMinutes, 5);
+  document.getElementById("targetMin").textContent = tgtMin;
+
+  const mins = Math.floor(doneSeconds()/60);
+  document.getElementById("doneMin").textContent = mins;
+
+  const done = isDayDone();
+  document.getElementById("dayState").textContent = done ? "Valmis ✅" : "Kesken…";
+
+  const openBtn = document.getElementById("openSpiderBtn");
+  openBtn.disabled = !done;
+
+  const banner = document.getElementById("lockBanner");
+  banner.style.display = done ? "none" : "block";
+
+  const status = document.getElementById("statusLine");
+  status.textContent = done
+    ? "Päivä tehty ✅ Spider on auki. Hyvä työ."
+    : "Tee päivän tavoite (3/5/7 min) → Spider aukeaa.";
+
+  document.getElementById("soundLabel").textContent =
+    "Ääni: " + (loadBool(LS.soundOn, true) ? "ON" : "OFF");
+}
+
+/* =========
+   SPIDER
+========= */
+function openSpider(){
+  window.open("https://solitaire.com/spider-solitaire/", "_blank", "noopener,noreferrer");
+}
+function markPlayed(){
+  saveStr(LS.playedToday, "1");
+  alert("Merkattu: pelattu tänään ✅");
+}
+
+/* =========
+   ADS (turvapiilotus)
+========= */
+let adsTimer = null;
+function adsSetVisible(isVisible){
+  const wrap = document.getElementById("ads-wrap");
+  if(!wrap) return;
+  wrap.style.display = isVisible ? "" : "none";
+  if(isVisible){
+    try{ (window.adsbygoogle = window.adsbygoogle || []).push({}); }catch(e){}
+  }
+}
+function adsOffFor(seconds){
+  seconds = Math.max(10, Math.min(60*30, Number(seconds)||60));
+  if(adsTimer) clearTimeout(adsTimer);
+  adsSetVisible(false);
+  adsTimer = setTimeout(()=>adsSetVisible(true), seconds*1000);
+}
+function adsForceOn(){
+  if(adsTimer) clearTimeout(adsTimer);
+  adsTimer = null;
+  adsSetVisible(true);
+}
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden) adsSetVisible(true);
+});
+
+/* =========
+   SOUND / SPEAK
+========= */
+function toggleSound(){
+  const on = loadBool(LS.soundOn, true);
+  saveBool(LS.soundOn, !on);
+  updateUI();
+}
+function speak(text){
+  if(!loadBool(LS.soundOn, true)) return;
+  try{
+    if(!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "fi-FI";
+    u.rate = 1.02;
+    u.pitch = 1.0;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* =========
+   MINUTES TARGET
+========= */
+function setTargetMin(min){
+  min = Number(min);
+  if(min !== 3 && min !== 5 && min !== 7) min = 5;
+  saveInt(LS.targetMinutes, min);
+  updateUI();
+  alert("Tavoite asetettu: " + min + " min");
+}
+
+/* =========
+   MOVEMENT MODE
+========= */
+let wakeLock = null;
+async function requestWakeLock(){
+  try{
+    if("wakeLock" in navigator){
+      wakeLock = await navigator.wakeLock.request("screen");
     }
-    lastPos=cur;
+  }catch(e){}
+}
+async function releaseWakeLock(){
+  try{
+    if(wakeLock){
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  }catch(e){}
+}
+
+let mmInterval = null;
+let mmStart = 0;
+let mmTarget = 300;
+let mmMotionScore = 0;
+let mmMotionOn = false;
+let motionHandler = null;
+
+function showOverlay(show){
+  const ov = document.getElementById("lockOverlay");
+  ov.style.display = show ? "block" : "none";
+  ov.setAttribute("aria-hidden", show ? "false" : "true");
+}
+
+function startMotion(){
+  mmMotionScore = 0;
+  mmMotionOn = false;
+
+  const maybePerm = (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function");
+  const enable = ()=>{
+    motionHandler = (ev)=>{
+      const a = ev.accelerationIncludingGravity;
+      if(!a) return;
+      const mag = Math.abs(a.x||0) + Math.abs(a.y||0) + Math.abs(a.z||0);
+      const inc = Math.max(0, mag - 18); // suodata kohina
+      if(inc > 0){
+        mmMotionOn = true;
+        mmMotionScore += inc;
+      }
+    };
+    window.addEventListener("devicemotion", motionHandler, {passive:true});
+  };
+
+  if(maybePerm){
+    DeviceMotionEvent.requestPermission().then(res=>{
+      if(res === "granted") enable();
+    }).catch(()=>{});
+  } else {
+    enable();
+  }
+}
+
+function stopMotion(){
+  if(motionHandler){
+    window.removeEventListener("devicemotion", motionHandler);
+    motionHandler = null;
+  }
+}
+
+function startMovementMode(){
+  ensureToday();
+
+  mmTarget = targetSeconds();
+  mmStart = Date.now();
+
+  // Mainokset piiloon liiketilassa ja palautus varmasti
+  adsOffFor(mmTarget + 60);
+
+  showOverlay(true);
+  requestWakeLock();
+  startMotion();
+
+  speak("Liike alkaa. Hyvä! Jatka rauhassa.");
+
+  setupHoldToStop();
+
+  if(mmInterval) clearInterval(mmInterval);
+  mmInterval = setInterval(()=>{
+    const elapsed = Math.floor((Date.now() - mmStart)/1000);
+    const remain = Math.max(0, mmTarget - elapsed);
+
+    document.getElementById("mmRemain").textContent = remain;
+    const pct = Math.min(100, Math.round((elapsed/mmTarget)*100));
+    document.getElementById("mmBar").style.width = pct + "%";
+    document.getElementById("mmMotion").textContent = (mmMotionOn ? ("Liike OK ("+Math.round(mmMotionScore)+")") : "Sensori ei havaittu (OK)");
+
+    if(remain === mmTarget - 10) speak("Hyvä alku.");
+    if(remain === Math.floor(mmTarget/2)) speak("Puolivälissä. Hienoa.");
+    if(remain === 30) speak("Kolmekymmentä sekuntia jäljellä.");
+    if(remain === 10) speak("Kymmenen sekuntia.");
+
+    if(remain <= 0){
+      finishMovementMode(true);
+    }
+  }, 250);
+}
+
+function finishMovementMode(success){
+  if(mmInterval) clearInterval(mmInterval);
+  mmInterval = null;
+
+  stopMotion();
+  releaseWakeLock();
+  showOverlay(false);
+
+  // Palauta mainokset varmasti
+  adsForceOn();
+
+  if(success){
+    speak("Valmis! Loistavaa.");
+
+    // Päivän sekunnit ainakin targetiin
+    const cur = doneSeconds();
+    const next = Math.max(cur, mmTarget);
+    saveInt(LS.doneSeconds, next);
+
+    markDayDoneIfNeeded();
     updateUI();
-  });
-};
+    alert("Liike tehty ✅ Spider aukeaa.");
+  } else {
+    updateUI();
+    alert("Liike-tila lopetettu. Voit aloittaa uudelleen milloin vain.");
+  }
+}
 
-stopBtn.onclick=()=>{
-  if(watchId) navigator.geolocation.clearWatch(watchId);
-  watchId=null;
-  startBtn.disabled=false; stopBtn.disabled=true;
-};
+let holdTimer = null;
+let holdStart = 0;
+function setupHoldToStop(){
+  const btn = document.getElementById("holdStopBtn");
+  const startHold = (e)=>{
+    e.preventDefault();
+    if(holdTimer) clearInterval(holdTimer);
+    holdStart = Date.now();
+    btn.textContent = "Pidä... (2 s)";
+    holdTimer = setInterval(()=>{
+      const ms = Date.now() - holdStart;
+      if(ms >= 2000){
+        clearInterval(holdTimer);
+        holdTimer = null;
+        btn.textContent = "Lopeta (pidä pohjassa 2 s)";
+        finishMovementMode(false);
+      }
+    }, 50);
+  };
+  const endHold = ()=>{
+    if(holdTimer){
+      clearInterval(holdTimer);
+      holdTimer = null;
+    }
+    btn.textContent = "Lopeta (pidä pohjassa 2 s)";
+  };
 
+  if(!btn.dataset.bound){
+    btn.dataset.bound = "1";
+    btn.addEventListener("pointerdown", startHold);
+    btn.addEventListener("pointerup", endHold);
+    btn.addEventListener("pointercancel", endHold);
+    btn.addEventListener("pointerleave", endHold);
+  }
+}
+
+/* =========
+   RESET
+========= */
+function resetToday(){
+  if(confirm("Nollataanko tämän päivän minuutit?")){
+    saveInt(LS.doneSeconds, 0);
+    updateUI();
+  }
+}
+function resetAll(){
+  if(confirm("Nollataanko KAIKKI tiedot (striikki, päivä, minuutit)?")){
+    Object.values(LS).forEach(k=>localStorage.removeItem(k));
+    ensureToday();
+    updateUI();
+  }
+}
+
+/* =========
+   INIT
+========= */
+ensureToday();
+markDayDoneIfNeeded();
 updateUI();
 </script>
-<p class="small" style="text-align:center;opacity:.7">
-  <a href="privacy.html">Tietosuoja</a>
-</p>
 </body>
 </html>
