@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Walking Spider Sol — MVP</title>
+
+  <!-- AdSense loader (vaihda client omaan jos eri) -->
+  <script async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434"
+    crossorigin="anonymous"></script>
+
+  <style>
+    :root{
+      --bg1:#063b34; --bg2:#0b5f52;
+      --card:#ffffff; --txt:#10211e; --muted:#5b6f6b;
+      --line:#dbe5e3; --shadow:0 12px 28px rgba(0,0,0,.22);
+      --r:18px;
+
+      --pile:#0b5f52;
+      --pile2:#094d43;
+
+      --sel:#ffe08a;
+      --good:#38a169;
+      --bad:#d64545;
+      --btn:#0b5f52;
+      --btn2:#1f8b63;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#fff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:12px 12px 24px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .brand{font-weight:1100;letter-spacing:-.2px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 12px;border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:1000;user-select:none;
+    }
+    .chip b{font-variant-numeric:tabular-nums}
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+    .btn{
+      border:0;border-radius:14px;
+      padding:12px 14px;
+      background:var(--btn);
+      color:#fff;font-weight:1100;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn.secondary{background:#2a6f62}
+    .btn.green{background:var(--btn2)}
+    .btn.ghost{background:transparent;border:2px solid rgba(255,255,255,.22); color:#fff}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .btn:active{transform:scale(.99)}
+    .small{font-size:13px;opacity:.82;line-height:1.45}
+
+    .layout{display:grid;grid-template-columns:1fr;gap:12px}
+
+    .card{
+      background:var(--card); color:var(--txt);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+
+    .hud{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+    }
+    .hud .left, .hud .right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:#f4f8f7;
+      color:#0b5f52;
+      font-weight:1100;
+      user-select:none;
+    }
+    .mono{font-variant-numeric:tabular-nums}
+    .hint{
+      margin-top:8px;
+      padding:10px 12px;border-radius:14px;
+      border:1px solid var(--line);
+      background:#fbfffe;
+      color:#1a2c29;
+    }
+
+    /* Board */
+    .board{
+      border-radius:22px;
+      padding:12px;
+      background:linear-gradient(180deg,var(--pile2),var(--pile));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+
+    /* ✅ TÄRKEIN MUUTOS: 10 pinoa aina yhdessä rivissä + vaakascroll */
+    .pilesScroll{
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom:8px;
+    }
+    .piles{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      width:max-content;
+      min-width:max-content;
+    }
+
+    .pile{
+      position:relative;
+      width:92px;            /* pinojen leveys puhelimelle */
+      min-height:560px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      padding:8px 6px 10px;
+      overflow:hidden;
+      cursor:pointer;
+      user-select:none;
+      flex:0 0 auto;
+    }
+
+    /* isommilla näytöillä vähän leveämmäksi */
+    @media (min-width: 700px){
+      .pile{width:104px}
+    }
+    @media (min-width: 980px){
+      .pile{width:112px}
+    }
+
+    .pile.empty::after{
+      content:"";
+      position:absolute;inset:10px 8px auto 8px;
+      height:64px;border-radius:12px;
+      border:2px dashed rgba(255,255,255,.26);
+      opacity:.8;
+    }
+
+    .cards{position:relative;height:100%;min-height:560px}
+
+    .cardEl{
+      position:absolute;left:0;right:0;
+      height:74px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 10px 18px rgba(0,0,0,.16);
+      background:#fff;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 10px;
+      color:#10211e;
+      font-weight:1100;
+      transform: translateZ(0);
+    }
+    .cardEl.faceDown{
+      background:linear-gradient(135deg,#1f8b63,#0b5f52);
+      color:rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .cardEl .rank{font-size:18px}
+    .cardEl .suit{font-size:18px}
+    .cardEl .mini{font-size:12px;opacity:.8;font-weight:900}
+
+    .cardEl.selected{
+      outline:3px solid var(--sel);
+      box-shadow:0 16px 26px rgba(255,224,138,.28);
+      z-index:999;
+    }
+    .cardEl.selTail{outline:3px solid rgba(255,224,138,.55)}
+
+    .pile.targetOK{box-shadow: inset 0 0 0 3px rgba(56,161,105,.55)}
+    .pile.targetNO{box-shadow: inset 0 0 0 3px rgba(214,69,69,.55)}
+
+    .stockRow{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      margin-top:10px;
+    }
+    .stockBtn{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .stockStack{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:14px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;font-weight:1100;
+    }
+
+    .adbox{
+      background:rgba(11,95,82,.08);
+      border:2px dashed rgba(11,95,82,.25);
+      color:rgba(11,95,82,.85);
+      border-radius:16px;
+      padding:12px;
+      text-align:center;
+      font-weight:1100;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(0,0,0,.78);color:#fff;
+      padding:10px 12px;border-radius:999px;
+      font-weight:1100;font-size:13px;
+      display:none;z-index:10000;
+      border:1px solid rgba(255,255,255,.14)
+    }
+    .toast.show{display:block}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">🕷️ Walking Spider Sol — <span class="mono">MVP</span></div>
+      <div class="chips">
+        <div class="chip">✅ 1-suit</div>
+        <div class="chip">🧮 Siirrot <b class="mono" id="movesCount">0</b></div>
+        <div class="chip">🏁 Maat <b class="mono" id="setsDone">0</b>/8</div>
+        <div class="chip">📦 Stock <b class="mono" id="stockLeft">50</b></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="btnrow">
+          <button class="btn green" id="btnNew">New game</button>
+          <button class="btn secondary" id="btnRestart">Restart sama jako</button>
+          <button class="btn secondary" id="btnUndo">Undo</button>
+          <button class="btn secondary" id="btnRedo">Redo</button>
+          <button class="btn" id="btnDeal">Deal 10 korttia</button>
+        </div>
+
+        <div class="hint" id="hintBox">
+          <b>Ohje (kosketus):</b>
+          1) Napauta face-up korttia valitaksesi laskevan sarjan (esim 9-8-7…).<br>
+          2) Napauta <b>mitä tahansa kohtaa kohdepinoissa</b> (korttia tai tyhjää pinoa) siirtääksesi.<br>
+          <span class="small">Deal onnistuu vain, jos yksikään pino ei ole tyhjä (Spider-sääntö).</span>
+        </div>
+      </div>
+
+      <div class="board" id="board">
+        <div class="pilesScroll">
+          <div class="piles" id="piles"></div>
+        </div>
+
+        <div class="stockRow">
+          <div class="stockBtn">
+            <div class="stockStack">Seed: <span class="mono" id="seedView">—</span></div>
+          </div>
+
+          <div style="max-width:460px;width:100%">
+            <div class="adbox">
+              Auto Ads -alue (jos AdSense on kunnossa, se voi näyttää mainoksia)
+              <div class="small" style="margin-top:6px;opacity:.7">
+                Tämä on vain paikka. Tulo syntyy vain jos AdSense oikeasti näyttää mainoksia.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✅ "Kopioi tämä" nappi sivun alaosaan -->
+      <div class="card">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-weight:1100">Työkalut</div>
+            <div class="small">“Kopioi tämä” = kopioi pelin tallennus (JSON). Voit liittää sen myöhemmin “Tuo tallennus”.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnCopy">📋 Kopioi tämä</button>
+            <button class="btn ghost" id="btnImport">⬇️ Tuo tallennus</button>
+            <button class="btn ghost" id="btnClearSave">🧹 Poista tallennus</button>
+          </div>
+        </div>
+
+        <div class="small" style="margin-top:10px;opacity:.75">
+          <a href="./privacy.html" style="color:#0b5f52;font-weight:1100;text-decoration:none">Tietosuoja</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const now = () => Date.now();
+  const clamp = (n,min,max) => Math.max(min, Math.min(max,n));
+
+  const LS = {
+    save: "spider_mvp_save_v2",
+    seed: "spider_mvp_seed_v2",
+  };
+
+  const CFG = {
+    PILES: 10,
+    INITIAL_PILES_6: 4, // first 4 piles get 6 cards, rest 5
+    TOTAL_SETS: 8,
+    CARD_OFFSET: 18,
+  };
+
+  function mulberry32(a){
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+  }
+  function randomSeed(){
+    return (Math.floor(Math.random()*1e9) ^ Date.now()) >>> 0;
+  }
+
+  let state = {
+    seed: 0,
+    rng: null,
+    piles: [],
+    stock: [],
+    setsDone: 0,
+    moves: 0,
+    selected: null, // {pileIndex, fromIndex}
+    history: [],
+    future: [],
+  };
+
+  function toast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"), 1600);
+  }
+
+  function cardLabel(r){
+    const map = {1:"A", 11:"J", 12:"Q", 13:"K"};
+    return map[r] || String(r);
+  }
+
+  function snapshot(){
+    return JSON.stringify({
+      seed: state.seed,
+      piles: state.piles,
+      stock: state.stock,
+      setsDone: state.setsDone,
+      moves: state.moves
+    });
+  }
+
+  function restoreFromSnap(json){
+    const s = JSON.parse(json);
+    state.seed = s.seed >>> 0;
+    state.rng = mulberry32(state.seed);
+    state.piles = s.piles;
+    state.stock = s.stock;
+    state.setsDone = s.setsDone;
+    state.moves = s.moves;
+    state.selected = null;
+  }
+
+  function pushHistory(){
+    state.history.push(snapshot());
+    if(state.history.length > 250) state.history.shift();
+    state.future = [];
+  }
+
+  function buildDeck(){
+    const deck = [];
+    let uid = 1;
+    for(let k=0;k<CFG.TOTAL_SETS;k++){
+      for(let r=1;r<=13;r++){
+        deck.push({r, f:false, uid: uid++});
+      }
+    }
+    return deck;
+  }
+
+  function shuffle(deck, rng){
+    for(let i=deck.length-1;i>0;i--){
+      const j = Math.floor(rng() * (i+1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+  }
+
+  function newGame(seed){
+    state.seed = seed >>> 0;
+    state.rng = mulberry32(state.seed);
+    state.piles = Array.from({length:CFG.PILES}, () => []);
+    state.stock = [];
+    state.setsDone = 0;
+    state.moves = 0;
+    state.selected = null;
+    state.history = [];
+    state.future = [];
+
+    const deck = buildDeck();
+    shuffle(deck, state.rng);
+
+    for(let i=0;i<CFG.PILES;i++){
+      const cnt = (i < CFG.INITIAL_PILES_6) ? 6 : 5;
+      for(let c=0;c<cnt;c++){
+        const card = deck.pop();
+        state.piles[i].push(card);
+      }
+      state.piles[i][state.piles[i].length-1].f = true;
+    }
+
+    state.stock = deck.map(c => ({...c, f:true}));
+
+    pushHistory();
+    renderAll();
+    saveGame();
+  }
+
+  function restartSame(){ newGame(state.seed); }
+
+  function canDeal(){
+    if(state.stock.length < CFG.PILES) return false;
+    for(const p of state.piles) if(p.length === 0) return false;
+    return true;
+  }
+
+  function deal10(){
+    if(!canDeal()){
+      toast("Deal ei onnistu: stock loppu tai tyhjä sarake.");
+      return;
+    }
+    pushHistory();
+    for(let i=0;i<CFG.PILES;i++){
+      const card = state.stock.pop();
+      card.f = true;
+      state.piles[i].push(card);
+    }
+    state.moves += 1;
+    checkCompletedSets();
+    renderAll();
+    saveGame();
+  }
+
+  function isValidDescendingRun(pile, fromIndex){
+    for(let i=fromIndex;i<pile.length;i++){
+      if(!pile[i].f) return false;
+      if(i > fromIndex){
+        if(pile[i-1].r !== pile[i].r + 1) return false;
+      }
+    }
+    return true;
+  }
+
+  function canPlace(runTopRank, targetPile){
+    if(targetPile.length === 0) return true;
+    const top = targetPile[targetPile.length-1];
+    if(!top.f) return false;
+    return top.r === runTopRank + 1;
+  }
+
+  function flipTopIfNeeded(pile){
+    if(pile.length === 0) return;
+    const top = pile[pile.length-1];
+    if(!top.f) top.f = true;
+  }
+
+  function moveRun(fromPileIdx, fromIndex, toPileIdx){
+    const fromPile = state.piles[fromPileIdx];
+    const toPile = state.piles[toPileIdx];
+    const run = fromPile.slice(fromIndex);
+
+    if(!isValidDescendingRun(fromPile, fromIndex)){
+      toast("Valinta ei ole laskeva sarja.");
+      return false;
+    }
+    const runTop = run[0];
+    if(!canPlace(runTop.r, toPile)){
+      toast("Ei voi siirtää siihen pinoon.");
+      return false;
+    }
+
+    pushHistory();
+
+    state.piles[toPileIdx] = toPile.concat(run);
+    state.piles[fromPileIdx] = fromPile.slice(0, fromIndex);
+    flipTopIfNeeded(state.piles[fromPileIdx]);
+
+    state.moves += 1;
+    state.selected = null;
+
+    checkCompletedSets();
+    renderAll();
+    saveGame();
+    return true;
+  }
+
+  function isCompleteKA(pile){
+    if(pile.length < 13) return false;
+    const tail = pile.slice(pile.length-13);
+    for(let i=0;i<13;i++){
+      const card = tail[i];
+      if(!card.f) return false;
+      const want = 13 - i;
+      if(card.r !== want) return false;
+    }
+    return true;
+  }
+
+  function checkCompletedSets(){
+    let removed = 0;
+    for(let i=0;i<CFG.PILES;i++){
+      const pile = state.piles[i];
+      if(isCompleteKA(pile)){
+        state.piles[i] = pile.slice(0, pile.length-13);
+        removed += 1;
+        flipTopIfNeeded(state.piles[i]);
+      }
+    }
+    if(removed > 0){
+      state.setsDone += removed;
+      toast("✅ Valmis maa! +" + removed);
+    }
+  }
+
+  function undo(){
+    if(state.history.length <= 1) { toast("Ei voi undo."); return; }
+    const cur = state.history.pop();
+    state.future.push(cur);
+    const prev = state.history[state.history.length-1];
+    restoreFromSnap(prev);
+    renderAll();
+    saveGame();
+  }
+
+  function redo(){
+    if(state.future.length === 0) { toast("Ei redo."); return; }
+    const next = state.future.pop();
+    state.history.push(next);
+    restoreFromSnap(next);
+    renderAll();
+    saveGame();
+  }
+
+  function saveGame(){
+    localStorage.setItem(LS.save, snapshot());
+    localStorage.setItem(LS.seed, String(state.seed));
+  }
+
+  function loadGame(){
+    const s = localStorage.getItem(LS.save);
+    if(!s) return false;
+    restoreFromSnap(s);
+    state.history = [snapshot()];
+    state.future = [];
+    state.selected = null;
+    renderAll();
+    return true;
+  }
+
+  function clearSave(){
+    localStorage.removeItem(LS.save);
+    toast("Tallennus poistettu.");
+  }
+
+  function renderAll(){
+    $("setsDone").textContent = state.setsDone;
+    $("stockLeft").textContent = state.stock.length;
+    $("movesCount").textContent = state.moves;
+    $("seedView").textContent = state.seed;
+
+    $("btnDeal").disabled = !canDeal();
+    $("btnUndo").disabled = (state.history.length <= 1);
+    $("btnRedo").disabled = (state.future.length === 0);
+
+    renderPiles();
+  }
+
+  function clearTargetClasses(){
+    document.querySelectorAll(".pile").forEach(p => {
+      p.classList.remove("targetOK");
+      p.classList.remove("targetNO");
+    });
+  }
+
+  function paintTargets(){
+    clearTargetClasses();
+    if(!state.selected) return;
+
+    const fromPile = state.piles[state.selected.pileIndex];
+    const run = fromPile.slice(state.selected.fromIndex);
+    const runTopRank = run[0].r;
+
+    document.querySelectorAll(".pile").forEach(p => {
+      const idx = Number(p.dataset.pile);
+      if(idx === state.selected.pileIndex) return;
+      const ok = canPlace(runTopRank, state.piles[idx]);
+      p.classList.add(ok ? "targetOK" : "targetNO");
+    });
+  }
+
+  function renderPiles(){
+    const pilesEl = $("piles");
+    pilesEl.innerHTML = "";
+
+    for(let i=0;i<CFG.PILES;i++){
+      const pile = state.piles[i];
+
+      const pileWrap = document.createElement("div");
+      pileWrap.className = "pile" + (pile.length === 0 ? " empty" : "");
+      pileWrap.dataset.pile = String(i);
+
+      const cardsWrap = document.createElement("div");
+      cardsWrap.className = "cards";
+
+      const sel = state.selected && state.selected.pileIndex === i ? state.selected : null;
+
+      for(let c=0;c<pile.length;c++){
+        const card = pile[c];
+        const cardEl = document.createElement("div");
+        cardEl.className = "cardEl" + (card.f ? "" : " faceDown");
+        cardEl.style.top = (c * CFG.CARD_OFFSET) + "px";
+        cardEl.dataset.pile = String(i);
+        cardEl.dataset.index = String(c);
+
+        const rank = document.createElement("div");
+        rank.className = "rank";
+        rank.textContent = card.f ? cardLabel(card.r) : "■";
+
+        const suit = document.createElement("div");
+        suit.className = "suit";
+        suit.textContent = card.f ? "♠" : " ";
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+        mini.textContent = card.f ? "" : "DOWN";
+
+        cardEl.appendChild(rank);
+        cardEl.appendChild(mini);
+        cardEl.appendChild(suit);
+
+        if(sel && c === sel.fromIndex) cardEl.classList.add("selected");
+        if(sel && c > sel.fromIndex) cardEl.classList.add("selTail");
+
+        // ✅ MUUTOS: jos on valinta päällä ja napautat toisen pinon korttia,
+        // tulkitaan se kohdepino-klikkaukseksi (eli siirrä)
+        cardEl.addEventListener("click", (e) => {
+          e.stopPropagation();
+
+          if(state.selected && state.selected.pileIndex !== i){
+            // target pile by tapping any card in it
+            moveRun(state.selected.pileIndex, state.selected.fromIndex, i);
+            return;
+          }
+
+          onCardSelect(i, c);
+        });
+
+        cardsWrap.appendChild(cardEl);
+      }
+
+      // pile click (background / empty area)
+      pileWrap.addEventListener("click", () => {
+        if(!state.selected) return;
+
+        if(state.selected.pileIndex === i){
+          state.selected = null;
+          renderPiles();
+          return;
+        }
+        moveRun(state.selected.pileIndex, state.selected.fromIndex, i);
+      });
+
+      pileWrap.appendChild(cardsWrap);
+      pilesEl.appendChild(pileWrap);
+    }
+
+    paintTargets();
+  }
+
+  function onCardSelect(pileIndex, cardIndex){
+    const pile = state.piles[pileIndex];
+    const card = pile[cardIndex];
+    if(!card.f){
+      toast("Tämä kortti on vielä käännetty.");
+      return;
+    }
+
+    if(state.selected && state.selected.pileIndex === pileIndex && state.selected.fromIndex === cardIndex){
+      state.selected = null;
+      renderPiles();
+      return;
+    }
+
+    if(!isValidDescendingRun(pile, cardIndex)){
+      toast("Valitse laskeva sarja (esim 9-8-7…).");
+      return;
+    }
+
+    state.selected = {pileIndex, fromIndex: cardIndex};
+    renderPiles();
+  }
+
+  // Copy / import tools
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(_){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        return true;
+      }catch(e){
+        document.body.removeChild(ta);
+        return false;
+      }
+    }
+  }
+
+  $("btnCopy").addEventListener("click", async () => {
+    const ok = await copyText(localStorage.getItem(LS.save) || snapshot());
+    toast(ok ? "📋 Tallennus kopioitu!" : "Kopiointi epäonnistui.");
+  });
+
+  $("btnImport").addEventListener("click", async () => {
+    const txt = prompt("Liitä tallennus (JSON) tähän:");
+    if(!txt) return;
+    try{
+      restoreFromSnap(txt);
+      state.history = [snapshot()];
+      state.future = [];
+      state.selected = null;
+      saveGame();
+      renderAll();
+      toast("⬇️ Tallennus tuotu!");
+    }catch(e){
+      toast("Virhe: tallennus ei kelpaa.");
+    }
+  });
+
+  $("btnClearSave").addEventListener("click", () => clearSave());
+
+  // Buttons
+  $("btnNew").addEventListener("click", () => {
+    const seed = randomSeed();
+    localStorage.setItem(LS.seed, String(seed));
+    newGame(seed);
+    toast("Uusi peli aloitettu.");
+  });
+  $("btnRestart").addEventListener("click", () => { restartSame(); toast("Restart sama jako."); });
+  $("btnUndo").addEventListener("click", undo);
+  $("btnRedo").addEventListener("click", redo);
+  $("btnDeal").addEventListener("click", deal10);
+
+  // Init
+  const loaded = loadGame();
+  if(!loaded){
+    const s = Number(localStorage.getItem(LS.seed) || 0);
+    const seed = s ? (s >>> 0) : randomSeed();
+    localStorage.setItem(LS.seed, String(seed));
+    newGame(seed);
+  }else{
+    localStorage.setItem(LS.seed, String(state.seed));
+    renderAll();
+  }
+})();
+</script>
+</body>
+</html>
