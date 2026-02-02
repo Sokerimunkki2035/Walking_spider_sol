@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Walking Spider Sol — MVP</title>
+
+  <!-- AdSense loader (pidä client omana; tämä ei takaa tuloa, mutta mahdollistaa mainokset) -->
+  <script async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434"
+    crossorigin="anonymous"></script>
+
+  <style>
+    :root{
+      --bg1:#063b34; --bg2:#0b5f52;
+      --card:#ffffff; --txt:#10211e; --muted:#5b6f6b;
+      --line:#dbe5e3; --shadow:0 12px 28px rgba(0,0,0,.22);
+      --r:18px;
+
+      --pile:#0b5f52;
+      --pile2:#094d43;
+
+      --sel:#ffe08a;
+      --good:#38a169;
+      --bad:#d64545;
+      --btn:#0b5f52;
+      --btn2:#1f8b63;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#fff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:12px 12px 24px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .brand{font-weight:1100;letter-spacing:-.2px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 12px;border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:1000;user-select:none;
+    }
+    .chip b{font-variant-numeric:tabular-nums}
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+    .btn{
+      border:0;border-radius:14px;
+      padding:12px 14px;
+      background:var(--btn);
+      color:#fff;font-weight:1100;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn.secondary{background:#2a6f62}
+    .btn.green{background:var(--btn2)}
+    .btn.ghost{background:transparent;border:2px solid rgba(255,255,255,.22)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .btn:active{transform:scale(.99)}
+    .small{font-size:13px;opacity:.82;line-height:1.45}
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    .card{
+      background:var(--card); color:var(--txt);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+
+    .hud{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+    }
+    .hud .left, .hud .right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:#f4f8f7;
+      color:#0b5f52;
+      font-weight:1100;
+      user-select:none;
+    }
+    .mono{font-variant-numeric:tabular-nums}
+    .hint{
+      margin-top:8px;
+      padding:10px 12px;border-radius:14px;
+      border:1px solid var(--line);
+      background:#fbfffe;
+      color:#1a2c29;
+    }
+
+    /* Board */
+    .board{
+      border-radius:22px;
+      padding:12px;
+      background:linear-gradient(180deg,var(--pile2),var(--pile));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .piles{
+      display:grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap:10px;
+      align-items:start;
+    }
+
+    .pile{
+      position:relative;
+      min-height:520px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      padding:8px 6px 10px;
+      overflow:hidden;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .pile.empty::after{
+      content:"";
+      position:absolute;inset:10px 8px auto 8px;
+      height:64px;border-radius:12px;
+      border:2px dashed rgba(255,255,255,.26);
+      opacity:.8;
+    }
+
+    .cards{
+      position:relative;
+      height:100%;
+      min-height:520px;
+    }
+
+    .cardEl{
+      position:absolute;left:0;right:0;
+      height:74px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 10px 18px rgba(0,0,0,.16);
+      background:#fff;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 10px;
+      color:#10211e;
+      font-weight:1100;
+      transform: translateZ(0);
+    }
+
+    .cardEl.faceDown{
+      background:linear-gradient(135deg,#1f8b63,#0b5f52);
+      color:rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .cardEl .rank{font-size:18px}
+    .cardEl .suit{font-size:18px}
+    .cardEl .mini{font-size:12px;opacity:.8;font-weight:900}
+
+    .cardEl.selected{
+      outline:3px solid var(--sel);
+      box-shadow:0 16px 26px rgba(255,224,138,.28);
+      z-index:999;
+    }
+    .cardEl.selTail{
+      outline:3px solid rgba(255,224,138,.55);
+    }
+
+    .pile.targetOK{
+      box-shadow: inset 0 0 0 3px rgba(56,161,105,.55);
+    }
+    .pile.targetNO{
+      box-shadow: inset 0 0 0 3px rgba(214,69,69,.55);
+    }
+
+    .stockRow{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      margin-top:10px;
+    }
+    .stockBtn{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    }
+    .stockStack{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:14px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;font-weight:1100;
+    }
+
+    .adbox{
+      background:rgba(11,95,82,.08);
+      border:2px dashed rgba(11,95,82,.25);
+      color:rgba(11,95,82,.85);
+      border-radius:16px;
+      padding:12px;
+      text-align:center;
+      font-weight:1100;
+    }
+
+    /* Overlay break wall */
+    .overlay{
+      position:fixed;inset:0;
+      display:none;z-index:9999;
+      background:rgba(0,0,0,.60);
+      backdrop-filter: blur(6px);
+      padding:14px;
+    }
+    .overlay.show{display:block}
+    .ovcard{
+      max-width:980px;margin:0 auto;
+      background:#fff;color:var(--txt);
+      border-radius:22px;
+      box-shadow:0 18px 44px rgba(0,0,0,.35);
+      padding:16px;
+    }
+    .ovtop{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
+    .ovtitle{font-size:24px;font-weight:1200;margin:0}
+    .ovreason{margin:6px 0 0;color:var(--muted)}
+    .lockline{
+      margin-top:10px;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:#fff3cd;border:1px solid #ffe69c;color:#664d03;
+      font-weight:1100;font-size:12px;
+    }
+    .split{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .split > *{flex:1;min-width:260px}
+    .panel{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      background:#fff;
+    }
+    .tag{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 10px;border-radius:999px;
+      background:#eafff5;border:1px solid #cbe9df;
+      color:#0b5f52;font-weight:1200;font-size:13px;
+    }
+    .timer{
+      font-size:44px;font-weight:1200;letter-spacing:-1px;margin:6px 0 0;color:#0b5f52;
+    }
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
+    .progress{height:12px;border-radius:999px;background:#e8f4f1;border:1px solid #d3ebe5;overflow:hidden;margin:10px 0 2px}
+    .bar{height:100%;width:0%;background:var(--good)}
+
+    /* Toast */
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(0,0,0,.78);color:#fff;
+      padding:10px 12px;border-radius:999px;
+      font-weight:1100;font-size:13px;
+      display:none;z-index:10000;
+      border:1px solid rgba(255,255,255,.14)
+    }
+    .toast.show{display:block}
+
+    @media (max-width: 980px){
+      .piles{grid-template-columns: repeat(5, minmax(0,1fr));}
+      .pile{min-height:520px}
+    }
+    @media (max-width: 560px){
+      .piles{grid-template-columns: repeat(3, minmax(0,1fr));}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">🕷️ Walking Spider Sol — <span class="mono">MVP</span></div>
+      <div class="chips">
+        <div class="chip">✅ Reilu 1-suit</div>
+        <div class="chip">⏱️ <b class="mono" id="sessionMin">0</b> min</div>
+        <div class="chip">👣 Tänään <b class="mono" id="moveMin">0</b> min</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="hud">
+          <div class="left">
+            <span class="pill">🏁 Valmiit maat: <span class="mono" id="setsDone">0</span>/8</span>
+            <span class="pill">📦 Stock: <span class="mono" id="stockLeft">50</span></span>
+            <span class="pill">🧮 Siirrot: <span class="mono" id="movesCount">0</span></span>
+          </div>
+          <div class="right">
+            <span class="pill">Seed: <span class="mono" id="seedView">—</span></span>
+          </div>
+        </div>
+
+        <div class="btnrow">
+          <button class="btn green" id="btnNew">New game</button>
+          <button class="btn secondary" id="btnRestart">Restart sama jako</button>
+          <button class="btn secondary" id="btnUndo">Undo</button>
+          <button class="btn secondary" id="btnRedo">Redo</button>
+          <button class="btn" id="btnDeal">Deal 10 korttia</button>
+          <button class="btn ghost" id="btnSave">Tallenna</button>
+          <button class="btn ghost" id="btnClearSave">Poista tallennus</button>
+        </div>
+
+        <div class="hint" id="hintBox">
+          <b>Ohje:</b> Klikkaa <b>face-up</b> korttia valitaksesi laskevan sarjan (esim 9-8-7…). Klikkaa kohdepinoa siirtääksesi.
+          <br><span class="small">Deal onnistuu vain, jos yksikään pino ei ole tyhjä (Spider-sääntö).</span>
+        </div>
+      </div>
+
+      <div class="board" id="board">
+        <div class="piles" id="piles"></div>
+
+        <div class="stockRow">
+          <div class="stockBtn">
+            <div class="stockStack">🂠 Stock: <span class="mono" id="stockLeft2">50</span></div>
+            <div class="stockStack">🔥 “Taukomuuri” voi laueta pelin aikana</div>
+          </div>
+          <div style="max-width:420px;width:100%">
+            <div class="adbox">
+              Auto Ads -alue (sivu voi näyttää mainoksia jos AdSense on kunnossa)
+              <div class="small" style="margin-top:6px;opacity:.7">
+                Tulo syntyy vain, jos AdSense oikeasti näyttää mainoksia. Tämä laatikko on vain paikka.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="text-align:center">
+        <div class="small" style="opacity:.75">
+          <a href="./privacy.html" style="color:#0b5f52;font-weight:1100;text-decoration:none">Tietosuoja</a>
+          • MVP: oma Spider + tallennus + taukomuuri + kävely
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAUKOMUURI -->
+  <div class="overlay" id="wallOverlay" aria-hidden="true">
+    <div class="ovcard">
+      <div class="ovtop">
+        <div>
+          <p class="ovtitle" id="wallTitle">Tauko</p>
+          <p class="ovreason" id="wallReason">—</p>
+          <div class="lockline">🔒 Muuri: valitse <b>mainosbreikki</b> tai <b>kävely</b> jatkaaksesi.</div>
+        </div>
+        <div class="tag" id="wallTypeTag">LIGHT</div>
+      </div>
+
+      <div class="split">
+        <div class="panel">
+          <div class="tag">▶️ Mainosbreikki</div>
+          <p style="margin:10px 0 0;font-weight:1100">Lyhyt tauko. Jatkonappi aktivoituu minimi-odotuksen jälkeen.</p>
+
+          <div style="margin-top:12px" class="adbox">
+            Mainosalue (AdSense / Auto Ads).<br>
+            <span class="small" style="opacity:.75">Jos mainos ei näy, tämä ei jumita: voit valita kävelyn.</span>
+          </div>
+
+          <p class="small" style="margin-top:10px">Minimi-odotus:</p>
+          <div class="timer mono" id="adTimer">25</div>
+
+          <button class="btn green" id="btnAdDone" disabled>✅ Jatka</button>
+          <p class="note" id="adNote"></p>
+        </div>
+
+        <div class="panel">
+          <div class="tag">👟 Kävely</div>
+          <p style="margin:10px 0 0;font-weight:1100">Kävele ensin. Kun valmis, pääset jatkamaan heti.</p>
+
+          <div class="btnrow" style="margin:10px 0 0">
+            <button class="btn secondary" id="walk60">1 min</button>
+            <button class="btn secondary" id="walk120">2 min</button>
+            <button class="btn secondary" id="walk300">5 min</button>
+          </div>
+
+          <div class="small" style="margin-top:10px">Kävelyä jäljellä</div>
+          <div class="timer mono" id="walkTimer">—</div>
+          <div class="progress" style="margin-top:10px">
+            <div class="bar" id="walkBar"></div>
+          </div>
+
+          <button class="btn green" id="btnWalkDone" disabled>✅ Jatka</button>
+          <p class="note" id="walkNote"></p>
+        </div>
+      </div>
+
+      <p class="note" style="margin-top:12px">
+        Tämä muuri on rakennettu niin, ettei se jää jumiin mainoksen takia.
+      </p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const now = () => Date.now();
+  const clamp = (n,min,max) => Math.max(min, Math.min(max,n));
+
+  // ===== Storage keys =====
+  const LS = {
+    save: "spider_mvp_save_v1",
+    seed: "spider_mvp_seed_v1",
+
+    // break wall + session
+    sessionStart: "spider_mvp_session_start",
+    lastInput: "spider_mvp_last_input",
+    lastLight: "spider_mvp_last_light",
+    lastDeep: "spider_mvp_last_deep",
+    undoStreak: "spider_mvp_undo_streak",
+
+    // walking minutes (simple)
+    moveMin: "spider_mvp_move_min_today",
+    moveDay: "spider_mvp_move_day"
+  };
+
+  // ===== Config =====
+  const CFG = {
+    // Spider
+    PILES: 10,
+    INITIAL_PILES_6: 4, // first 4 piles get 6 cards, rest 5
+    TOTAL_SETS: 8,      // 8 complete K..A sets (1-suit)
+    CARD_OFFSET: 18,
+
+    // Break wall
+    LIGHT_AFTER_MOVES: 25,
+    LIGHT_AFTER_IDLE_SEC: 240,       // 4 min
+    DEEP_AFTER_UNDO_STREAK: 10,
+    DEEP_AFTER_SESSION_MIN: 35,
+    COOLDOWN_LIGHT_MIN: 8,
+    COOLDOWN_DEEP_MIN: 25,
+    AD_WAIT_LIGHT: 25,
+    AD_WAIT_DEEP: 45,
+  };
+
+  // ===== RNG (seeded) =====
+  function mulberry32(a){
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+  }
+  function randomSeed(){
+    return (Math.floor(Math.random()*1e9) ^ Date.now()) >>> 0;
+  }
+
+  // ===== Game state =====
+  let state = {
+    seed: 0,
+    rng: null,
+    piles: [],     // array of arrays of cards
+    stock: [],     // remaining cards to deal (faceUp cards)
+    setsDone: 0,
+    moves: 0,
+
+    selected: null, // {pileIndex, fromIndex}
+    history: [],    // stack of snapshots
+    future: [],     // redo stack
+  };
+
+  function cardLabel(r){
+    const map = {1:"A", 11:"J", 12:"Q", 13:"K"};
+    return map[r] || String(r);
+  }
+
+  function snapshot(){
+    // small but complete snapshot
+    return JSON.stringify({
+      seed: state.seed,
+      piles: state.piles,
+      stock: state.stock,
+      setsDone: state.setsDone,
+      moves: state.moves
+    });
+  }
+  function restoreFromSnap(json){
+    const s = JSON.parse(json);
+    state.seed = s.seed;
+    state.rng = mulberry32(state.seed);
+    state.piles = s.piles;
+    state.stock = s.stock;
+    state.setsDone = s.setsDone;
+    state.moves = s.moves;
+    state.selected = null;
+  }
+  function pushHistory(){
+    state.history.push(snapshot());
+    if(state.history.length > 250) state.history.shift();
+    state.future = [];
+  }
+
+  // ===== Session + walking minutes =====
+  function todayISO(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  function ensureSession(){
+    const ss = Number(localStorage.getItem(LS.sessionStart) || 0);
+    if(!ss) localStorage.setItem(LS.sessionStart, String(now()));
+    const li = Number(localStorage.getItem(LS.lastInput) || 0);
+    if(!li) localStorage.setItem(LS.lastInput, String(now()));
+  }
+  function bumpInput(){
+    localStorage.setItem(LS.lastInput, String(now()));
+  }
+  function rolloverMoveDay(){
+    const day = todayISO();
+    const stored = localStorage.getItem(LS.moveDay);
+    if(stored !== day){
+      localStorage.setItem(LS.moveDay, day);
+      localStorage.setItem(LS.moveMin, "0");
+    }
+  }
+  function addMoveMinutes(min){
+    rolloverMoveDay();
+    const cur = Number(localStorage.getItem(LS.moveMin) || 0);
+    localStorage.setItem(LS.moveMin, String(clamp(cur + min, 0, 9999)));
+  }
+  function getMoveMinutes(){
+    rolloverMoveDay();
+    return Number(localStorage.getItem(LS.moveMin) || 0);
+  }
+
+  // ===== Build deck + deal =====
+  function buildDeck(){
+    // 1-suit: ranks 1..13 repeated 8 times = 104 cards
+    const deck = [];
+    let uid = 1;
+    for(let k=0;k<CFG.TOTAL_SETS;k++){
+      for(let r=1;r<=13;r++){
+        deck.push({r, f:false, uid: uid++});
+      }
+    }
+    return deck;
+  }
+  function shuffle(deck, rng){
+    for(let i=deck.length-1;i>0;i--){
+      const j = Math.floor(rng() * (i+1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+  }
+  function newGame(seed){
+    state.seed = seed >>> 0;
+    state.rng = mulberry32(state.seed);
+    state.piles = Array.from({length:CFG.PILES}, () => []);
+    state.stock = [];
+    state.setsDone = 0;
+    state.moves = 0;
+    state.selected = null;
+    state.history = [];
+    state.future = [];
+
+    const deck = buildDeck();
+    shuffle(deck, state.rng);
+
+    // Initial tableau: first 4 piles get 6 cards, rest 5
+    for(let i=0;i<CFG.PILES;i++){
+      const cnt = (i < CFG.INITIAL_PILES_6) ? 6 : 5;
+      for(let c=0;c<cnt;c++){
+        const card = deck.pop();
+        state.piles[i].push(card);
+      }
+      // flip top face up
+      state.piles[i][state.piles[i].length-1].f = true;
+    }
+
+    // Remaining deck becomes stock, dealt face-up when dealt
+    state.stock = deck.map(c => ({...c, f:true}));
+
+    // initial snapshot for undo
+    pushHistory();
+    renderAll();
+    saveGame();
+    bumpInput();
+  }
+
+  function restartSame(){
+    newGame(state.seed);
+  }
+
+  function canDeal(){
+    if(state.stock.length < CFG.PILES) return false;
+    // Spider rule: can't deal if any pile empty
+    for(const p of state.piles) if(p.length === 0) return false;
+    return true;
+  }
+
+  function deal10(){
+    if(!canDeal()){
+      toast("Deal ei onnistu: stock loppu tai tyhjä sarake.");
+      return;
+    }
+    pushHistory();
+    for(let i=0;i<CFG.PILES;i++){
+      const card = state.stock.pop();
+      card.f = true;
+      state.piles[i].push(card);
+    }
+    state.moves += 1;
+    localStorage.setItem(LS.undoStreak, "0");
+    checkCompletedSets();
+    renderAll();
+    saveGame();
+    bumpInput();
+    evaluateWall();
+  }
+
+  // ===== Selection + move rules =====
+  function isValidDescendingRun(pile, fromIndex){
+    // must be face up
+    for(let i=fromIndex;i<pile.length;i++){
+      if(!pile[i].f) return false;
+      if(i > fromIndex){
+        if(pile[i-1].r !== pile[i].r + 1) return false; // e.g. 9 on 8
+      }
+    }
+    return true;
+  }
+
+  function canPlace(runTopRank, targetPile){
+    if(targetPile.length === 0) return true;
+    const top = targetPile[targetPile.length-1];
+    if(!top.f) return false;
+    return top.r === runTopRank + 1; // e.g. place 8 onto 9
+  }
+
+  function flipTopIfNeeded(pile){
+    if(pile.length === 0) return;
+    const top = pile[pile.length-1];
+    if(!top.f) top.f = true;
+  }
+
+  function moveRun(fromPileIdx, fromIndex, toPileIdx){
+    const fromPile = state.piles[fromPileIdx];
+    const toPile = state.piles[toPileIdx];
+    const run = fromPile.slice(fromIndex);
+
+    if(!isValidDescendingRun(fromPile, fromIndex)){
+      toast("Valinta ei ole laskeva sarja.");
+      return false;
+    }
+    const runTop = run[0];
+    if(!canPlace(runTop.r, toPile)){
+      toast("Ei voi siirtää siihen pinoon.");
+      return false;
+    }
+
+    pushHistory();
+
+    // move
+    state.piles[toPileIdx] = toPile.concat(run);
+    state.piles[fromPileIdx] = fromPile.slice(0, fromIndex);
+
+    // flip new top
+    flipTopIfNeeded(state.piles[fromPileIdx]);
+
+    state.moves += 1;
+    localStorage.setItem(LS.undoStreak, "0");
+
+    state.selected = null;
+
+    checkCompletedSets();
+    renderAll();
+    saveGame();
+    bumpInput();
+    evaluateWall();
+    return true;
+  }
+
+  // ===== Completed set detection =====
+  function isCompleteKA(pile){
+    if(pile.length < 13) return false;
+    const tail = pile.slice(pile.length-13);
+    for(let i=0;i<13;i++){
+      const card = tail[i];
+      if(!card.f) return false;
+      const want = 13 - i; // K..A
+      if(card.r !== want) return false;
+    }
+    return true;
+  }
+
+  function checkCompletedSets(){
+    let removed = 0;
+    for(let i=0;i<CFG.PILES;i++){
+      const pile = state.piles[i];
+      if(isCompleteKA(pile)){
+        // remove last 13
+        state.piles[i] = pile.slice(0, pile.length-13);
+        removed += 1;
+        flipTopIfNeeded(state.piles[i]);
+      }
+    }
+    if(removed > 0){
+      state.setsDone += removed;
+      toast("✅ Valmis maa! +" + removed);
+    }
+
+    if(state.setsDone >= CFG.TOTAL_SETS){
+      toast("🏆 Voitto! Kaikki maat koottu.");
+    }
+  }
+
+  // ===== Undo / Redo =====
+  function undo(){
+    if(state.history.length <= 1) { toast("Ei voi undo."); return; }
+    const cur = state.history.pop();
+    state.future.push(cur);
+    const prev = state.history[state.history.length-1];
+    restoreFromSnap(prev);
+    // undo streak (for deep wall trigger)
+    const u = Number(localStorage.getItem(LS.undoStreak) || 0) + 1;
+    localStorage.setItem(LS.undoStreak, String(u));
+    renderAll();
+    saveGame();
+    bumpInput();
+    evaluateWall();
+  }
+  function redo(){
+    if(state.future.length === 0) { toast("Ei redo."); return; }
+    const next = state.future.pop();
+    state.history.push(next);
+    restoreFromSnap(next);
+    localStorage.setItem(LS.undoStreak, "0");
+    renderAll();
+    saveGame();
+    bumpInput();
+    evaluateWall();
+  }
+
+  // ===== Save / Load =====
+  function saveGame(){
+    localStorage.setItem(LS.save, snapshot());
+    localStorage.setItem(LS.seed, String(state.seed));
+  }
+  function loadGame(){
+    const s = localStorage.getItem(LS.save);
+    if(!s) return false;
+    restoreFromSnap(s);
+    // rebuild history minimal: set one snapshot as baseline so undo works from here
+    state.history = [snapshot()];
+    state.future = [];
+    state.selected = null;
+    renderAll();
+    return true;
+  }
+  function clearSave(){
+    localStorage.removeItem(LS.save);
+    toast("Tallennus poistettu.");
+  }
+
+  // ===== Render =====
+  function renderAll(){
+    $("setsDone").textContent = state.setsDone;
+    $("stockLeft").textContent = state.stock.length;
+    $("stockLeft2").textContent = state.stock.length;
+    $("movesCount").textContent = state.moves;
+    $("seedView").textContent = state.seed;
+
+    $("btnDeal").disabled = !canDeal();
+    $("btnUndo").disabled = (state.history.length <= 1);
+    $("btnRedo").disabled = (state.future.length === 0);
+
+    $("moveMin").textContent = getMoveMinutes();
+
+    renderPiles();
+  }
+
+  function renderPiles(){
+    const pilesEl = $("piles");
+    pilesEl.innerHTML = "";
+
+    for(let i=0;i<CFG.PILES;i++){
+      const pile = state.piles[i];
+
+      const pileWrap = document.createElement("div");
+      pileWrap.className = "pile" + (pile.length === 0 ? " empty" : "");
+      pileWrap.dataset.pile = String(i);
+
+      const cardsWrap = document.createElement("div");
+      cardsWrap.className = "cards";
+
+      // compute selection highlighting
+      const sel = state.selected && state.selected.pileIndex === i ? state.selected : null;
+
+      // card elements
+      for(let c=0;c<pile.length;c++){
+        const card = pile[c];
+        const cardEl = document.createElement("div");
+        cardEl.className = "cardEl" + (card.f ? "" : " faceDown");
+        cardEl.style.top = (c * CFG.CARD_OFFSET) + "px";
+        cardEl.dataset.pile = String(i);
+        cardEl.dataset.index = String(c);
+
+        const rank = document.createElement("div");
+        rank.className = "rank";
+        rank.textContent = card.f ? cardLabel(card.r) : "■";
+
+        const suit = document.createElement("div");
+        suit.className = "suit";
+        suit.textContent = card.f ? "♠" : " ";
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+        mini.textContent = card.f ? "" : "DOWN";
+
+        cardEl.appendChild(rank);
+        cardEl.appendChild(mini);
+        cardEl.appendChild(suit);
+
+        // highlight selected run
+        if(sel && c === sel.fromIndex){
+          cardEl.classList.add("selected");
+        }
+        if(sel && c > sel.fromIndex){
+          cardEl.classList.add("selTail");
+        }
+
+        // card click
+        cardEl.addEventListener("click", (e) => {
+          e.stopPropagation();
+          onCardClick(i, c);
+        });
+
+        cardsWrap.appendChild(cardEl);
+      }
+
+      // pile click (target)
+      pileWrap.addEventListener("click", () => {
+        onPileClick(i);
+      });
+
+      pileWrap.appendChild(cardsWrap);
+      pilesEl.appendChild(pileWrap);
+    }
+
+    // update target highlighting
+    paintTargets();
+  }
+
+  function clearTargetClasses(){
+    document.querySelectorAll(".pile").forEach(p => {
+      p.classList.remove("targetOK");
+      p.classList.remove("targetNO");
+    });
+  }
+
+  function paintTargets(){
+    clearTargetClasses();
+    if(!state.selected) return;
+
+    const fromPile = state.piles[state.selected.pileIndex];
+    const run = fromPile.slice(state.selected.fromIndex);
+    const runTopRank = run[0].r;
+
+    document.querySelectorAll(".pile").forEach(p => {
+      const idx = Number(p.dataset.pile);
+      if(idx === state.selected.pileIndex) return;
+      const ok = canPlace(runTopRank, state.piles[idx]);
+      p.classList.add(ok ? "targetOK" : "targetNO");
+    });
+  }
+
+  function onCardClick(pileIndex, cardIndex){
+    bumpInput();
+    if(state.wallActive) return;
+
+    const pile = state.piles[pileIndex];
+    const card = pile[cardIndex];
+    if(!card.f){
+      toast("Tämä kortti on vielä käännetty.");
+      return;
+    }
+
+    // clicking same selected card toggles off
+    if(state.selected && state.selected.pileIndex === pileIndex && state.selected.fromIndex === cardIndex){
+      state.selected = null;
+      renderPiles();
+      return;
+    }
+
+    // validate run
+    if(!isValidDescendingRun(pile, cardIndex)){
+      toast("Valitse laskeva sarja (esim 9-8-7…).");
+      return;
+    }
+
+    state.selected = {pileIndex, fromIndex: cardIndex};
+    renderPiles();
+  }
+
+  function onPileClick(targetPileIndex){
+    bumpInput();
+    if(state.wallActive) return;
+
+    if(!state.selected){
+      // no selection: do nothing
+      return;
+    }
+
+    // moving to same pile cancels selection
+    if(targetPileIndex === state.selected.pileIndex){
+      state.selected = null;
+      renderPiles();
+      return;
+    }
+
+    moveRun(state.selected.pileIndex, state.selected.fromIndex, targetPileIndex);
+  }
+
+  // ===== Break Wall =====
+  let wall = {
+    active:false,
+    type:"light",
+    reason:"",
+    adTimerId:null,
+    adLeft:0,
+    walkTimerId:null,
+    walkLeft:0,
+    walkTotal:0,
+  };
+
+  function toast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"), 1800);
+  }
+
+  function minutesSince(key){
+    const ts = Number(localStorage.getItem(key) || 0);
+    if(!ts) return Infinity;
+    return (now() - ts) / 60000;
+  }
+
+  function canTriggerLight(){
+    return minutesSince(LS.lastLight) >= CFG.COOLDOWN_LIGHT_MIN;
+  }
+  function canTriggerDeep(){
+    return minutesSince(LS.lastDeep) >= CFG.COOLDOWN_DEEP_MIN;
+  }
+
+  function openWall(type, reason){
+    if(wall.active) return;
+    wall.active = true;
+    wall.type = type;
+    wall.reason = reason;
+
+    $("wallTypeTag").textContent = type.toUpperCase();
+    $("wallTitle").textContent = (type === "deep") ? "Syvä tauko" : "Tauko";
+    $("wallReason").textContent = reason;
+
+    resetWallUI();
+    startAdCountdown();
+
+    $("wallOverlay").classList.add("show");
+    $("wallOverlay").setAttribute("aria-hidden","false");
+    toast("🔒 Taukomuuri");
+  }
+
+  function closeWall(method){
+    // cooldown marks
+    if(wall.type === "deep"){
+      localStorage.setItem(LS.lastDeep, String(now()));
+      localStorage.setItem(LS.undoStreak, "0");
+    }else{
+      localStorage.setItem(LS.lastLight, String(now()));
+    }
+    localStorage.setItem(LS.lastInput, String(now()));
+
+    wall.active = false;
+    $("wallOverlay").classList.remove("show");
+    $("wallOverlay").setAttribute("aria-hidden","true");
+
+    toast("✅ Tauko tehty");
+  }
+
+  function resetWallUI(){
+    if(wall.adTimerId) clearInterval(wall.adTimerId);
+    wall.adTimerId = null;
+    wall.adLeft = 0;
+    $("btnAdDone").disabled = true;
+    $("adNote").textContent = (wall.type === "deep")
+      ? "Syvä tauko: suosittelen kävelyä tai pidempää breikkiä."
+      : "Kevyt tauko: lyhyt breikki ja takaisin peliin.";
+
+    if(wall.walkTimerId) clearInterval(wall.walkTimerId);
+    wall.walkTimerId = null;
+    wall.walkLeft = 0;
+    wall.walkTotal = 0;
+    $("walkTimer").textContent = "—";
+    $("walkBar").style.width = "0%";
+    $("btnWalkDone").disabled = true;
+    $("walkNote").textContent = "Valitse kävely.";
+  }
+
+  function startAdCountdown(){
+    const wait = (wall.type === "deep") ? CFG.AD_WAIT_DEEP : CFG.AD_WAIT_LIGHT;
+    wall.adLeft = wait;
+    $("adTimer").textContent = wall.adLeft;
+    $("btnAdDone").disabled = true;
+
+    wall.adTimerId = setInterval(() => {
+      wall.adLeft -= 1;
+      $("adTimer").textContent = Math.max(0, wall.adLeft);
+      if(wall.adLeft <= 0){
+        clearInterval(wall.adTimerId);
+        wall.adTimerId = null;
+        $("btnAdDone").disabled = false;
+        $("adNote").textContent = "Voit jatkaa. (Jos AdSense näyttää mainoksen, se on plussaa.)";
+      }
+    }, 1000);
+  }
+
+  function startWalk(seconds){
+    if(wall.walkTimerId) clearInterval(wall.walkTimerId);
+
+    wall.walkTotal = seconds;
+    wall.walkLeft = seconds;
+    $("btnWalkDone").disabled = true;
+    $("walkTimer").textContent = wall.walkLeft + " s";
+    $("walkBar").style.width = "0%";
+    $("walkNote").textContent = "Kävele nyt. Kun ajastin on nolla, jatko aukeaa.";
+
+    wall.walkTimerId = setInterval(() => {
+      wall.walkLeft -= 1;
+      const left = Math.max(0, wall.walkLeft);
+      $("walkTimer").textContent = left + " s";
+      const pct = clamp(((wall.walkTotal - left)/wall.walkTotal)*100, 0, 100);
+      $("walkBar").style.width = pct + "%";
+      if(left <= 0){
+        clearInterval(wall.walkTimerId);
+        wall.walkTimerId = null;
+        $("btnWalkDone").disabled = false;
+        $("walkNote").textContent = "Hyvä! Kävely valmis.";
+      }
+    }, 1000);
+  }
+
+  $("btnAdDone").addEventListener("click", () => closeWall("ads"));
+  $("walk60").addEventListener("click", () => startWalk(60));
+  $("walk120").addEventListener("click", () => startWalk(120));
+  $("walk300").addEventListener("click", () => startWalk(300));
+  $("btnWalkDone").addEventListener("click", () => {
+    // kirjaa kävelyminuutit (pyöristys ylös)
+    const mins = Math.max(1, Math.round((wall.walkTotal)/60));
+    addMoveMinutes(mins);
+    $("moveMin").textContent = getMoveMinutes();
+    closeWall("walk");
+  });
+
+  function evaluateWall(){
+    if(wall.active) return;
+    ensureSession();
+
+    const moves = state.moves;
+    const lastInput = Number(localStorage.getItem(LS.lastInput) || now());
+    const idleSec = (now() - lastInput) / 1000;
+
+    const sessionStart = Number(localStorage.getItem(LS.sessionStart) || now());
+    const sessionMin = (now() - sessionStart) / 60000;
+    $("sessionMin").textContent = String(Math.floor(sessionMin));
+
+    const undoStreak = Number(localStorage.getItem(LS.undoStreak) || 0);
+
+    // deep triggers
+    if(canTriggerDeep()){
+      if(undoStreak >= CFG.DEEP_AFTER_UNDO_STREAK){
+        openWall("deep", "Undo-putki on pitkä. Tauko tekee nyt hyvää.");
+        return;
+      }
+      if(sessionMin >= CFG.DEEP_AFTER_SESSION_MIN){
+        openWall("deep", "Pitkä sessio (" + Math.floor(sessionMin) + " min). Tauko ja takaisin.");
+        return;
+      }
+    }
+
+    // light triggers
+    if(canTriggerLight()){
+      if(moves > 0 && moves % CFG.LIGHT_AFTER_MOVES === 0){
+        openWall("light", "Paljon siirtoja (" + moves + "). Pieni tauko.");
+        return;
+      }
+      if(idleSec >= CFG.LIGHT_AFTER_IDLE_SEC){
+        openWall("light", "Olet ollut paikallasi hetken. Pieni tauko auttaa.");
+        return;
+      }
+    }
+  }
+
+  setInterval(evaluateWall, 1000);
+
+  // ===== Buttons =====
+  $("btnNew").addEventListener("click", () => {
+    const seed = randomSeed();
+    localStorage.setItem(LS.seed, String(seed));
+    newGame(seed);
+    toast("Uusi peli aloitettu.");
+  });
+
+  $("btnRestart").addEventListener("click", () => {
+    restartSame();
+    toast("Restart sama jako.");
+  });
+
+  $("btnUndo").addEventListener("click", undo);
+  $("btnRedo").addEventListener("click", redo);
+  $("btnDeal").addEventListener("click", deal10);
+  $("btnSave").addEventListener("click", () => { saveGame(); toast("Tallennettu."); });
+  $("btnClearSave").addEventListener("click", () => { clearSave(); });
+
+  // ===== Init =====
+  ensureSession();
+  rolloverMoveDay();
+  $("moveMin").textContent = getMoveMinutes();
+
+  // Load saved game if exists; else start with stored seed or new seed
+  const loaded = loadGame();
+  if(!loaded){
+    const s = Number(localStorage.getItem(LS.seed) || 0);
+    const seed = s ? (s >>> 0) : randomSeed();
+    localStorage.setItem(LS.seed, String(seed));
+    newGame(seed);
+  } else {
+    // ensure we have a seed stored
+    localStorage.setItem(LS.seed, String(state.seed));
+    // after load, ensure stock/deal/undo buttons correct
+    renderAll();
+  }
+
+  // Initial UI fields
+  $("sessionMin").textContent = String(Math.floor((now() - Number(localStorage.getItem(LS.sessionStart) || now()))/60000));
+})();
+</script>
+</body>
+</html>
