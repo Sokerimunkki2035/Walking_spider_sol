@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Walking Spider Sol – MVP</title>
+
+  <style>
+    :root{
+      --bg:#0b3d36;
+      --card:#ffffff;
+      --ink:#0f201d;
+      --muted:#5b6f6b;
+      --accent:#0b5f52;
+      --accent2:#1f8b63;
+      --shadow: 0 10px 26px rgba(0,0,0,.22);
+      --radius: 18px;
+
+      /* korttien koko: yritetään mahduttaa 10 pinoa ilman sivuttaisskrollia */
+      --colW: clamp(30px, 9.2vw, 66px);
+      --cardH: calc(var(--colW) * 1.35);
+      --stackGap: clamp(9px, 2.4vw, 16px); /* limitys: ylemmät numerot näkyviin */
+      --tableGap: clamp(4px, 0.8vw, 10px);
+    }
+
+    html,body{
+      margin:0; padding:0;
+      background:var(--bg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:#fff;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:10px;}
+    .topbar{
+      display:flex;gap:10px;justify-content:space-between;align-items:center;
+      padding:8px 0 10px;
+    }
+    .brand{font-weight:900;letter-spacing:.3px}
+    .btn{
+      appearance:none;border:0;cursor:pointer;
+      padding:12px 14px;border-radius:999px;
+      font-weight:900;font-size:15px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.15);
+    }
+    .btn.primary{background:var(--accent);border-color:rgba(255,255,255,.2)}
+    .btn.soft{background:rgba(255,255,255,.14)}
+    .btn:active{transform:translateY(1px)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+
+    .card{
+      background:var(--card);
+      color:var(--ink);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:12px;
+      margin:10px 0;
+    }
+    .small{color:var(--muted);font-size:13px;line-height:1.35}
+    .h{
+      margin:4px 0 8px;
+      font-weight:1000;
+      letter-spacing:.2px;
+    }
+
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .controls .btn{flex:1; min-width:130px}
+    select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid #dbe5e3;
+      font-weight:800;
+      font-size:15px;
+      background:#fff;
+      color:#10211e;
+    }
+
+    .status{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .pill{
+      display:inline-flex;gap:8px;align-items:center;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(11,95,82,.10);
+      border:1px solid rgba(11,95,82,.15);
+      color:#0f201d;
+      font-weight:900;
+      font-size:13px;
+    }
+    .warn{
+      color:#7a2e1f;
+      background:rgba(240,120,70,.12);
+      border-color:rgba(240,120,70,.20);
+    }
+
+    /* PELIALUE */
+    .tableWrap{
+      padding:10px 8px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:var(--radius);
+    }
+
+    .table{
+      display:flex;
+      gap:var(--tableGap);
+      justify-content:space-between;
+      align-items:flex-start;
+      /* tärkeä: ei sivuttaisscrollia */
+      overflow:hidden;
+      touch-action: manipulation;
+    }
+
+    .col{
+      flex: 1 1 0;
+      min-width: var(--colW);
+      max-width: calc((100% - (9 * var(--tableGap))) / 10);
+      background:rgba(0,0,0,.12);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:6px 3px 10px;
+      position:relative;
+    }
+
+    .col.selected{
+      outline:3px solid rgba(255,255,255,.35);
+      outline-offset:2px;
+    }
+
+    .slot{
+      height: calc(var(--cardH) + (18 * var(--stackGap))); /* riittää pitkälle pinolle */
+      position:relative;
+    }
+
+    .cardUI{
+      width: 100%;
+      height: var(--cardH);
+      border-radius:12px;
+      background:#fff;
+      color:#111;
+      box-shadow: 0 6px 14px rgba(0,0,0,.20);
+      display:flex;flex-direction:column;justify-content:space-between;
+      padding:7px 8px;
+      box-sizing:border-box;
+      border:2px solid rgba(0,0,0,.05);
+      position:absolute;
+      left:0;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .cardUI.facedown{
+      background: linear-gradient(135deg, rgba(11,95,82,.95), rgba(31,139,99,.85));
+      color: rgba(255,255,255,.90);
+      border-color: rgba(255,255,255,.18);
+    }
+    .cardUI.pick{
+      border-color:#f0b429;
+      box-shadow: 0 8px 18px rgba(240,180,41,.25);
+    }
+    .rank{font-weight:1000;font-size:14px}
+    .suit{font-size:16px;opacity:.9}
+    .mini{font-size:12px;opacity:.8}
+
+    .stockbar{
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .stockBox{
+      flex:1;
+      min-width:220px;
+      background:rgba(255,255,255,.06);
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:16px;
+      padding:10px;
+      color:#fff;
+    }
+    .stockRow{
+      display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .dealDot{
+      width:34px;height:34px;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:1000;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .dealDot.on{
+      background:rgba(31,139,99,.35);
+      border-color:rgba(255,255,255,.20);
+    }
+
+    .tipToast{
+      position:sticky;
+      top:8px;
+      z-index:5;
+      margin:8px 0;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.90);
+      color:#0f201d;
+      box-shadow:var(--shadow);
+      display:none;
+    }
+    .tipToast.show{display:block}
+    .tipToast .small{color:#2b3b38}
+
+    .footerNote{
+      text-align:center;
+      opacity:.8;
+      font-size:12px;
+      padding:10px 0 18px;
+    }
+    a{color:#eafff5;text-decoration:none;font-weight:900}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Walking Spider Sol</div>
+    <a class="btn soft" href="./privacy.html">Tietosuoja</a>
+  </div>
+
+  <div id="toast" class="tipToast">
+    <div style="font-weight:1000" id="toastTitle">Vinkki</div>
+    <div class="small" id="toastBody">…</div>
+  </div>
+
+  <div class="card">
+    <div class="h">Moodit</div>
+    <div class="small">Valitse harvinainen “Spider Palace” -tyyli: osa “pakoista” on piilossa ja jakoja on vain 4. Kaikki pöydässä on auki.</div>
+    <div style="height:8px"></div>
+
+    <div class="row">
+      <div style="flex:2;min-width:220px">
+        <select id="mode">
+          <option value="classic">Classic Open Spider (104 korttia, 5 jakoa)</option>
+          <option value="palace2">Spider Palace – 2 piilotettua pakkaa (4 jakoa)</option>
+          <option value="palace3">Spider Palace – 3 piilotettua pakkaa (4 jakoa)</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:160px" class="controls">
+        <button class="btn primary" id="newGame">New game</button>
+      </div>
+    </div>
+
+    <div style="height:10px"></div>
+
+    <div class="controls">
+      <button class="btn primary" id="restart">Restart sama jako</button>
+      <button class="btn soft" id="undo">Undo</button>
+      <button class="btn soft" id="redo">Redo</button>
+      <button class="btn primary" id="deal">Deal 10 korttia</button>
+    </div>
+
+    <div style="height:10px"></div>
+    <div class="status">
+      <span class="pill">Seed: <span id="seedTxt">—</span></span>
+      <span class="pill">Siirrot: <span id="moves">0</span></span>
+      <span class="pill">Valittu: <span id="picked">—</span></span>
+      <span class="pill" id="palacePill" style="display:none">Piilotetut pakat: <span id="hiddenPacks">—</span></span>
+      <span class="pill warn" id="msg" style="display:none">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="h">Pelaa + opi samalla</div>
+    <div class="small">
+      1) Napauta pinon ylimmäistä (face-up) korttia → valitset laskevan sarjan.<br>
+      2) Napauta kohdepinoa → siirto tapahtuu heti.<br>
+      <b>Vinkki:</b> Et tarvitse tuplaklikkausta.
+    </div>
+  </div>
+
+  <div class="tableWrap">
+    <div class="stockbar">
+      <div class="stockBox">
+        <div style="font-weight:1000">Stock</div>
+        <div class="small">Jakoja jäljellä: <b id="dealsLeft">—</b> (4 tai 5 riippuu moodista)</div>
+        <div class="stockRow" id="dealDots"></div>
+      </div>
+      <div class="stockBox" style="min-width:220px">
+        <div style="font-weight:1000">Pikainfo</div>
+        <div class="small" id="info">
+          Classic: 104 korttia (2 pakkaa), 10 pinoa, 5 jakoa.
+        </div>
+      </div>
+    </div>
+
+    <div style="height:10px"></div>
+
+    <div class="table" id="table"></div>
+  </div>
+
+  <div class="footerNote">
+    MVP – paikallinen tallennus selaimessa. (Ei verkkoa.)
+  </div>
+
+</div>
+
+<script>
+(() => {
+  // ====== UTIL ======
+  const $ = (id) => document.getElementById(id);
+
+  function showMsg(text, kind="warn", ms=2500){
+    const el = $("msg");
+    if(!text){ el.style.display="none"; return; }
+    el.textContent = text;
+    el.style.display = "inline-flex";
+    clearTimeout(showMsg._t);
+    showMsg._t = setTimeout(()=>{ el.style.display="none"; }, ms);
+  }
+
+  function toast(title, body, ms=2600){
+    $("toastTitle").textContent = title;
+    $("toastBody").textContent = body;
+    const t = $("toast");
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(()=>t.classList.remove("show"), ms);
+  }
+
+  // deterministic RNG (mulberry32)
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+  }
+  function randInt(rng, n){ return Math.floor(rng()*n); }
+
+  // ====== CARDS ======
+  const SUITS = ["♠","♥","♦","♣"];
+  const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  function rankValue(r){ return RANKS.indexOf(r)+1; } // A=1..K=13
+
+  // 2 standard decks (104 cards): same exact card exists twice
+  function makeDeck2Packs(seed){
+    const rng = mulberry32(seed);
+    const deck = [];
+    let uid = 1;
+    for(let pack=0; pack<2; pack++){
+      for(const s of SUITS){
+        for(const r of RANKS){
+          deck.push({ r, s, f:true, uid: uid++ }); // f = face-up by default
+        }
+      }
+    }
+    // shuffle
+    for(let i=deck.length-1;i>0;i--){
+      const j = Math.floor(rng()*(i+1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+  }
+
+  // ====== GAME STATE ======
+  const LS_KEY = "walking_spider_mvp_v2";
+  let state = null;
+  let history = [];
+  let future = [];
+
+  function snapshot(){
+    // deep copy (simple)
+    return JSON.parse(JSON.stringify(state));
+  }
+
+  function pushHistory(){
+    history.push(snapshot());
+    if(history.length > 80) history.shift();
+    future = [];
+  }
+
+  function setPickedText(){
+    if(!state.pick){
+      $("picked").textContent = "—";
+      return;
+    }
+    const c = state.cols[state.pick.col][state.pick.idx];
+    $("picked").textContent = `P${state.pick.col+1}: ${c.r}${c.s} (+${state.pick.len-1})`;
+  }
+
+  function updateDots(){
+    const dots = $("dealDots");
+    dots.innerHTML = "";
+    const total = state.maxDeals;
+    const used = total - state.dealsLeft;
+    for(let i=0;i<total;i++){
+      const d = document.createElement("div");
+      d.className = "dealDot " + (i < used ? "on" : "");
+      d.textContent = i+1;
+      dots.appendChild(d);
+    }
+    $("dealsLeft").textContent = state.dealsLeft;
+  }
+
+  function setModeInfo(){
+    const m = state.mode;
+    if(m === "classic"){
+      $("info").textContent = "Classic Open Spider: 104 korttia (2 pakkaa), pöydässä 54 alussa, stock 50, 5 jakoa.";
+      $("palacePill").style.display = "none";
+    } else {
+      const hidden = state.hiddenPacks;
+      $("info").textContent = `Spider Palace: pöydässä 64 alussa (kaikki auki), stock 40, vain 4 jakoa. Piilotetut pakat: ${hidden}.`;
+      $("palacePill").style.display = "inline-flex";
+      $("hiddenPacks").textContent = hidden;
+    }
+  }
+
+  // layout: 10 columns always
+  function initNewGame(seed, mode){
+    const deck = makeDeck2Packs(seed);
+
+    // modes:
+    // classic: tableau 54 (4x6 + 6x5), stock 50, deals 5
+    // palace: tableau 64 (4x7 + 6x6), stock 40, deals 4, "hidden packs" is just a flavor counter
+    const isPalace = (mode !== "classic");
+    const tableauCounts = isPalace
+      ? [7,7,7,7,6,6,6,6,6,6]   // 64
+      : [6,6,6,6,5,5,5,5,5,5];  // 54
+
+    const totalTableau = tableauCounts.reduce((a,b)=>a+b,0);
+    const stockSize = 104 - totalTableau;
+    const maxDeals = isPalace ? 4 : 5;
+
+    // build columns
+    const cols = Array.from({length:10}, ()=>[]);
+    let p = 0;
+    for(let c=0;c<10;c++){
+      for(let k=0;k<tableauCounts[c];k++){
+        const card = deck[p++];
+        card.f = true; // kaikki auki tässä MVP:ssä
+        cols[c].push(card);
+      }
+    }
+
+    const stock = deck.slice(p, p+stockSize);
+    stock.forEach(c=>c.f = true); // jaot tulevat auki
+
+    state = {
+      seed,
+      mode,
+      cols,
+      stock,
+      maxDeals,
+      dealsLeft: maxDeals,
+      moves: 0,
+      pick: null,
+      hiddenPacks: (mode==="palace2" ? 2 : (mode==="palace3" ? 3 : 0)),
+      lastAction: "new"
+    };
+
+    history = [];
+    future = [];
+    save();
+    render();
+    toast("Uusi jako", isPalace ? "Spider Palace -moodi käynnissä." : "Classic Open Spider käynnissä.", 2200);
+  }
+
+  function restartSameDeal(){
+    const seed = state.seed;
+    const mode = state.mode;
+    initNewGame(seed, mode);
+    toast("Restart", "Sama jako (seed) alusta.", 2000);
+  }
+
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function load(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    try{
+      state = JSON.parse(raw);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // ====== RULES ======
+  function canPlace(movingTop, targetTop){
+    // descending by 1 onto targetTop (or empty ok)
+    if(!targetTop) return true;
+    return rankValue(movingTop.r) === rankValue(targetTop.r) - 1;
+  }
+
+  function computeRun(colIdx, startIdx){
+    const col = state.cols[colIdx];
+    if(startIdx < 0 || startIdx >= col.length) return null;
+    if(!col[startIdx].f) return null;
+
+    // open spider: allow moving any descending sequence regardless of suits
+    let end = startIdx;
+    while(end+1 < col.length){
+      const a = col[end], b = col[end+1];
+      if(!b.f) break;
+      if(rankValue(b.r) !== rankValue(a.r) - 1) break;
+      end++;
+    }
+    return { col: colIdx, idx: startIdx, len: (end - startIdx + 1) };
+  }
+
+  function tryAutoCompleteRun(colIdx){
+    // If top 13 are K..A and same suit, remove it (optional)
+    const col = state.cols[colIdx];
+    if(col.length < 13) return false;
+    const tail = col.slice(col.length-13);
+    // must be face-up
+    if(tail.some(c=>!c.f)) return false;
+
+    // must be K..A descending
+    for(let i=0;i<13;i++){
+      const need = RANKS[12-i]; // K..A
+      if(tail[i].r !== need) return false;
+    }
+    // same suit
+    const s = tail[0].s;
+    if(tail.some(c=>c.s !== s)) return false;
+
+    col.splice(col.length-13, 13);
+    toast("Sarja valmis! 🎓", "Poistettiin valmis K→A sarja.", 1800);
+    return true;
+  }
+
+  function movePickedTo(targetCol){
+    const p = state.pick;
+    if(!p) return;
+
+    const from = p.col;
+    const fromCol = state.cols[from];
+    const toCol = state.cols[targetCol];
+
+    const moving = fromCol.slice(p.idx, p.idx + p.len);
+    const movingTop = moving[0];
+    const targetTop = toCol.length ? toCol[toCol.length-1] : null;
+
+    if(from === targetCol){
+      state.pick = null;
+      setPickedText();
+      render();
+      return;
+    }
+
+    if(!canPlace(movingTop, targetTop)){
+      showMsg("Ei voi siirtää: kohdepino ei sovi.", "warn", 1600);
+      return;
+    }
+
+    pushHistory();
+
+    // do move
+    fromCol.splice(p.idx, p.len);
+    toCol.push(...moving);
+
+    state.pick = null;
+    state.moves++;
+    save();
+
+    // try complete on target
+    tryAutoCompleteRun(targetCol);
+
+    render();
+  }
+
+  function deal10(){
+    if(state.dealsLeft <= 0){
+      showMsg("Ei jakoja jäljellä.", "warn", 1700);
+      return;
+    }
+    // Spider-sääntö: ei saa jakaa jos jokin pino on tyhjä
+    if(state.cols.some(c=>c.length===0)){
+      showMsg("Deal estetty: jokin pino on tyhjä (Spider-sääntö).", "warn", 2200);
+      return;
+    }
+    if(state.stock.length < 10){
+      showMsg("Stock tyhjä.", "warn", 1700);
+      return;
+    }
+
+    pushHistory();
+
+    for(let i=0;i<10;i++){
+      const card = state.stock.shift();
+      card.f = true; // jaot auki
+      state.cols[i].push(card);
+    }
+    state.dealsLeft--;
+    state.moves++;
+    state.pick = null;
+    save();
+    render();
+    toast("Deal", "Jaettiin 10 korttia pöytään.", 1400);
+  }
+
+  // ====== RENDER ======
+  function render(){
+    $("seedTxt").textContent = String(state.seed);
+    $("moves").textContent = String(state.moves);
+    setPickedText();
+    updateDots();
+    setModeInfo();
+
+    const table = $("table");
+    table.innerHTML = "";
+
+    // columns
+    for(let c=0;c<10;c++){
+      const colEl = document.createElement("div");
+      colEl.className = "col";
+      if(state.pick && state.pick.col === c) colEl.classList.add("selected");
+
+      const slot = document.createElement("div");
+      slot.className = "slot";
+
+      const col = state.cols[c];
+
+      // We draw all cards but with overlap. Only the "click area" is the top card (and chosen run start).
+      for(let i=0;i<col.length;i++){
+        const card = col[i];
+        const ce = document.createElement("div");
+        ce.className = "cardUI" + (card.f ? "" : " facedown");
+
+        // position
+        ce.style.top = (i * parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--stackGap"))) + "px";
+
+        // show
+        if(card.f){
+          ce.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="rank">${card.r}</div>
+              <div class="suit">${card.s}</div>
+            </div>
+            <div class="mini">P${c+1}</div>
+          `;
+        } else {
+          ce.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="rank">🂠</div>
+              <div class="suit">?</div>
+            </div>
+            <div class="mini">piilossa</div>
+          `;
+        }
+
+        // Interactions:
+        // - tapping any face-up card selects run starting there
+        // - then tapping a column moves to that column
+        if(card.f){
+          ce.addEventListener("click", (e)=>{
+            e.stopPropagation();
+            const run = computeRun(c, i);
+            if(!run) return;
+            state.pick = run;
+            setPickedText();
+            save();
+            render();
+          });
+        }
+
+        // highlight the selected start card
+        if(state.pick && state.pick.col===c && state.pick.idx===i){
+          ce.classList.add("pick");
+        }
+
+        slot.appendChild(ce);
+      }
+
+      // Tap empty area in column = move here if picked, else select top (if any)
+      colEl.addEventListener("click", ()=>{
+        if(state.pick){
+          movePickedTo(c);
+        } else {
+          if(col.length){
+            // pick from the best visible starting point = last card (top)
+            const run = computeRun(c, col.length-1);
+            if(run){
+              state.pick = run;
+              setPickedText();
+              save();
+              render();
+            }
+          }
+        }
+      });
+
+      colEl.appendChild(slot);
+      table.appendChild(colEl);
+    }
+  }
+
+  // ====== BUTTONS ======
+  $("newGame").addEventListener("click", ()=>{
+    const mode = $("mode").value;
+    const seed = (Date.now() ^ (Math.random()*1e9)) >>> 0;
+    initNewGame(seed, mode);
+  });
+
+  $("restart").addEventListener("click", ()=>{
+    pushHistory(); // so undo can come back if you want
+    restartSameDeal();
+  });
+
+  $("undo").addEventListener("click", ()=>{
+    if(history.length === 0){
+      showMsg("Ei undo-historiaa.", "warn", 1500);
+      return;
+    }
+    future.push(snapshot());
+    state = history.pop();
+    save();
+    render();
+  });
+
+  $("redo").addEventListener("click", ()=>{
+    if(future.length === 0){
+      showMsg("Ei redoa.", "warn", 1500);
+      return;
+    }
+    history.push(snapshot());
+    state = future.pop();
+    save();
+    render();
+  });
+
+  $("deal").addEventListener("click", ()=>{
+    deal10();
+  });
+
+  // ====== STARTUP ======
+  if(!load()){
+    initNewGame((Date.now() >>> 0), "classic");
+  } else {
+    // if old state missing fields, re-init safely
+    if(!state || !state.cols || !state.stock){
+      initNewGame((Date.now() >>> 0), "classic");
+    } else {
+      render();
+      toast("Palautettu", "Jatketaan siitä mihin jäit.", 1600);
+    }
+  }
+})();
+</script>
+</body>
+</html>
