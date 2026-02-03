@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Walking Spider Sol – 3 peliä</title>
+  <style>
+    :root{
+      --bg:#0f3c35;
+      --panel:#ffffff;
+      --ink:#0b1b18;
+      --muted:#54706a;
+      --btn:#1e6a5b;
+      --btn2:#3b8a79;
+      --chip:#113f37;
+      --shadow:0 10px 30px rgba(0,0,0,.25);
+      --radius:18px;
+      --gap:10px;
+      --cardW: 50px; /* JS säätää */
+      --cardH: calc(var(--cardW) * 1.35);
+      --stackOffset: 14px; /* osittain näkyvä pinossa */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 30% -10%, #1b6b5d, var(--bg));
+      color:#fff;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x:hidden;
+    }
+    header{
+      position: sticky; top:0; z-index: 10;
+      background: rgba(15,60,53,.86);
+      backdrop-filter: blur(10px);
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .brand{
+      font-weight:900; letter-spacing:.3px; font-size:18px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .pill{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.12);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-weight:800;
+      display:flex; gap:8px; align-items:center;
+    }
+    .pill small{opacity:.85; font-weight:700}
+    .tabs{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+    .tab{
+      border:1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      padding:10px 12px;
+      border-radius: 999px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .tab.active{background: rgba(255,255,255,.18)}
+    main{padding:14px; max-width: 980px; margin:0 auto}
+    .card{
+      background: rgba(255,255,255,.95);
+      color: var(--ink);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .card h2{margin:0 0 6px; font-size:28px}
+    .sub{color: var(--muted); font-weight:700; line-height:1.35}
+    .btnRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    button{
+      appearance:none; border:0; cursor:pointer;
+      background: var(--btn);
+      color:#fff; font-weight:900;
+      padding: 12px 14px;
+      border-radius: 14px;
+      box-shadow: 0 10px 18px rgba(0,0,0,.18);
+    }
+    button.secondary{background:#dfeeea; color:#10322c; font-weight:900}
+    button.ghost{background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15)}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .hintBox{
+      background: #f3fbf8;
+      border: 1px solid #d8efea;
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: #12443b;
+      font-weight:800;
+      margin-top:10px;
+    }
+    .tiny{font-size:12px; font-weight:800; color: var(--muted)}
+    .divider{height:1px; background: rgba(0,0,0,.08); margin:12px 0}
+    .boardWrap{
+      margin-top: 10px;
+      background: linear-gradient(180deg, rgba(16,67,58,.15), rgba(16,67,58,.03));
+      border-radius: 18px;
+      padding: 10px;
+      border: 1px solid rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+    .boardScroll{
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 6px;
+    }
+    .cols{
+      display:flex; gap: var(--gap);
+      width: max-content;
+      padding: 6px 2px;
+    }
+    .col{
+      width: calc(var(--cardW) + 6px);
+      background: rgba(16,67,58,.12);
+      border: 1px solid rgba(16,67,58,.22);
+      border-radius: 14px;
+      padding: 6px 4px 10px;
+      position: relative;
+      min-height: calc(var(--cardH) + 12px);
+    }
+    .colTitle{
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(255,255,255,.85);
+      text-align:center;
+      margin: 4px 0 6px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    .stack{
+      position: relative;
+      min-height: 210px;
+    }
+    .cardEl{
+      width: var(--cardW);
+      height: var(--cardH);
+      border-radius: 10px;
+      background:#fff;
+      border: 2px solid rgba(0,0,0,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 1000;
+      user-select:none;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 8px 14px rgba(0,0,0,.18);
+    }
+    .cardEl.down{
+      background: repeating-linear-gradient(45deg,#1a6a5b,#1a6a5b 8px,#14564a 8px,#14564a 16px);
+      color: transparent;
+      border-color: rgba(255,255,255,.18);
+    }
+    .cardEl.sel{outline: 3px solid #ffce54; border-color:#ffce54}
+    .cardEl.ok{outline: 3px solid #66d19a; border-color:#66d19a}
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+      align-items:center;
+    }
+    .chip{
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 900;
+      color:#fff;
+      display:flex; gap:8px; align-items:center;
+    }
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.78);
+      color:#fff;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight:900;
+      z-index: 50;
+      max-width: 92vw;
+      display:none;
+    }
+    .modalBack{
+      position: fixed; inset:0; z-index: 60;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      padding: 14px;
+    }
+    .modal{
+      width: min(560px, 98vw);
+      background: rgba(255,255,255,.98);
+      color: var(--ink);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .modal h3{margin:0 0 6px; font-size: 22px}
+    .modal p{margin: 6px 0; color:#2f4c46; font-weight:800; line-height:1.3}
+    .optGrid{display:grid; gap:10px; margin-top:10px}
+    .optRow{display:flex; gap:10px; flex-wrap:wrap}
+    .optRow button{flex: 1 1 140px}
+    .lockOverlay{
+      position: fixed; inset:0; z-index: 70;
+      background: rgba(0,0,0,.72);
+      display:none;
+      align-items:center; justify-content:center;
+      padding: 14px;
+      touch-action: none;
+    }
+    .lockCard{
+      width: min(560px, 98vw);
+      background: rgba(255,255,255,.98);
+      color: var(--ink);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .big{
+      font-size: 54px;
+      font-weight: 1000;
+      letter-spacing: .5px;
+      margin: 8px 0;
+    }
+    .bar{
+      height: 12px;
+      background: #dfeeea;
+      border-radius: 999px;
+      overflow:hidden;
+      border: 1px solid #cfe7e1;
+      margin-top: 10px;
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width: 0%;
+      background: #2da77c;
+    }
+    .footer{
+      opacity:.9;
+      font-weight:800;
+      font-size: 12px;
+      text-align:center;
+      padding: 18px 12px 26px;
+    }
+    .copyWrap{
+      margin-top: 10px;
+      display:flex; gap:10px; flex-wrap:wrap;
+      align-items:center;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div class="brand">🕷️ Walking Spider Sol <span class="pill"><small>kävely</small> <span id="walkDoneTxt">ei</span></span></div>
+    <div class="pill">🔥 Striikki <span id="streak">0</span></div>
+    <div class="pill">🎯 Tavoite <span id="goalMinTxt">5</span> min</div>
+    <div class="pill">✅ Tänään <span id="todayMinTxt">0</span> min</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabHome">🏠 Kävely</button>
+    <button class="tab" id="tabSpider">🕷️ Spider</button>
+    <button class="tab" id="tabScorpion">🦂 Scorpion</button>
+    <button class="tab" id="tabGolf">⛳ Golf</button>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section id="viewHome">
+    <div class="card">
+      <h2>Päivän kävelyvelvoite</h2>
+      <div class="sub">
+        Valitse tavoite (3/5/7 min). Kun täytät, pelit aukeaa. Kävelytilassa kosketus lukitaan, ettei “vahingossa jää” puhelimeen.
+      </div>
+
+      <div class="btnRow">
+        <button class="secondary" id="goal3">3 min</button>
+        <button class="secondary" id="goal5">5 min</button>
+        <button class="secondary" id="goal7">7 min</button>
+      </div>
+
+      <div class="btnRow">
+        <button id="startWalk">Aloita kävely-tila</button>
+        <button class="secondary" id="openAfterWalk">Avaa peli</button>
+      </div>
+
+      <div class="hintBox" id="walkHint">
+        Nykyinen tavoite: <b><span id="goalNow">5</span> min</b> · Tänään tehty: <b><span id="doneNow">0</span> min</b><br/>
+        Vinkki: tämä on <b>kävelyvelvoite</b>, ei täydellinen askelmittari. Ajastin riittää.
+      </div>
+
+      <div class="divider"></div>
+      <div class="tiny">Tietosuojana: mitään ei lähetetä minnekään. Kaikki pysyy laitteessa (localStorage).</div>
+    </div>
+
+    <div class="card">
+      <h2>Opettaja (nopea)</h2>
+      <div class="sub">
+        Jos haluat ettei opettaja ole “tyhmä”: täällä voit valita kuinka tiukka se on.
+      </div>
+      <div class="btnRow">
+        <button class="secondary" id="teacherSoft">🙂 Pehmeä</button>
+        <button class="secondary" id="teacherSmart">🧠 Fiksu</button>
+        <button class="secondary" id="teacherStrict">🚫 Tiukka</button>
+      </div>
+      <div class="hintBox" id="teacherTxt">Taso: <b>Fiksu</b>. Vinkit tulevat ennen siirtoa (kuiskauksina).</div>
+    </div>
+
+    <div class="card">
+      <h2>Kopioi koodi talteen</h2>
+      <div class="sub">Jos GitHub-editori sekoilee, paina tästä: kopioi koko sivun HTML leikepöydälle.</div>
+      <div class="copyWrap">
+        <button class="secondary" id="copyAll">📋 Kopioi tämä (koko HTML)</button>
+        <span class="tiny" id="copyMsg"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPIDER -->
+  <section id="viewSpider" style="display:none">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h2 style="margin:0">🕷️ Spider (kevyt, 1 maa)</h2>
+          <div class="sub">Tavoite: kerää K→A samaa maata. Valitse kortti/sarja → napauta kohdepinoa.</div>
+        </div>
+        <div class="row">
+          <span class="chip">📦 Stock <span id="spStock">0</span></span>
+          <span class="chip">↔️ Siirrot <span id="spMoves">0</span></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="spNew">New game</button>
+        <button class="secondary" id="spRestart">Restart sama jako</button>
+        <button class="secondary" id="spUndo">Undo</button>
+        <button class="secondary" id="spRedo">Redo</button>
+        <button id="spDeal">Deal 10</button>
+        <button class="secondary" id="spHint">🧠 Vinkki</button>
+        <button class="secondary" id="spDeselect">✖ Poista valinta</button>
+      </div>
+
+      <div class="hintBox" id="spTeach">
+        Opettaja: <b>ennen siirtoa</b> näet lyhyen huomion. (Testimoodi: ei taukoporttia kesken pelin.)
+      </div>
+
+      <div class="boardWrap">
+        <div class="boardScroll" id="spScroll">
+          <div class="cols" id="spCols"></div>
+        </div>
+      </div>
+      <div class="tiny">Seed: <span id="spSeed"></span></div>
+    </div>
+  </section>
+
+  <!-- SCORPION -->
+  <section id="viewScorpion" style="display:none">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h2 style="margin:0">🦂 Scorpion</h2>
+          <div class="sub">
+            Tavoite: rakenna K→A samaa maata pöydässä. Voit siirtää <b>minkä tahansa face-up kortin</b> + kaikki sen alla olevat.
+            Kohteeksi käy sama maa ja <b>yksi pykälä isompi</b>.
+          </div>
+        </div>
+        <div class="row">
+          <span class="chip">↔️ Siirrot <span id="scMoves">0</span></span>
+          <span class="chip">🏁 Valmiit <span id="scDone">0</span></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="scNew">New game</button>
+        <button class="secondary" id="scUndo">Undo</button>
+        <button class="secondary" id="scRedo">Redo</button>
+        <button class="secondary" id="scHint">🧠 Vinkki</button>
+        <button class="secondary" id="scDeselect">✖ Poista valinta</button>
+      </div>
+
+      <div class="hintBox" id="scTeach">Opettaja kuiskaa ennen siirtoa. (Testimoodi: ei portteja.)</div>
+
+      <div class="boardWrap">
+        <div class="boardScroll" id="scScroll">
+          <div class="cols" id="scCols"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOLF -->
+  <section id="viewGolf" style="display:none">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h2 style="margin:0">⛳ Golf Solitaire</h2>
+          <div class="sub">
+            Siirrä pöydästä kortti “jätepinon” päälle jos se on <b>±1</b> (A ja K kiertää).
+            Kun et voi siirtää, käännä stockista.
+          </div>
+        </div>
+        <div class="row">
+          <span class="chip">📦 Stock <span id="gStock">0</span></span>
+          <span class="chip">🗑️ Waste <span id="gWaste">-</span></span>
+          <span class="chip">↔️ Siirrot <span id="gMoves">0</span></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="gNew">New game</button>
+        <button class="secondary" id="gUndo">Undo</button>
+        <button class="secondary" id="gRedo">Redo</button>
+        <button id="gDraw">Nosta stockista</button>
+        <button class="secondary" id="gHint">🧠 Vinkki</button>
+      </div>
+
+      <div class="hintBox" id="gTeach">Opettaja kuiskaa ennen siirtoa.</div>
+
+      <div class="boardWrap">
+        <div class="boardScroll" id="gScroll">
+          <div class="cols" id="gCols"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">Made with stubbornness + walking breaks 💚</div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- WALK LOCK -->
+<div class="lockOverlay" id="walkOverlay">
+  <div class="lockCard">
+    <div class="row" style="justify-content:space-between">
+      <div style="font-weight:1000;font-size:18px">🚶 Kävelytila käynnissä</div>
+      <button class="secondary" id="walkStop">Lopeta (pidä 2s)</button>
+    </div>
+    <p class="sub" style="margin-top:10px">
+      Kosketus on lukossa, jotta et vahingossa näppäile. Liiku vapaasti.
+    </p>
+    <div class="big"><span id="walkLeft">0</span>s</div>
+    <div class="bar"><i id="walkBar"></i></div>
+    <p class="tiny" style="margin-top:10px">Kun aika täyttyy, saat pienen kyselyn ja pelit aukeaa.</p>
+  </div>
+</div>
+
+<!-- QUICK CHECK-IN MODAL -->
+<div class="modalBack" id="checkInBack">
+  <div class="modal">
+    <h3>🧠 Pieni check-in</h3>
+    <p id="checkInWhy">Tauko ohi. Valitse nopeasti:</p>
+
+    <div class="optGrid">
+      <div>
+        <p><b>1) Onko ollut hyvä päivä?</b></p>
+        <div class="optRow">
+          <button class="secondary" data-q="day" data-a="juu">👍 Juu</button>
+          <button class="secondary" data-q="day" data-a="ei">👎 Ei</button>
+        </div>
+      </div>
+
+      <div>
+        <p><b>2) Miten tauko meni?</b></p>
+        <div class="optRow">
+          <button class="secondary" data-q="break" data-a="kivaa">😄 Kivaa</button>
+          <button class="secondary" data-q="break" data-a="ihan ok">😐 Ihan ok</button>
+          <button class="secondary" data-q="break" data-a="tyhmaa">🙄 Tyhmää</button>
+        </div>
+      </div>
+
+      <div>
+        <p><b>3) Saitko jotain ajatuksia mieleen?</b></p>
+        <div class="optRow">
+          <button class="secondary" data-q="thought" data-a="ajatukset rullasi">🌀 Ajatukset rullasi</button>
+          <button class="secondary" data-q="thought" data-a="paras idea">💡 Paras idea</button>
+          <button class="secondary" data-q="thought" data-a="tarttee kelata">🔁 Tarttee kelata</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btnRow" style="margin-top:12px">
+      <button id="checkInDone">Jatka</button>
+    </div>
+
+    <div class="tiny" id="checkInStatus"></div>
+  </div>
+</div>
+
+<script>
+/* ===========================
+   Perus utilit
+=========================== */
+const $ = (id)=>document.getElementById(id);
+const LS = {
+  get(k, def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){return def} },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function toast(msg, ms=1800){
+  const t = $("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>t.style.display="none", ms);
+}
+function todayISO(){
+  const d=new Date();
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+/* ===========================
+   Layout / korttikoko
+   - yritetään saada 10 pinon spider mahtumaan ilman sivun skrollia.
+   - boardScroll hoitaa varalla.
+=========================== */
+function updateCardSizeForViewport(){
+  const vw = Math.min(window.innerWidth, 980);
+  // 10 kolumnia + 9 gap + padding (arvio)
+  const usable = vw - 34;
+  const gap = 10;
+  const w = Math.floor((usable - 9*gap) / 10);
+  const cardW = clamp(w, 40, 62);
+  document.documentElement.style.setProperty("--cardW", cardW+"px");
+
+  // pinojen offset: pienemmäksi jos kortti kapea
+  const off = clamp(Math.floor(cardW*0.28), 10, 18);
+  document.documentElement.style.setProperty("--stackOffset", off+"px");
+}
+window.addEventListener("resize", updateCardSizeForViewport);
+updateCardSizeForViewport();
+
+/* ===========================
+   Päivä/striikki/kävely
+=========================== */
+const WALK_KEY="ws_walk";
+const STREAK_KEY="ws_streak";
+const TEACH_KEY="ws_teacher";
+let teacher = LS.get(TEACH_KEY, "smart"); // soft/smart/strict
+
+function loadDay(){
+  const t = todayISO();
+  const s = LS.get(WALK_KEY, {date:t, goal:5, doneMin:0, done:false});
+  if(s.date !== t){
+    // uusi päivä: päivitä striikki
+    const prev = s;
+    const streak = LS.get(STREAK_KEY, {count:0, lastDate:null});
+    // jos eilen done, jatka, muuten nollaa
+    if(prev.done){
+      streak.count = (streak.count||0) + 1;
+    }else{
+      streak.count = 0;
+    }
+    streak.lastDate = t;
+    LS.set(STREAK_KEY, streak);
+
+    // reset päivän data
+    const ns = {date:t, goal:prev.goal||5, doneMin:0, done:false};
+    LS.set(WALK_KEY, ns);
+    return ns;
+  }
+  return s;
+}
+let day = loadDay();
+let streak = LS.get(STREAK_KEY, {count:0, lastDate: day.date});
+
+function refreshTopUI(){
+  $("goalMinTxt").textContent = day.goal;
+  $("todayMinTxt").textContent = day.doneMin;
+  $("walkDoneTxt").textContent = day.done ? "kyllä" : "ei";
+  $("streak").textContent = streak.count || 0;
+  $("goalNow").textContent = day.goal;
+  $("doneNow").textContent = day.doneMin;
+  $("checkInStatus").textContent = "";
+}
+refreshTopUI();
+
+function setGoal(min){
+  day.goal = min;
+  LS.set(WALK_KEY, day);
+  refreshTopUI();
+  toast(`Tavoite: ${min} min`);
+}
+
+$("goal3").onclick=()=>setGoal(3);
+$("goal5").onclick=()=>setGoal(5);
+$("goal7").onclick=()=>setGoal(7);
+
+let walkTimer=null;
+let walkLeft=0;
+let walkTotal=0;
+let walkStopHold=null;
+
+function openCheckIn(reason){
+  // reset answers
+  checkIn.answers = { day:null, break:null, thought:null, reason };
+  $("checkInWhy").textContent = reason === "walk" ? "Kävely valmis. Valitse nopeasti:" : "Tauko ohi. Valitse nopeasti:";
+  $("checkInBack").style.display = "flex";
+  $("checkInStatus").textContent = "Valitse jokaisesta kohdasta yksi.";
+}
+function closeCheckIn(){
+  $("checkInBack").style.display = "none";
+}
+const checkIn = { answers: {day:null, break:null, thought:null, reason:null} };
+
+$("checkInBack").addEventListener("click",(e)=>{
+  if(e.target.id==="checkInBack") closeCheckIn();
+});
+document.querySelectorAll("#checkInBack button[data-q]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const q = btn.dataset.q;
+    const a = btn.dataset.a;
+    checkIn.answers[q]=a;
+    toast(`✔ ${q}: ${a}`, 900);
+    // show progress
+    const a1=!!checkIn.answers.day, a2=!!checkIn.answers.break, a3=!!checkIn.answers.thought;
+    $("checkInStatus").textContent = `Valittu: ${a1?"1":"_"} ${a2?"2":"_"} ${a3?"3":"_"}`;
+  });
+});
+$("checkInDone").onclick=()=>{
+  const a=checkIn.answers;
+  if(!a.day || !a.break || !a.thought){
+    toast("Valitse kaikki 3 kohtaa 🙂");
+    return;
+  }
+  // tallenna päivän lokiin
+  const log = LS.get("ws_checkins", []);
+  log.push({ts: Date.now(), date: todayISO(), ...a});
+  LS.set("ws_checkins", log);
+  closeCheckIn();
+  toast("Kiitos. Jatka peliä 💚", 1400);
+};
+
+function startWalk(){
+  walkTotal = day.goal * 60;
+  walkLeft = walkTotal;
+
+  $("walkLeft").textContent = walkLeft;
+  $("walkBar").style.width = "0%";
+  $("walkOverlay").style.display = "flex";
+
+  clearInterval(walkTimer);
+  walkTimer = setInterval(()=>{
+    walkLeft--;
+    if(walkLeft < 0) walkLeft = 0;
+    $("walkLeft").textContent = walkLeft;
+    const pct = 100 * (1 - (walkLeft / walkTotal));
+    $("walkBar").style.width = pct.toFixed(1)+"%";
+
+    if(walkLeft<=0){
+      clearInterval(walkTimer);
+      $("walkOverlay").style.display = "none";
+      // merkitse päivän kävely tehdyksi
+      day.doneMin = day.goal;
+      day.done = true;
+      LS.set(WALK_KEY, day);
+      refreshTopUI();
+      openCheckIn("walk"); // ✅ KYSYLY KÄVELYN JÄLKEEN
+      toast("Kävely tehty ✅");
+    }
+  }, 1000);
+}
+
+$("startWalk").onclick=()=>{
+  startWalk();
+};
+
+$("walkStop").addEventListener("touchstart", ()=>{
+  if(walkStopHold) clearTimeout(walkStopHold);
+  walkStopHold = setTimeout(()=>{
+    clearInterval(walkTimer);
+    $("walkOverlay").style.display="none";
+    toast("Kävelytila lopetettu");
+  }, 2000);
+});
+$("walkStop").addEventListener("touchend", ()=>{
+  if(walkStopHold) clearTimeout(walkStopHold);
+});
+
+/* ===========================
+   Opettaja taso
+=========================== */
+function setTeacher(t){
+  teacher=t;
+  LS.set(TEACH_KEY, t);
+  const label = t==="soft"?"Pehmeä":(t==="strict"?"Tiukka":"Fiksu");
+  $("teacherTxt").innerHTML = `Taso: <b>${label}</b>. Vinkit tulevat ennen siirtoa (kuiskauksina).`;
+  toast(`Opettaja: ${label}`);
+}
+$("teacherSoft").onclick=()=>setTeacher("soft");
+$("teacherSmart").onclick=()=>setTeacher("smart");
+$("teacherStrict").onclick=()=>setTeacher("strict");
+setTeacher(teacher);
+
+function teacherMsg(kind, text){
+  // kind: warn/good/info
+  if(teacher==="soft" && kind==="warn") return;
+  if(teacher==="strict" && kind==="info") return;
+  toast(text, 1700);
+}
+
+/* ===========================
+   Tabit / näkymät
+=========================== */
+const views = {
+  Home: $("viewHome"),
+  Spider: $("viewSpider"),
+  Scorpion: $("viewScorpion"),
+  Golf: $("viewGolf")
+};
+function setActiveTab(name){
+  $("tabHome").classList.toggle("active", name==="Home");
+  $("tabSpider").classList.toggle("active", name==="Spider");
+  $("tabScorpion").classList.toggle("active", name==="Scorpion");
+  $("tabGolf").classList.toggle("active", name==="Golf");
+  for(const k in views) views[k].style.display = (k===name) ? "block" : "none";
+}
+$("tabHome").onclick=()=>setActiveTab("Home");
+$("tabSpider").onclick=()=>{ if(!day.done) {toast("Tee ensin päivän kävely (3/5/7 min)."); setActiveTab("Home");} else setActiveTab("Spider"); };
+$("tabScorpion").onclick=()=>{ if(!day.done) {toast("Tee ensin päivän kävely (3/5/7 min)."); setActiveTab("Home");} else setActiveTab("Scorpion"); };
+$("tabGolf").onclick=()=>{ if(!day.done) {toast("Tee ensin päivän kävely (3/5/7 min)."); setActiveTab("Home");} else setActiveTab("Golf"); };
+
+$("openAfterWalk").onclick=()=>{
+  if(!day.done){ toast("Tee ensin päivän kävely."); return; }
+  setActiveTab("Spider");
+};
+
+/* ===========================
+   Kortit
+=========================== */
+const SUITS = ["♠","♥","♦","♣"];
+function rankToStr(r){
+  if(r===1) return "A";
+  if(r===11) return "J";
+  if(r===12) return "Q";
+  if(r===13) return "K";
+  return String(r);
+}
+function makeDeck(decks=1){
+  const out=[];
+  for(let d=0; d<decks; d++){
+    for(let s=0; s<4; s++){
+      for(let r=1; r<=13; r++){
+        out.push({r,s, face:true});
+      }
+    }
+  }
+  return out;
+}
+function mulberry32(a){
+  return function(){
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t>>>15), t | 1);
+    t ^= t + Math.imul(t ^ (t>>>7), t | 61);
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  }
+}
+function shuffle(arr, seed){
+  const rng=mulberry32(seed);
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(rng()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+/* ===========================
+   Spider (1 maa) – 2 pakkaa, 10 pinoa
+=========================== */
+const spider = {
+  seed: 0,
+  state: null,
+  undo: [],
+  redo: [],
+  selected: null, // {col, idx} start of movable run
+  moves: 0
+};
+
+function spiderInit(seed){
+  spider.seed = seed;
+  spider.undo=[]; spider.redo=[];
+  spider.selected=null;
+  spider.moves=0;
+
+  // 2 pakkaa mutta 1 maa: tehdään 104 korttia yhtä maata (♠), 8 kopiota joka rank
+  const cards=[];
+  for(let k=0;k<8;k++){
+    for(let r=1;r<=13;r++) cards.push({r,s:0,face:true});
+  }
+  shuffle(cards, seed);
+
+  const cols = Array.from({length:10}, ()=>[]);
+  // jaa: 54 korttia pöytään (1.4 pinoa 6, loput 5), vain päällimmäiset auki
+  for(let i=0;i<10;i++){
+    const cnt = (i<4)?6:5;
+    for(let j=0;j<cnt;j++){
+      const c = cards.pop();
+      c.face = (j===cnt-1);
+      cols[i].push(c);
+    }
+  }
+  const stock = cards.map(c=>({...c, face:false})); // stock aina face-down
+  spider.state = { cols, stock, doneRuns:0 };
+  spiderRender();
+  spiderUpdateUI();
+}
+
+function spiderCloneState(st){
+  return {
+    cols: st.cols.map(col=>col.map(c=>({...c}))),
+    stock: st.stock.map(c=>({...c})),
+    doneRuns: st.doneRuns
+  };
+}
+function spiderPushUndo(){
+  spider.undo.push(spiderCloneState(spider.state));
+  if(spider.undo.length>80) spider.undo.shift();
+  spider.redo=[];
+}
+
+function spiderUpdateUI(){
+  $("spStock").textContent = spider.state.stock.length;
+  $("spMoves").textContent = spider.moves;
+  $("spSeed").textContent = spider.seed;
+}
+
+function spiderSelectableRun(colIndex, cardIndex){
+  const col = spider.state.cols[colIndex];
+  // vain face-up ja laskeva sarja
+  if(!col[cardIndex] || !col[cardIndex].face) return null;
+
+  // start at cardIndex; require that from cardIndex to end is descending by 1
+  for(let i=cardIndex; i<col.length-1; i++){
+    const a=col[i], b=col[i+1];
+    if(!b.face) return null;
+    if(a.r !== b.r+1) return null;
+    // same suit always in 1-suit mode
+  }
+  return {col: colIndex, idx: cardIndex};
+}
+
+function spiderCanPlace(run, targetColIndex){
+  const cols = spider.state.cols;
+  const fromCol = cols[run.col];
+  const moving = fromCol.slice(run.idx);
+  const top = moving[0];
+  const tcol = cols[targetColIndex];
+  if(tcol.length===0) return true;
+  const dest = tcol[tcol.length-1];
+  if(!dest.face) return false;
+  return (dest.r === top.r + 1); // dest one higher
+}
+
+function spiderTryMove(run, targetColIndex){
+  if(!spiderCanPlace(run, targetColIndex)){
+    teacherMsg("warn","🚫 Et voi siirtää tuohon pinoon.");
+    return false;
+  }
+  spiderPushUndo();
+  const cols = spider.state.cols;
+  const fromCol = cols[run.col];
+  const moving = fromCol.splice(run.idx);
+  cols[targetColIndex].push(...moving);
+
+  // käännä uusi päällimmäinen auki
+  if(fromCol.length>0 && !fromCol[fromCol.length-1].face){
+    fromCol[fromCol.length-1].face = true;
+  }
+
+  spider.moves++;
+  spider.selected = null;
+
+  // tarkista valmis K→A pino jokaisessa kolumnissa
+  spiderCheckRuns();
+
+  spiderRender();
+  spiderUpdateUI();
+  teacherMsg("good","✅ Siirto tehty.");
+  return true;
+}
+
+function spiderCheckRuns(){
+  const cols = spider.state.cols;
+  for(let c=0;c<10;c++){
+    const col=cols[c];
+    if(col.length<13) continue;
+    // tarkista viimeiset 13 korttia K..A face-up
+    const tail = col.slice(col.length-13);
+    if(tail.some(x=>!x.face)) continue;
+    let ok=true;
+    for(let i=0;i<12;i++){
+      if(tail[i].r !== tail[i+1].r+1) {ok=false;break;}
+    }
+    if(ok && tail[0].r===13 && tail[12].r===1){
+      // poista
+      spiderPushUndo();
+      col.splice(col.length-13, 13);
+      spider.state.doneRuns++;
+      // käännä uusi päällimmäinen
+      if(col.length>0 && !col[col.length-1].face) col[col.length-1].face=true;
+      teacherMsg("good","🏁 Valmis K→A poistui!");
+    }
+  }
+}
+
+function spiderDeal(){
+  // spider-sääntö: ei saa jakaa jos joku pino tyhjä
+  if(spider.state.cols.some(col=>col.length===0)){
+    teacherMsg("warn","🚫 Jako onnistuu vain jos mikään pino ei ole tyhjä.");
+    return;
+  }
+  if(spider.state.stock.length < 10){
+    teacherMsg("warn","Stock loppu.");
+    return;
+  }
+  spiderPushUndo();
+  for(let i=0;i<10;i++){
+    const c = spider.state.stock.pop();
+    c.face = true;
+    spider.state.cols[i].push(c);
+  }
+  spider.moves++;
+  spider.selected=null;
+  spiderRender();
+  spiderUpdateUI();
+  teacherMsg("info","📤 Jaettu 10 korttia.");
+}
+
+function spiderRender(){
+  const root = $("spCols");
+  root.innerHTML = "";
+  for(let ci=0;ci<10;ci++){
+    const colDiv = document.createElement("div");
+    colDiv.className="col";
+    colDiv.dataset.col = ci;
+
+    const title = document.createElement("div");
+    title.className="colTitle";
+    title.textContent = `Pino ${ci+1}`;
+    colDiv.appendChild(title);
+
+    const stack = document.createElement("div");
+    stack.className="stack";
+    stack.dataset.col = ci;
+
+    // click empty stack area = deselect (korjaa “kolmonen pakottaa siirron” fiiliksen)
+    stack.addEventListener("click",(e)=>{
+      if(e.target===stack){
+        spider.selected=null;
+        spiderRender();
+        teacherMsg("info","✖ Valinta poistettu.");
+      }
+    });
+
+    const col = spider.state.cols[ci];
+    const off = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--stackOffset")) || 14;
+    for(let i=0;i<col.length;i++){
+      const c = col[i];
+      const el = document.createElement("div");
+      el.className = "cardEl" + (c.face? "" : " down");
+      el.style.top = (i*off)+"px";
+      el.dataset.idx = i;
+
+      if(c.face){
+        el.textContent = `${rankToStr(c.r)} ${SUITS[c.s]}`;
+      }else{
+        el.textContent = "";
+      }
+
+      // selected highlight
+      if(spider.selected && spider.selected.col===ci && i===spider.selected.idx){
+        el.classList.add("sel");
+      }
+      // show possible target if selected
+      if(spider.selected && spiderCanPlace(spider.selected, ci)){
+        if(ci!==spider.selected.col) el.classList.add("ok");
+      }
+
+      // click
+      el.addEventListener("click",(ev)=>{
+        ev.stopPropagation();
+
+        // if clicking selected card again -> deselect
+        if(spider.selected && spider.selected.col===ci && spider.selected.idx===i){
+          spider.selected=null;
+          spiderRender();
+          teacherMsg("info","✖ Valinta poistettu.");
+          return;
+        }
+
+        // if there is a selection, interpret click as "move to this column" (not “auto”)
+        if(spider.selected){
+          const ok = spiderTryMove(spider.selected, ci);
+          if(!ok && teacher!=="soft"){
+            // before move tip
+            teacherMsg("warn","Vihje: valitse laskeva sarja (esim 9-8-7) ja napauta kohdepinoa.");
+          }
+          return;
+        }
+
+        // otherwise: select run if possible
+        const run = spiderSelectableRun(ci, i);
+        if(!run){
+          teacherMsg("warn","Valitse face-up kortti (tai laskeva sarja).");
+          return;
+        }
+        spider.selected = run;
+
+        // teacher before move
+        const top = spider.state.cols[ci][i];
+        // find a good target
+        let target = -1;
+        for(let t=0;t<10;t++){
+          if(t===ci) continue;
+          if(spiderCanPlace(run, t)) {target=t; break;}
+        }
+        if(target>=0){
+          teacherMsg("good",`🧠 Vihje: siirrä ${rankToStr(top.r)} → Pino ${target+1}`);
+        }else{
+          teacherMsg("info",`🧠 Ei selkeää siirtoa. Voit kokeilla vapauttaa tilaa tai jakaa (Deal).`);
+        }
+        spiderRender();
+      });
+
+      stack.appendChild(el);
+    }
+
+    colDiv.appendChild(stack);
+
+    // click column background (not card) as target for move when selected
+    colDiv.addEventListener("click",(e)=>{
+      if(spider.selected && e.target===colDiv){
+        spiderTryMove(spider.selected, ci);
+      }
+    });
+
+    root.appendChild(colDiv);
+  }
+}
+
+function spiderHint(){
+  // etsi yksinkertainen siirto
+  const cols = spider.state.cols;
+  for(let c=0;c<10;c++){
+    const col = cols[c];
+    for(let i=0;i<col.length;i++){
+      const run = spiderSelectableRun(c,i);
+      if(!run) continue;
+      for(let t=0;t<10;t++){
+        if(t===c) continue;
+        if(spiderCanPlace(run,t)){
+          teacherMsg("good",`🧠 Suositus: siirrä ${rankToStr(col[i].r)} → Pino ${t+1}`);
+          spider.selected = run;
+          spiderRender();
+          return;
+        }
+      }
+    }
+  }
+  teacherMsg("warn","🧠 Ei löytynyt helppoa siirtoa. Kokeile Deal tai vapauta pinoja.");
+}
+
+$("spNew").onclick=()=>spiderInit((Math.random()*1e9)|0);
+$("spRestart").onclick=()=>spiderInit(spider.seed);
+$("spDeal").onclick=()=>spiderDeal();
+$("spHint").onclick=()=>spiderHint();
+$("spDeselect").onclick=()=>{
+  spider.selected=null; spiderRender(); teacherMsg("info","✖ Valinta poistettu.");
+};
+$("spUndo").onclick=()=>{
+  if(!spider.undo.length){ toast("Ei undo."); return; }
+  spider.redo.push(spiderCloneState(spider.state));
+  spider.state = spider.undo.pop();
+  spider.selected=null;
+  spiderRender(); spiderUpdateUI();
+};
+$("spRedo").onclick=()=>{
+  if(!spider.redo.length){ toast("Ei redo."); return; }
+  spider.undo.push(spiderCloneState(spider.state));
+  spider.state = spider.redo.pop();
+  spider.selected=null;
+  spiderRender(); spiderUpdateUI();
+};
+
+/* ===========================
+   Scorpion – 7 pinoa
+   Setup (per perusohje): 7 pinoa, jokaisessa 7 korttia.
+   Ensimmäiset 4 pinoa: 3 face-down + 4 face-up. Loput: kaikki face-up.
+=========================== */
+const scorpion = { state:null, undo:[], redo:[], selected:null, moves:0, done:0 };
+function scInit(seed){
+  scorpion.undo=[]; scorpion.redo=[]; scorpion.selected=null; scorpion.moves=0; scorpion.done=0;
+
+  const deck = shuffle(makeDeck(1), seed);
+  const cols = Array.from({length:7}, ()=>[]);
+  for(let col=0; col<7; col++){
+    for(let i=0;i<7;i++){
+      const c = deck.pop();
+      // face rules:
+      if(col<4 && i<3) c.face=false; else c.face=true;
+      cols[col].push(c);
+    }
+  }
+  scorpion.state = { cols };
+  scRender(); scUpdate();
+}
+function scClone(st){
+  return { cols: st.cols.map(col=>col.map(c=>({...c}))) };
+}
+function scPushUndo(){
+  scorpion.undo.push(scClone(scorpion.state));
+  if(scorpion.undo.length>80) scorpion.undo.shift();
+  scorpion.redo=[];
+}
+function scUpdate(){
+  $("scMoves").textContent = scorpion.moves;
+  $("scDone").textContent = scorpion.done;
+}
+function scMovable(col, idx){
+  const colArr = scorpion.state.cols[col];
+  if(!colArr[idx] || !colArr[idx].face) return null;
+  return {col, idx}; // Scorpion: voi siirtää minkä tahansa face-up + alla olevat
+}
+function scCanPlace(run, targetCol){
+  const cols=scorpion.state.cols;
+  const from=cols[run.col];
+  const moving=from.slice(run.idx);
+  const top=moving[0];
+  const destCol=cols[targetCol];
+  if(destCol.length===0) return true; // tyhjään saa laittaa
+  const dest=destCol[destCol.length-1];
+  if(!dest.face) return false;
+  // sama maa ja dest one higher
+  return (dest.s===top.s && dest.r===top.r+1);
+}
+function scTryMove(run, targetCol){
+  if(!scCanPlace(run, targetCol)){
+    teacherMsg("warn","🚫 Scorpion: kohteessa pitää olla sama maa + yksi isompi.");
+    return false;
+  }
+  scPushUndo();
+  const cols=scorpion.state.cols;
+  const from=cols[run.col];
+  const moving=from.splice(run.idx);
+  cols[targetCol].push(...moving);
+
+  // käännä uusi päällimmäinen
+  if(from.length>0 && !from[from.length-1].face){
+    from[from.length-1].face=true;
+  }
+  scorpion.moves++;
+  scorpion.selected=null;
+
+  scCheckDone();
+  scRender(); scUpdate();
+  teacherMsg("good","✅ Siirto tehty.");
+  return true;
+}
+function scCheckDone(){
+  // jos jonkun pinon lopussa on K..A sama maa face-up, poista ja lisää done
+  const cols=scorpion.state.cols;
+  for(let c=0;c<7;c++){
+    const col=cols[c];
+    if(col.length<13) continue;
+    const tail=col.slice(col.length-13);
+    if(tail.some(x=>!x.face)) continue;
+    let ok=true;
+    for(let i=0;i<12;i++){
+      if(!(tail[i].s===tail[i+1].s && tail[i].r===tail[i+1].r+1)){ ok=false; break; }
+    }
+    if(ok && tail[0].r===13 && tail[12].r===1){
+      scPushUndo();
+      col.splice(col.length-13, 13);
+      scorpion.done++;
+      if(col.length>0 && !col[col.length-1].face) col[col.length-1].face=true;
+      teacherMsg("good","🏁 Valmis K→A poistui!");
+    }
+  }
+}
+function scRender(){
+  const root=$("scCols");
+  root.innerHTML="";
+  const off=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--stackOffset")) || 14;
+
+  for(let ci=0;ci<7;ci++){
+    const colDiv=document.createElement("div");
+    colDiv.className="col";
+    colDiv.style.width = "calc(var(--cardW) + 10px)";
+    const title=document.createElement("div");
+    title.className="colTitle";
+    title.textContent=`Pino ${ci+1}`;
+    colDiv.appendChild(title);
+
+    const stack=document.createElement("div");
+    stack.className="stack";
+    stack.addEventListener("click",(e)=>{
+      if(e.target===stack){
+        scorpion.selected=null; scRender(); teacherMsg("info","✖ Valinta poistettu.");
+      }
+    });
+
+    const col=scorpion.state.cols[ci];
+    for(let i=0;i<col.length;i++){
+      const c=col[i];
+      const el=document.createElement("div");
+      el.className="cardEl"+(c.face?"":" down");
+      el.style.top=(i*off)+"px";
+      if(c.face) el.textContent=`${rankToStr(c.r)} ${SUITS[c.s]}`;
+
+      if(scorpion.selected && scorpion.selected.col===ci && scorpion.selected.idx===i){
+        el.classList.add("sel");
+      }
+      if(scorpion.selected && scCanPlace(scorpion.selected, ci)){
+        if(ci!==scorpion.selected.col) el.classList.add("ok");
+      }
+
+      el.addEventListener("click",(ev)=>{
+        ev.stopPropagation();
+
+        if(scorpion.selected && scorpion.selected.col===ci && scorpion.selected.idx===i){
+          scorpion.selected=null; scRender(); teacherMsg("info","✖ Valinta poistettu."); return;
+        }
+
+        if(scorpion.selected){
+          scTryMove(scorpion.selected, ci);
+          return;
+        }
+
+        const run=scMovable(ci,i);
+        if(!run){ teacherMsg("warn","Valitse face-up kortti."); return; }
+        scorpion.selected=run;
+
+        // teacher
+        const top=col[i];
+        let target=-1;
+        for(let t=0;t<7;t++){
+          if(t===ci) continue;
+          if(scCanPlace(run,t)){ target=t; break; }
+        }
+        if(target>=0) teacherMsg("good",`🧠 Siirrä ${rankToStr(top.r)} ${SUITS[top.s]} → Pino ${target+1}`);
+        else teacherMsg("info","🧠 Ei selkeää siirtoa. Yritä vapauttaa K:n alkuja tai kääntää piilokortteja auki.");
+        scRender();
+      });
+
+      stack.appendChild(el);
+    }
+    colDiv.appendChild(stack);
+    root.appendChild(colDiv);
+  }
+}
+function scHint(){
+  const cols=scorpion.state.cols;
+  for(let c=0;c<7;c++){
+    const col=cols[c];
+    for(let i=0;i<col.length;i++){
+      const run=scMovable(c,i);
+      if(!run) continue;
+      for(let t=0;t<7;t++){
+        if(t===c) continue;
+        if(scCanPlace(run,t)){
+          teacherMsg("good",`🧠 Suositus: ${rankToStr(col[i].r)} ${SUITS[col[i].s]} → Pino ${t+1}`);
+          scorpion.selected=run; scRender(); return;
+        }
+      }
+    }
+  }
+  teacherMsg("warn","🧠 Ei löytynyt helppoa siirtoa.");
+}
+$("scNew").onclick=()=>scInit((Math.random()*1e9)|0);
+$("scUndo").onclick=()=>{
+  if(!scorpion.undo.length){ toast("Ei undo."); return; }
+  scorpion.redo.push(scClone(scorpion.state));
+  scorpion.state=scorpion.undo.pop();
+  scorpion.selected=null;
+  scRender(); scUpdate();
+};
+$("scRedo").onclick=()=>{
+  if(!scorpion.redo.length){ toast("Ei redo."); return; }
+  scorpion.undo.push(scClone(scorpion.state));
+  scorpion.state=scorpion.redo.pop();
+  scorpion.selected=null;
+  scRender(); scUpdate();
+};
+$("scHint").onclick=()=>scHint();
+$("scDeselect").onclick=()=>{ scorpion.selected=null; scRender(); teacherMsg("info","✖ Valinta poistettu."); };
+
+/* ===========================
+   Golf – 7 kolumnia, 5 korttia per kolumni (35), waste 1, stock loput
+=========================== */
+const golf = { state:null, undo:[], redo:[], moves:0 };
+function gInit(seed){
+  golf.undo=[]; golf.redo=[]; golf.moves=0;
+  const deck = shuffle(makeDeck(1), seed);
+  const cols = Array.from({length:7}, ()=>[]);
+  // deal 5 each face-up
+  for(let r=0;r<5;r++){
+    for(let c=0;c<7;c++){
+      const card = deck.pop();
+      card.face=true;
+      cols[c].push(card);
+    }
+  }
+  const waste = deck.pop(); waste.face=true;
+  const stock = deck.map(c=>({...c, face:false}));
+  golf.state = { cols, waste, stock };
+  gRender(); gUpdate();
+}
+function gClone(st){
+  return {
+    cols: st.cols.map(col=>col.map(c=>({...c}))),
+    waste: {...st.waste},
+    stock: st.stock.map(c=>({...c}))
+  };
+}
+function gPushUndo(){
+  golf.undo.push(gClone(golf.state));
+  if(golf.undo.length>80) golf.undo.shift();
+  golf.redo=[];
+}
+function isAdj(a,b){
+  // a adjacent to b by rank +/-1 with wrap A<->K
+  const dr = Math.abs(a-b);
+  return (dr===1) || (a===1 && b===13) || (a===13 && b===1);
+}
+function gCanMove(card){
+  return isAdj(card.r, golf.state.waste.r);
+}
+function gMoveFrom(colIndex){
+  const col = golf.state.cols[colIndex];
+  if(!col.length){ teacherMsg("warn","Tyhjä."); return; }
+  const card = col[col.length-1];
+  if(!gCanMove(card)){
+    teacherMsg("warn","🚫 Golf: pitää olla ±1 (A/K kiertää).");
+    return;
+  }
+  gPushUndo();
+  col.pop();
+  golf.state.waste = card;
+  golf.moves++;
+  gRender(); gUpdate();
+  teacherMsg("good",`✅ Siirretty ${rankToStr(card.r)} → Waste`);
+}
+function gDraw(){
+  if(!golf.state.stock.length){ teacherMsg("warn","Stock loppu."); return; }
+  gPushUndo();
+  const c = golf.state.stock.pop();
+  c.face=true;
+  golf.state.waste=c;
+  golf.moves++;
+  gRender(); gUpdate();
+  teacherMsg("info","📤 Nosto stockista.");
+}
+function gHint(){
+  // ehdota paras siirto: mikä tahansa mahdollinen
+  for(let c=0;c<7;c++){
+    const col=golf.state.cols[c];
+    if(!col.length) continue;
+    const card=col[col.length-1];
+    if(gCanMove(card)){
+      teacherMsg("good",`🧠 Suositus: siirrä Pino ${c+1} (${rankToStr(card.r)}) → Waste`);
+      return;
+    }
+  }
+  teacherMsg("info","🧠 Ei siirtoa. Nosta stockista.");
+}
+function gUpdate(){
+  $("gStock").textContent = golf.state.stock.length;
+  $("gWaste").textContent = `${rankToStr(golf.state.waste.r)} ${SUITS[golf.state.waste.s]}`;
+  $("gMoves").textContent = golf.moves;
+}
+function gRender(){
+  const root=$("gCols");
+  root.innerHTML="";
+  const off=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--stackOffset")) || 14;
+
+  // ensimmäinen “waste + stock” -kolumni
+  const special=document.createElement("div");
+  special.className="col";
+  special.style.width="calc(var(--cardW) + 16px)";
+  const title=document.createElement("div");
+  title.className="colTitle";
+  title.textContent="Waste / Stock";
+  special.appendChild(title);
+
+  const stack=document.createElement("div");
+  stack.className="stack";
+
+  // Waste card
+  const w=document.createElement("div");
+  w.className="cardEl";
+  w.style.top="0px";
+  w.textContent=`${rankToStr(golf.state.waste.r)} ${SUITS[golf.state.waste.s]}`;
+  w.style.outline="3px solid #66d19a";
+  stack.appendChild(w);
+
+  // Stock back
+  const s=document.createElement("div");
+  s.className="cardEl down";
+  s.style.top=(off*3)+"px";
+  s.textContent="";
+  stack.appendChild(s);
+
+  special.appendChild(stack);
+  root.appendChild(special);
+
+  // 7 tableau cols
+  for(let ci=0;ci<7;ci++){
+    const colDiv=document.createElement("div");
+    colDiv.className="col";
+    colDiv.style.width="calc(var(--cardW) + 16px)";
+    const t=document.createElement("div");
+    t.className="colTitle";
+    t.textContent=`Pino ${ci+1}`;
+    colDiv.appendChild(t);
+
+    const st=document.createElement("div");
+    st.className="stack";
+
+    const col=golf.state.cols[ci];
+    for(let i=0;i<col.length;i++){
+      const c=col[i];
+      const el=document.createElement("div");
+      el.className="cardEl";
+      el.style.top=(i*off)+"px";
+      el.textContent=`${rankToStr(c.r)} ${SUITS[c.s]}`;
+      if(i===col.length-1 && gCanMove(c)) el.classList.add("ok");
+      // only top clickable
+      if(i===col.length-1){
+        el.addEventListener("click",(ev)=>{
+          ev.stopPropagation();
+          if(gCanMove(c)) teacherMsg("good","🧠 Hyvä siirto!");
+          gMoveFrom(ci);
+        });
+      }
+      st.appendChild(el);
+    }
+
+    // click empty tableau doesn't do anything
+    colDiv.appendChild(st);
+    root.appendChild(colDiv);
+  }
+}
+
+/* ===========================
+   Taukoportti (TESTIMOODI nyt OFF)
+   - Käyttäjä pyysi: kunnes mainokset näkyy => enemmän virheitä, ei taukoa kesken peliä.
+   - Silti: kysely tehdään myös tauon jälkeen, jos joskus otat portin käyttöön.
+=========================== */
+const GATE_KEY="ws_gate";
+let gate = LS.get(GATE_KEY, { enabled:false, everyMoves:25, maxMistakes:999, breakSec:10 });
+function maybeGate(reason){
+  if(!gate.enabled) return false;
+  // jos aktivoitu myöhemmin:
+  // näytä “tauko” ja sen jälkeen check-in
+  openBreak(gate.breakSec, reason);
+  return true;
+}
+function openBreak(sec, reason){
+  // Yksinkertainen “tauko”: käytetään samaa walkOverlaya mutta lyhyenä
+  walkTotal = sec; walkLeft = sec;
+  $("walkLeft").textContent = walkLeft;
+  $("walkBar").style.width="0%";
+  $("walkOverlay").style.display="flex";
+  clearInterval(walkTimer);
+  walkTimer = setInterval(()=>{
+    walkLeft--;
+    if(walkLeft<0) walkLeft=0;
+    $("walkLeft").textContent = walkLeft;
+    const pct = 100*(1-(walkLeft/walkTotal));
+    $("walkBar").style.width=pct.toFixed(1)+"%";
+    if(walkLeft<=0){
+      clearInterval(walkTimer);
+      $("walkOverlay").style.display="none";
+      openCheckIn("break"); // ✅ KYSYLY TAUON JÄLKEEN
+      toast("Tauko ohi ✅");
+    }
+  }, 1000);
+}
+
+/* ===========================
+   Kopioi koko HTML
+=========================== */
+$("copyAll").onclick=async ()=>{
+  const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+  try{
+    await navigator.clipboard.writeText(html);
+    $("copyMsg").textContent="Kopioitu ✅";
+    toast("Koko HTML kopioitu ✅");
+  }catch(e){
+    // fallback
+    const ta=document.createElement("textarea");
+    ta.value=html;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+    $("copyMsg").textContent="Kopioitu (fallback) ✅";
+    toast("Kopioitu ✅");
+  }
+  setTimeout(()=>$("copyMsg").textContent="", 2500);
+};
+
+/* ===========================
+   Boot
+=========================== */
+(function boot(){
+  // default to home
+  setActiveTab("Home");
+  // init games
+  spiderInit((Math.random()*1e9)|0);
+  scInit((Math.random()*1e9)|0);
+  gInit((Math.random()*1e9)|0);
+})();
+</script>
+</body>
+</html>
