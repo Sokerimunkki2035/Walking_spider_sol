@@ -1,0 +1,32 @@
+<style>
+  .hint-text { background: #fcf8e3; color: #8a6d3b; padding: 10px; border-radius: 5px; margin: 10px; font-size: 14px; border: 1px solid #faebcc; }
+  .legal-target { box-shadow: 0 0 15px #00ff00 !important; border: 2px solid #00ff00 !important; }
+  .error-msg { color: #ff9999; font-weight: bold; margin-top: 5px; min-height: 20px; }
+</style>
+
+<script>
+function playCard(cIdx) {
+  let card = columns[cIdx][columns[cIdx].length - 1];
+  let diff = Math.abs(card - wasteCard);
+  
+  // SÄÄNTÖ: Pitää olla eroa tasan 1 (tai Kuningas-Ässä kierto)
+  const isLegal = (diff === 1 || (wasteCard === 13 && card === 1) || (wasteCard === 1 && card === 13));
+
+  if (isLegal) {
+    wasteCard = columns[cIdx].pop();
+    updateError("");
+    drawTable();
+    checkWin();
+  } else {
+    updateError(`Virhe: ${getRankName(card)} ei sovi kortin ${getRankName(wasteCard)} päälle. Etsi kortti, joka on ${getRankName(wasteCard-1 === 0 ? 13 : wasteCard-1)} tai ${getRankName(wasteCard+1 === 14 ? 1 : wasteCard+1)}.`);
+  }
+}
+
+function updateError(msg) {
+  document.getElementById("error-display").innerText = msg;
+}
+
+// Opettajan vinkki-logiikka drawTableen:
+// Lisää drawTable-funktioon tarkistus, joka korostaa vihreällä ne kortit sarakkeiden päissä, 
+// jotka voi siirtää wasteCardin päälle.
+</script>
