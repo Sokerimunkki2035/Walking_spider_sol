@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scorpio Solitaire</title>
+  <style>
+    body { font-family: sans-serif; background: #0d4a3a; color: white; text-align: center; margin: 0; padding: 5px; }
+    .controls { padding: 5px; }
+    button { padding: 8px; margin: 3px; background: #2a8b6f; color: white; border: none; border-radius: 4px; font-size: 12px; }
+    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .card { background: white; color: black; border: 1px solid #333; border-radius: 3px; 
+            height: 50px; margin-bottom: -35px; font-size: 12px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; position: relative; }
+    .card.face-down { background: #1a5f4a; color: transparent; }
+    .card.selected { outline: 2px solid yellow; z-index: 10; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="initScorpio()">Uusi Scorpio</button>
+    <button onclick="location.href='index.html'">Takaisin</button>
+  </div>
+  <div id="table"></div>
+<script>
+let columns = [], selected = null;
+function initScorpio() {
+  let deck = [];
+  for(let r=1; r<=13; r++) for(let s=0; s<4; s++) deck.push({rank:r, faceUp:false});
+  deck.sort(() => Math.random() - 0.5);
+  columns = Array.from({length:7}, () => []);
+  for(let i=0; i<52; i++) {
+    let card = deck.pop();
+    // Kolme ensimmäistä saraketta: 3 ekaa korttia piilossa, loput auki. Muut kaikki auki.
+    let colIdx = i % 7;
+    let rowIdx = Math.floor(i / 7);
+    if(colIdx < 3 && rowIdx < 3) card.faceUp = false; else card.faceUp = true;
+    columns[colIdx].push(card);
+  }
+  draw();
+}
+function draw() {
+  const t = document.getElementById("table"); t.innerHTML = "";
+  columns.forEach((col, c) => {
+    let d = document.createElement("div");
+    col.forEach((card, r) => {
+      let cDiv = document.createElement("div");
+      cDiv.className = "card" + (card.faceUp ? "" : " face-down");
+      if(selected && selected.c === c && r >= selected.r) cDiv.classList.add("selected");
+      if(card.faceUp) {
+        cDiv.innerText = (card.rank === 1 ? 'A' : card.rank === 11 ? 'J' : card.rank === 12 ? 'Q' : card.rank === 13 ? 'K' : card.rank) + "♠";
+        cDiv.onclick = (e) => { e.stopPropagation(); click(c, r); };
+      }
+      d.appendChild(cDiv);
+    });
+    d.onclick = () => clickCol(c);
+    t.appendChild(d);
+  });
+}
+function click(c, r) {
+  if(!selected) { selected = {c, r}; } 
+  else { move(c); }
+  draw();
+}
+function clickCol(c) { if(selected) move(c); draw(); }
+function move(toC) {
+  let fromC = selected.c, fromR = selected.r;
+  let card = columns[fromC][fromR];
+  let targetCol = columns[toC];
+  let can = targetCol.length === 0 ? card.rank === 13 : targetCol[targetCol.length-1].rank === card.rank + 1;
+  if(can && fromC !== toC) {
+    let moved = columns[fromC].splice(fromR);
+    columns[toC] = columns[toC].concat(moved);
+    if(columns[fromC].length > 0) {
+      let last = columns[fromC][columns[fromC].length-1];
+      if(!last.faceUp) last.faceUp = true;
+    }
+  }
+  selected = null;
+}
+initScorpio();
+</script>
+</body>
+</html>
