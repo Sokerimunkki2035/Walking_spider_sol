@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <title>Peliportti & Kävelyhaaste</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a1a;
+      color: white;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #2d2d2d;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .timer {
+      font-size: 48px;
+      font-weight: bold;
+      color: #00ffcc;
+      margin: 20px 0;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background: #2a8b6f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:disabled { background: #444; cursor: not-allowed; }
+    .game-menu { display: none; margin-top: 30px; }
+    .game-card {
+      background: #3d3d3d;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 8px;
+      display: inline-block;
+      width: 120px;
+      cursor: pointer;
+    }
+    .game-card:hover { background: #4d4d4d; }
+    #quiz { display: none; }
+    select { padding: 10px; width: 100%; margin: 10px 0; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Tervetuloa Pelaamaan!</h1>
+  
+  <div id="walk-section">
+    <p>Suorita päivittäinen kävely avataksesi pelit.</p>
+    <select id="time-select">
+      <option value="180">3 minuuttia</option>
+      <option value="300">5 minuuttia</option>
+      <option value="420">7 minuuttia</option>
+    </select>
+    <div class="timer" id="timer-display">00:00</div>
+    <button id="start-btn" onclick="startWalk()">Aloita kävely</button>
+  </div>
+
+  <div id="quiz">
+    <h3>Hienoa työtä! Vastaa vielä lyhyesti:</h3>
+    <label>Miten menee?</label>
+    <select id="q1">
+      <option>Hyvin</option>
+      <option>Menettelee</option>
+      <option>Väsyttää</option>
+    </select>
+    <label>Mistä päin maailmaa olet?</label>
+    <select id="q2">
+      <option>Suomi</option>
+      <option>Eurooppa</option>
+      <option>Muu maailma</option>
+    </select>
+    <label>Onko hyvä fiilis?</label>
+    <select id="q3">
+      <option>Kyllä!</option>
+      <option>Ei vielä</option>
+      <option>Tulossa on</option>
+    </select>
+    <br><br>
+    <button onclick="submitQuiz()">Avaa pelit</button>
+  </div>
+
+  <div id="game-menu" class="game-menu">
+    <h2>Pelit avattu! 🎮</h2>
+    <div class="game-card" onclick="location.href='spider.html'">Spider</div>
+    <div class="game-card" onclick="alert('Tulossa pian!')">Scorpio</div>
+    <div class="game-card" onclick="alert('Tulossa pian!')">Golf</div>
+    <br><br>
+    <button onclick="resetDay()" style="background:#8b2a2a; font-size:12px;">Nollaa päivä (testausta varten)</button>
+  </div>
+</div>
+
+<script>
+let timerInterval;
+let timeLeft;
+
+// Tarkista onko päivä jo suoritettu
+window.onload = function() {
+  if (localStorage.getItem('walkDone') === 'true') {
+    showGames();
+  }
+};
+
+function startWalk() {
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('time-select').disabled = true;
+  timeLeft = parseInt(document.getElementById('time-select').value);
+  
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      showQuiz();
+    }
+  }, 1000);
+}
+
+function updateDisplay() {
+  let mins = Math.floor(timeLeft / 60);
+  let secs = timeLeft % 60;
+  document.getElementById('timer-display').innerText = 
+    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function showQuiz() {
+  document.getElementById('walk-section').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+}
+
+function submitQuiz() {
+  // Tässä kohdassa voisit lähettää vastaukset tietokantaan, jos haluat.
+  localStorage.setItem('walkDone', 'true');
+  localStorage.setItem('walkDate', new Date().toLocaleDateString());
+  showGames();
+}
+
+function showGames() {
+  document.getElementById('walk-section').style.display = 'none';
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('game-menu').style.display = 'block';
+}
+
+function resetDay() {
+  localStorage.clear();
+  location.reload();
+}
+</script>
+
+</body>
+</html>
