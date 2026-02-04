@@ -169,7 +169,7 @@
 
   let columns = [];
   let moves = 0;
-
+let undoStack = []; // UNDO-historia (viimeisin viimeisenä)
   // dragged stack info (for drag/drop)
   let dragged = null; // {fromCol, startIndex, count}
 
