@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scorpio - Opettaja</title>
+  <style>
+    body { font-family: sans-serif; background: #0d4a3a; color: white; text-align: center; margin: 0; }
+    button { padding: 8px; margin: 5px; background: #2a8b6f; color: white; border: none; border-radius: 4px; }
+    #msg { background: rgba(0,0,0,0.5); padding: 10px; font-size: 13px; color: #00ffcc; min-height: 35px; }
+    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 5px; }
+    .card { background: white; color: black; border: 1px solid #333; border-radius: 3px; height: 50px; margin-bottom: -35px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; position: relative; }
+    .face-down { background: #1a5f4a; color: transparent; }
+    .selected { outline: 3px solid yellow; z-index: 10; transform: scale(1.1); }
+    /* Opettajan kohdeapu */
+    .target-hint { outline: 3px solid #00ff00; }
+  </style>
+</head>
+<body>
+  <button onclick="initScorpio()">Uusi Scorpio</button> <button onclick="location.href='index.html'">Takaisin</button>
+  <div id="msg">Opettaja: Klikkaa korttia siirtääksesi sen (ja sen alla olevat) yhtä suuremman päälle.</div>
+  <div id="table"></div>
+<script>
+let columns = [], selected = null;
+function initScorpio() {
+  let deck = []; for(let r=1; r<=13; r++) for(let s=0; s<4; s++) deck.push({rank:r, faceUp:false});
+  deck.sort(() => Math.random() - 0.5);
+  columns = Array.from({length:7}, () => []);
+  for(let i=0; i<52; i++) {
+    let card = deck.pop(); let colIdx = i % 7; let rowIdx = Math.floor(i/7);
+    card.faceUp = (colIdx < 3 && rowIdx < 3) ? false : true;
+    columns[colIdx].push(card);
+  }
+  selected = null; draw();
+}
+function draw() {
+  const t = document.getElementById("table"); t.innerHTML = "";
+  columns.forEach((col, c) => {
+    let d = document.createElement("div"); d.onclick = () => handleColClick(c);
+    col.forEach((card, r) => {
+      let cDiv = document.createElement("div"); cDiv.className = "card" + (card.faceUp ? "" : " face-down");
+      if(selected && selected.c === c && r >= selected.r) cDiv.classList.add("selected");
+      // OPETTAJA: Jos joku on valittu, näytetäänkö vihreällä mihin se sopii?
+      if(selected && card.faceUp && r === col.length - 1 && card.rank === columns[selected.c][selected.r].rank + 1) {
+        cDiv.classList.add("target-hint");
+      }
+      if(card.faceUp) {
+        cDiv.innerText = getRankName(card.rank) + "♠";
+        cDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(c, r); };
+      }
+      d.appendChild(cDiv);
+    });
+    t.appendChild(d);
+  });
+}
+function handleCardClick(c, r) {
+  if(!selected) { selected = {c, r}; } 
+  else { tryMove(c); }
+  draw();
+}
+function handleColClick(c) { if(selected) tryMove(c); draw(); }
+function tryMove(toC) {
+  let fromC = selected.c, fromR = selected.r;
+  let card = columns[fromC][fromR];
+  let target = columns[toC];
+  let can = (target.length === 0) ? card.rank === 13 : target[target.length-1].rank === card.rank + 1;
+  if(can && fromC !== toC) {
+    columns[toC] = columns[toC].concat(columns[fromC].splice(fromR));
+    if(columns[fromC].length > 0) columns[fromC][columns[fromC].length-1].faceUp = true;
+    document.getElementById("msg").innerText = "Opettaja: Loistava siirto!";
+  } else {
+    document.getElementById("msg").innerText = "Opettaja: Ei onnistu. Etsi kortti " + getRankName(card.rank+1) + " tai tyhjä paikka Kuninkaalle.";
+  }
+  selected = null;
+}
+function getRankName(r) { return {1:'A', 11:'J', 12:'Q', 13:'K'}[r] || r; }
+initScorpio();
+</script>
+</body>
+</html>
