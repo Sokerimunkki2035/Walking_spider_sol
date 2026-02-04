@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peliportti</title>
+  
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
+
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 20px; }
+    .container { max-width: 500px; margin: 0 auto; background: #2d2d2d; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .timer { font-size: 48px; font-weight: bold; color: #00ffcc; margin: 20px 0; }
+    button { padding: 15px 24px; font-size: 18px; background: #2a8b6f; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
+    button:active { transform: scale(0.98); }
+    .game-menu { display: none; margin-top: 20px; }
+    .game-card { background: #3d3d3d; padding: 15px; margin: 10px; border-radius: 8px; display: inline-block; width: 110px; cursor: pointer; border: 1px solid #555; font-weight: bold; }
+    .game-card:active { background: #444; }
+    #quiz { display: none; }
+    select { padding: 12px; width: 100%; margin: 10px 0; border-radius: 5px; background: #444; color: white; border: 1px solid #666; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Tervetuloa Pelaamaan!</h1>
+  
+  <div id="walk-section">
+    <p>Suorita päivittäinen kävely avataksesi pelit.</p>
+    <div class="timer" id="timer-display">00:00</div>
+    <button id="start-btn" onclick="startWalk()">Aloita kävely (2s testi)</button>
+  </div>
+
+  <div id="quiz">
+    <h3>Hienoa työtä!</h3>
+    <p>Vastaa kysymyksiin niin pelit aukeavat:</p>
+    <select id="q1"><option>Fiilis: Hyvä</option><option>Menettelee</option></select>
+    <select id="q2"><option>Sijainti: Suomi</option><option>Muu maailma</option></select>
+    <button onclick="submitQuiz()">Avaa pelit</button>
+  </div>
+
+  <div id="game-menu" class="game-menu">
+    <h2>Pelit avattu! 🎮</h2>
+    <div class="game-card" onclick="location.href='spider.html'">Spider</div>
+    <div class="game-card" onclick="location.href='scorpio.html'">Scorpio</div>
+    <div class="game-card" onclick="location.href='golf.html'">Golf</div>
+    <br><br>
+    <button onclick="localStorage.clear(); location.reload();" style="background:#8b2a2a; font-size:12px;">Nollaa päivä (testausta varten)</button>
+  </div>
+</div>
+
+<script>
+window.onload = function() {
+  if (localStorage.getItem('walkDone') === 'true') showGames();
+};
+
+function startWalk() {
+  document.getElementById('start-btn').disabled = true;
+  let timeLeft = 2; 
+  let timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer-display').innerText = "00:0" + (timeLeft < 0 ? 0 : timeLeft);
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      showQuiz();
+    }
+  }, 1000);
+}
+
+function showQuiz() {
+  document.getElementById('walk-section').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+}
+
+function submitQuiz() {
+  localStorage.setItem('walkDone', 'true');
+  showGames();
+}
+
+function showGames() {
+  document.getElementById('walk-section').style.display = 'none';
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('game-menu').style.display = 'block';
+}
+</script>
+</body>
+</html>
