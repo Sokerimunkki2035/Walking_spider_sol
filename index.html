@@ -3,87 +3,100 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spider Solitaire - Eri tasot</title>
-    
+    <title>Spider - Lypsylehmä Edition</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
-
     <style>
-        body { font-family: sans-serif; background: #006633; color: white; margin: 0; text-align: center; }
-        .nav-bar { background: rgba(0,0,0,0.5); padding: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .back-btn { background: #444; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 14px; font-weight: bold; }
-        .difficulty-select { padding: 8px; border-radius: 5px; background: white; color: black; font-weight: bold; }
-        #game-info { margin: 10px; font-size: 14px; color: #ccffcc; }
-        #board { display: flex; justify-content: center; gap: 5px; padding: 10px; flex-wrap: wrap; }
-        .placeholder { width: 40px; height: 60px; border: 1px dashed #ffffff55; border-radius: 4px; }
+        body { font-family: sans-serif; background: #006633; color: white; margin: 0; text-align: center; overflow-x: hidden; }
+        .nav-bar { background: rgba(0,0,0,0.8); padding: 10px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .back-btn { background: #444; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-size: 14px; border: none; cursor: pointer; }
+        .difficulty-select { padding: 8px; border-radius: 5px; font-weight: bold; }
+        
+        /* Korttien asettelu */
+        #game-board { 
+            display: grid; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 2px; 
+            padding: 10px; 
+            margin-top: 20px;
+            min-height: 400px;
+        }
+        .card { 
+            background: white; 
+            color: black; 
+            border: 1px solid #000; 
+            border-radius: 4px; 
+            height: 60px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            margin-bottom: -40px; /* Pinoamisvaikutus */
+        }
+        .red { color: red; }
     </style>
 </head>
 <body>
 
 <div class="nav-bar">
-    <a href="index.html" class="back-btn">← Valikkoon</a>
-    <div>
-        <select class="difficulty-select" id="diffSelect" onchange="startGame()">
-            <option value="1">1 Maa (Helppo)</option>
-            <option value="2">2 Maata (Keskitaso)</option>
-            <option value="4">4 Maata (Vaikea)</option>
-        </select>
-    </div>
+    <button class="back-btn" onclick="location.href='index.html'">← Valikkoon</button>
+    <select class="difficulty-select" id="diffSelect" onchange="startGame()">
+        <option value="1">1 Maa (♠)</option>
+        <option value="2">2 Maata (♠♥)</option>
+        <option value="4">4 Maata (♠♥♣♦)</option>
+    </select>
 </div>
 
-<div id="game-info">Peli päivittyy, kun vaihdat tasoa.</div>
+<div id="status" style="padding: 10px; font-size: 14px;">Valitse taso aloittaaksesi...</div>
 
-<div style="margin: 10px 0;">
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-7652525244986434"
-         data-ad-slot="auto"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-</div>
-
-<div id="board">
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-    <div class="placeholder"></div>
-</div>
+<div id="game-board"></div>
 
 <script>
-// TÄSSÄ ON SE FUNKTIO, JOTA KYSYIT:
-function createDeck(difficulty) {
-    let suits;
-    if (difficulty == 1) suits = ['♠', '♠', '♠', '♠']; 
-    else if (difficulty == 2) suits = ['♠', '♥', '♠', '♥']; 
-    else suits = ['♠', '♥', '♣', '♦']; 
-
-    let newDeck = [];
-    for (let p = 0; p < 2; p++) {
-        for (let s of suits) {
-            for (let r = 1; r <= 13; r++) {
-                newDeck.push({ rank: r, suit: s });
-            }
-        }
-    }
-    return newDeck.sort(() => Math.random() - 0.5);
-}
+const suits = ['♠', '♥', '♣', '♦'];
+const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
 function startGame() {
-    const diff = document.getElementById('diffSelect').value;
-    const deck = createDeck(diff);
+    const diff = parseInt(document.getElementById('diffSelect').value);
+    const board = document.getElementById('game-board');
+    const status = document.getElementById('status');
+    board.innerHTML = '';
     
-    document.getElementById('game-info').innerText = 
-        "Uusi peli aloitettu (" + diff + " maata). Pakassa " + deck.length + " korttia.";
-    
-    console.log("Kortit arvottu:", deck);
-    // Tässä kohtaa varsinainen pelilogiikka jakaisi kortit pinoihin.
+    // Luodaan pakka
+    let activeSuits = suits.slice(0, diff);
+    if(diff === 1) activeSuits = ['♠', '♠', '♠', '♠'];
+    if(diff === 2) activeSuits = ['♠', '♥', '♠', '♥'];
+
+    let deck = [];
+    for(let i=0; i<8; i++) { // 104 korttia yhteensä
+        activeSuits.forEach(s => {
+            ranks.forEach(r => deck.push({r, s}));
+        });
+    }
+    deck.sort(() => Math.random() - 0.5);
+
+    // Luodaan 10 saraketta
+    const columns = Array.from({ length: 10 }, () => []);
+    for(let i=0; i<54; i++) { // Jaetaan alkukortit
+        columns[i % 10].push(deck.pop());
+    }
+
+    // Piirretään sarakkeet
+    columns.forEach(col => {
+        const colDiv = document.createElement('div');
+        col.forEach(card => {
+            const cDiv = document.createElement('div');
+            cDiv.className = 'card' + (card.s === '♥' || card.s === '♦' ? ' red' : '');
+            cDiv.innerHTML = `<div>${card.r}</div><div>${card.s}</div>`;
+            colDiv.appendChild(cDiv);
+        });
+        board.appendChild(colDiv);
+    });
+
+    status.innerText = `Uusi peli (${diff} maata). Pakassa ${deck.length} korttia jäljellä.`;
 }
 
-// Aloitetaan peli heti kun sivu latautuu
+// Käynnistä automaattisesti
 window.onload = startGame;
 </script>
 
