@@ -66,13 +66,17 @@
             margin-bottom: -40px;
             cursor: grab;
             position: relative;
+            transition: background-color 0.2s;
         }
         .red {
             color: red;
         }
+        .card.hovered {
+            background-color: #ffcccc; /* Vaaleanpunainen korostus */
+        }
         .card.dragging {
             z-index: 1000;
-            opacity: 0.8;
+            opacity: 0.9;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
     </style>
@@ -133,6 +137,8 @@
                 cDiv.innerHTML = `<div>${card.r}</div><div>${card.s}</div>`;
                 cDiv.draggable = true;
                 cDiv.addEventListener('mousedown', startDrag);
+                cDiv.addEventListener('mouseenter', () => cDiv.classList.add('hovered'));
+                cDiv.addEventListener('mouseleave', () => cDiv.classList.remove('hovered'));
                 colDiv.appendChild(cDiv);
             });
             board.appendChild(colDiv);
@@ -146,6 +152,8 @@
         draggedCard.classList.add('dragging');
         offsetX = e.clientX - draggedCard.getBoundingClientRect().left;
         offsetY = e.clientY - draggedCard.getBoundingClientRect().top;
+        draggedCard.style.position = 'absolute';
+        draggedCard.style.zIndex = 1000;
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', endDrag);
     }
@@ -154,7 +162,6 @@
         if (draggedCard) {
             draggedCard.style.left = (e.clientX - offsetX) + 'px';
             draggedCard.style.top = (e.clientY - offsetY) + 'px';
-            draggedCard.style.position = 'absolute';
         }
     }
 
