@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spider Solitaire (3–4 maata)</title>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #006633;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        #game-board {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .column {
+            margin: 0 5px;
+            min-width: 80px;
+        }
+        .card {
+            background: white;
+            color: black;
+            border: 1px solid #000;
+            border-radius: 5px;
+            width: 80px;
+            height: 120px;
+            margin-bottom: -80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .card.draggable {
+            cursor: grab;
+        }
+        .card.red {
+            color: red;
+        }
+        .card:hover {
+            background: #ffcccc; /* Korostus kosketettaessa */
+        }
+        #ad-space {
+            margin: 20px auto;
+            width: 728px;
+            height: 90px;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spider Solitaire (3–4 maata)</h1>
+    <div id="ad-space">
+        <!-- Google AdSense mainos tulee tähän -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:728px;height:90px"
+             data-ad-client="ca-pub-7652525244986434"
+             data-ad-slot="1234567890"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+    <div id="game-board"></div>
+
+    <script>
+        // Korttipakka
+        const suits = ['♠', '♥', '♣', '♦'];
+        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // Pelilaudan alustus
+        function initGame(suitsCount = 4) {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+
+            // Luodaan pakka (esimerkiksi 4 maata)
+            let deck = [];
+            for (let i = 0; i < suitsCount; i++) {
+                for (const rank of ranks) {
+                    deck.push({ rank, suit: suits[i] });
+                }
+            }
+
+            // Sekoitetaan pakka
+            deck.sort(() => Math.random() - 0.5);
+
+            // Jaetaan kortit 10 sarakkeeseen
+            const columns = Array.from({ length: 10 }, () => []);
+            for (let i = 0; i < 54; i++) {
+                columns[i % 10].push(deck.pop());
+            }
+
+            // Piirretään pelilauta
+            columns.forEach((col, colIndex) => {
+                const columnElement = document.createElement('div');
+                columnElement.className = 'column';
+                columnElement.dataset.column = colIndex;
+
+                col.forEach((card, cardIndex) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = `card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''}`;
+                    cardElement.textContent = `${card.rank}\n${card.suit}`;
+                    cardElement.dataset.rank = card.rank;
+                    cardElement.dataset.suit = card.suit;
+                    cardElement.dataset.column = colIndex;
+                    cardElement.dataset.index = cardIndex;
+                    cardElement.draggable = true;
+
+                    // Lisätään tapahtumankäsittelijät
+                    cardElement.addEventListener('dragstart', handleDragStart);
+                    columnElement.appendChild(cardElement);
+                });
+
+                board.appendChild(columnElement);
+            });
+        }
+
+        // Raahaamisen aloitus
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.index);
+            e.target.classList.add('dragging');
+        }
+
+        // Korttien siirtämisen logiikka
+        function handleDrop(e) {
+            e.preventDefault();
+            const draggedIndex = e.dataTransfer.getData('text/plain');
+            const draggedCard = document.querySelector(`.card[data-index="${draggedIndex}"]`);
+            const targetColumn = e.currentTarget;
+
+            // Tarkistetaan, voidaanko kortti siirtää
+            if (canMoveCard(draggedCard, targetColumn)) {
+                targetColumn.appendChild(draggedCard);
+            }
+
+            draggedCard.classList.remove('dragging');
+        }
+
+        // Tarkistetaan, voidaanko kortti siirtää
+        function canMoveCard(card, targetColumn) {
+            const targetCard = targetColumn.lastElementChild;
+            if (!targetCard) return true; // Tyhjään sarakkeeseen voi aina siirtää
+
+            // Tarkistetaan, että maat ovat samat ja järjestys laskeva
+            return (
+                card.dataset.suit === targetCard.dataset.suit &&
+                getRankValue(card.dataset.rank) === getRankValue(targetCard.dataset.rank) - 1
+            );
+        }
+
+        // Muuttaa kortin arvon numeeriseksi (A=1, J=11, Q=12, K=13)
+        function getRankValue(rank) {
+            if (rank === 'A') return 1;
+            if (rank === 'J') return 11;
+            if (rank === 'Q') return 12;
+            if (rank === 'K') return 13;
+            return parseInt(rank);
+        }
+
+        // Aloita peli (esimerkiksi 4 maalla)
+        window.onload = () => initGame(4);
+    </script>
+</body>
+</html>
