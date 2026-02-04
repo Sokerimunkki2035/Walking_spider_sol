@@ -6,35 +6,75 @@
     <title>Spider - Lypsylehmä Edition</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
     <style>
-        body { font-family: sans-serif; background: #006633; color: white; margin: 0; text-align: center; overflow-x: hidden; }
-        .nav-bar { background: rgba(0,0,0,0.8); padding: 10px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .back-btn { background: #444; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-size: 14px; border: none; cursor: pointer; }
-        .difficulty-select { padding: 8px; border-radius: 5px; font-weight: bold; }
-        
+        body {
+            font-family: sans-serif;
+            background: #006633;
+            color: white;
+            margin: 0;
+            text-align: center;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        .nav-bar {
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn {
+            background: #444;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+        .difficulty-select {
+            padding: 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
         /* Korttien asettelu */
-        #game-board { 
-            display: grid; 
-            grid-template-columns: repeat(10, 1fr); 
-            gap: 2px; 
-            padding: 10px; 
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 2px;
+            padding: 10px;
             margin-top: 20px;
             min-height: 400px;
+            position: relative;
         }
-        .card { 
-            background: white; 
-            color: black; 
-            border: 1px solid #000; 
-            border-radius: 4px; 
-            height: 60px; 
-            font-size: 12px; 
-            font-weight: bold; 
-            display: flex; 
-            flex-direction: column; 
+        .card {
+            background: white;
+            color: black;
+            border: 1px solid #000;
+            border-radius: 4px;
+            height: 60px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
             justify-content: flex-start;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            margin-bottom: -40px; /* Pinoamisvaikutus */
+            margin-bottom: -40px;
+            cursor: grab;
+            position: relative;
         }
-        .red { color: red; }
+        .red {
+            color: red;
+        }
+        .card.dragging {
+            z-index: 1000;
+            opacity: 0.8;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
@@ -53,51 +93,85 @@
 <div id="game-board"></div>
 
 <script>
-const suits = ['♠', '♥', '♣', '♦'];
-const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    const suits = ['♠', '♥', '♣', '♦'];
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-function startGame() {
-    const diff = parseInt(document.getElementById('diffSelect').value);
-    const board = document.getElementById('game-board');
-    const status = document.getElementById('status');
-    board.innerHTML = '';
-    
-    // Luodaan pakka
-    let activeSuits = suits.slice(0, diff);
-    if(diff === 1) activeSuits = ['♠', '♠', '♠', '♠'];
-    if(diff === 2) activeSuits = ['♠', '♥', '♠', '♥'];
+    let draggedCard = null;
+    let offsetX, offsetY;
 
-    let deck = [];
-    for(let i=0; i<8; i++) { // 104 korttia yhteensä
-        activeSuits.forEach(s => {
-            ranks.forEach(r => deck.push({r, s}));
+    function startGame() {
+        const diff = parseInt(document.getElementById('diffSelect').value);
+        const board = document.getElementById('game-board');
+        const status = document.getElementById('status');
+        board.innerHTML = '';
+
+        // Luodaan pakka
+        let activeSuits = suits.slice(0, diff);
+        if(diff === 1) activeSuits = ['♠', '♠', '♠', '♠'];
+        if(diff === 2) activeSuits = ['♠', '♥', '♠', '♥'];
+
+        let deck = [];
+        for(let i=0; i<8; i++) {
+            activeSuits.forEach(s => {
+                ranks.forEach(r => deck.push({r, s}));
+            });
+        }
+        deck.sort(() => Math.random() - 0.5);
+
+        // Luodaan 10 saraketta
+        const columns = Array.from({ length: 10 }, () => []);
+        for(let i=0; i<54; i++) {
+            columns[i % 10].push(deck.pop());
+        }
+
+        // Piirretään sarakkeet
+        columns.forEach(col => {
+            const colDiv = document.createElement('div');
+            col.forEach(card => {
+                const cDiv = document.createElement('div');
+                cDiv.className = 'card' + (card.s === '♥' || card.s === '♦' ? ' red' : '');
+                cDiv.innerHTML = `<div>${card.r}</div><div>${card.s}</div>`;
+                cDiv.draggable = true;
+                cDiv.addEventListener('mousedown', startDrag);
+                colDiv.appendChild(cDiv);
+            });
+            board.appendChild(colDiv);
         });
-    }
-    deck.sort(() => Math.random() - 0.5);
 
-    // Luodaan 10 saraketta
-    const columns = Array.from({ length: 10 }, () => []);
-    for(let i=0; i<54; i++) { // Jaetaan alkukortit
-        columns[i % 10].push(deck.pop());
+        status.innerText = `Uusi peli (${diff} maata). Pakassa ${deck.length} korttia jäljellä.`;
     }
 
-    // Piirretään sarakkeet
-    columns.forEach(col => {
-        const colDiv = document.createElement('div');
-        col.forEach(card => {
-            const cDiv = document.createElement('div');
-            cDiv.className = 'card' + (card.s === '♥' || card.s === '♦' ? ' red' : '');
-            cDiv.innerHTML = `<div>${card.r}</div><div>${card.s}</div>`;
-            colDiv.appendChild(cDiv);
-        });
-        board.appendChild(colDiv);
-    });
+    function startDrag(e) {
+        draggedCard = e.target;
+        draggedCard.classList.add('dragging');
+        offsetX = e.clientX - draggedCard.getBoundingClientRect().left;
+        offsetY = e.clientY - draggedCard.getBoundingClientRect().top;
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag);
+    }
 
-    status.innerText = `Uusi peli (${diff} maata). Pakassa ${deck.length} korttia jäljellä.`;
-}
+    function drag(e) {
+        if (draggedCard) {
+            draggedCard.style.left = (e.clientX - offsetX) + 'px';
+            draggedCard.style.top = (e.clientY - offsetY) + 'px';
+            draggedCard.style.position = 'absolute';
+        }
+    }
 
-// Käynnistä automaattisesti
-window.onload = startGame;
+    function endDrag() {
+        if (draggedCard) {
+            draggedCard.classList.remove('dragging');
+            draggedCard.style.position = 'static';
+            draggedCard.style.left = 'auto';
+            draggedCard.style.top = 'auto';
+        }
+        draggedCard = null;
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', endDrag);
+    }
+
+    // Käynnistä automaattisesti
+    window.onload = startGame;
 </script>
 
 </body>
