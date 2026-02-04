@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scorpio - Koko Pino Näkyvissä</title>
+  <style>
+    body { font-family: sans-serif; background: #0d4a3a; color: white; text-align: center; margin: 0; padding: 5px; touch-action: manipulation; }
+    .controls { padding: 5px; display: flex; justify-content: space-around; }
+    button { padding: 10px; background: #2a8b6f; color: white; border: none; border-radius: 5px; font-weight: bold; }
+    
+    #msg { background: rgba(0,0,0,0.5); padding: 8px; font-size: 12px; color: #00ffcc; min-height: 30px; margin-bottom: 5px; border-radius: 5px; }
+    
+    #table { 
+      display: grid; 
+      grid-template-columns: repeat(7, 1fr); 
+      gap: 2px; 
+      padding: 5px; 
+      align-items: start;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+
+    .card { 
+      background: white; 
+      color: black; 
+      border: 1px solid #333; 
+      border-radius: 3px; 
+      height: 45px; /* Kortin korkeus */
+      margin-bottom: -32px; /* TÄMÄ tuo koko pinon näkyviin limitettynä */
+      font-size: 13px; 
+      font-weight: bold; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: flex-start;
+      padding-top: 2px;
+      position: relative; 
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+    }
+
+    .face-down { 
+      background: #1a5f4a; 
+      color: transparent; 
+      background-image: repeating-linear-gradient(45deg, #165240, #165240 5px, #1a5f4a 5px, #1a5f4a 10px);
+    }
+
+    .selected { 
+      background: #ffffcc !important;
+      outline: 3px solid yellow; 
+      z-index: 100; 
+      transform: translateY(-5px); 
+    }
+
+    /* Opettajan kohdeapu */
+    .target-hint { 
+      outline: 3px solid #00ff00; 
+      z-index: 50;
+    }
+
+    .suit { font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="initScorpio()">Uusi Peli</button>
+    <button onclick="location.href='index.html'">Valikkoon</button>
+  </div>
+  <div id="msg">Valitse kortti siirtääksesi pinon.</div>
+  <div id="table"></div>
+
+<script>
+let columns = [], selected = null;
+const suits = ['♠', '♣', '♥', '♦'];
+
+function initScorpio() {
+  let deck = [];
+  // Luodaan 52 korttia (4 maata, 13 arvoa)
+  for(let s=0; s<4; s++) {
+    for(let r=1; r<=13; r++) {
+      deck.push({rank: r, suit: suits[s], faceUp: false});
+    }
+  }
+  
+  deck.sort(() => Math.random() - 0.5);
+  
+  columns = Array.from({length: 7}, () => []);
+  for(let i=0; i<52; i++) {
+    let card = deck.pop();
+    let colIdx = i % 7;
+    let rowIdx = Math.floor(i / 7);
+    // Kolme ensimmäistä saraketta: ekat 3 korttia piilossa
+    card.faceUp = (colIdx < 3 && rowIdx < 3) ? false : true;
+    columns[colIdx].push(card);
+  }
+  selected = null;
+  draw();
+}
+
+function draw() {
+  const t = document.getElementById("table");
+  t.innerHTML = "";
+  
+  columns.forEach((col, c) => {
+    let colDiv = document.createElement("div");
+    colDiv.className = "column";
+    colDiv.onclick = () => handleColClick(c);
+    
+    col.forEach((card, r) => {
+      let cDiv = document.createElement("div");
+      cDiv.className = "card" + (card.faceUp ? "" : " face-down");
+      
+      if(selected && selected.c === c && r >= selected.r) {
+        cDiv.classList.add("selected");
+      }
+
+      // OPETTAJA: Näytetään vihreä reuna, jos kortti on sopiva kohde valitulle pinolle
+      if(selected && card.faceUp && r === col.length - 1) {
+        let selCard = columns[selected.c][selected.r];
+        if(card.rank === selCard.rank + 1 && card.suit === selCard.suit) {
+          cDiv.classList.add("target-hint");
+        }
+      }
+      
+      if(card.faceUp) {
+        let rankName = getRankName(card.rank);
+        cDiv.innerHTML = `<span>${rankName}</span><span class="suit">${card.suit}</span>`;
+        if(card.suit === '♥' || card.suit === '♦') cDiv.style.color = "red";
+        
+        cDiv.onclick = (e) => {
+          e.stopPropagation();
+          handleCardClick(c, r);
+        };
+      }
+      colDiv.appendChild(cDiv);
+    });
+    t.appendChild(colDiv);
+  });
+}
+
+function handleCardClick(c, r) {
+  if(!selected) {
+    selected = {c, r};
+  } else {
+    tryMove(c);
+  }
+  draw();
+}
+
+function handleColClick(c) {
+  if(selected) tryMove(c);
+  draw();
+}
+
+function tryMove(toC) {
+  let fromC = selected.c, fromR = selected.r;
+  let card = columns[fromC][fromR];
+  let targetCol = columns[toC];
+  
+  let canMove = false;
+  if(targetCol.length === 0) {
+    if(card.rank === 13) canMove = true; // Vain Kuningas tyhjään
+    else updateMsg("Vain Kuningas (K) voi mennä tyhjään paikkaan!");
+  } else {
+    let lastTarget = targetCol[targetCol.length - 1];
+    if(lastTarget.rank === card.rank + 1 && lastTarget.suit === card.suit) {
+      canMove = true;
+    } else {
+      updateMsg("Väärä kortti! Etsi " + getRankName(card.rank + 1) + card.suit);
+    }
+  }
+
+  if(canMove && fromC !== toC) {
+    let movedCards = columns[fromC].splice(fromR);
+    columns[toC] = columns[toC].concat(movedCards);
+    
+    // Käännetään uusi ylin kortti auki
+    if(columns[fromC].length > 0) {
+      columns[fromC][columns[fromC].length - 1].faceUp = true;
+    }
+    updateMsg("Hieno siirto!");
+    checkWin(toC);
+  }
+  selected = null;
+}
+
+function updateMsg(m) { document.getElementById("msg").innerText = m; }
+
+function getRankName(r) {
+  return {1:'A', 11:'J', 12:'Q', 13:'K'}[r] || r;
+}
+
+function checkWin(cIdx) {
+  // Scorpio voitettaessa sarja K-A poistuu tai peli loppuu kun kaikki on järjestyksessä
+  // (Yksinkertaistettu versio: ei automaattista poistoa tässä)
+}
+
+initScorpio();
+</script>
+</body>
+</html>
