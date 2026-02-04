@@ -147,6 +147,7 @@
     <button class="btn primary" onclick="initGame(2)">Uusi peli (2 maata)</button>
     <button class="btn" onclick="initGame(3)">Uusi peli (3 maata)</button>
     <button class="btn" onclick="initGame(4)">Uusi peli (4 maata)</button>
+    <button class="btn" onclick="undoMove()">↩ Undo</button>
     <div class="pill">Siirrot: <span id="moves">0</span></div>
   </div>
 
@@ -405,7 +406,18 @@ if (undoStack.length > 30) undoStack.shift();
       board.appendChild(colEl);
     });
   }
-
+function undoMove(){
+  if(undoStack.length === 0){
+    toast("Ei peruttavaa");
+    return;
+  }
+  const prev = undoStack.pop();
+  columns = prev.columns;
+  moves = prev.moves;
+  document.getElementById('moves').textContent = moves;
+  render();
+  toast("Siirto peruttu");
+}
   window.onload = ()=> initGame(2);
 </script>
 </body>
