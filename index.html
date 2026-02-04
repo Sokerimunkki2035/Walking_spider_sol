@@ -115,8 +115,7 @@ window.onload = function() {
 function startWalk() {
   document.getElementById('start-btn').disabled = true;
   document.getElementById('time-select').disabled = true;
-  timeLeft = 2; // Nyt kävely kestää vain 2 sekuntia!
- 
+  timeLeft = parseInt(document.getElementById('time-select').value);
   
   timerInterval = setInterval(() => {
     timeLeft--;
