@@ -1,195 +1,317 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fi">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spider Solitaire (3–4 maata)</title>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #006633;
-            color: white;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        #game-board {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .column {
-            margin: 0 5px;
-            min-width: 80px;
-            position: relative;
-            height: 400px;
-        }
-        .card {
-            background: white;
-            color: black;
-            border: 1px solid #000;
-            border-radius: 5px;
-            width: 80px;
-            height: 120px;
-            margin-bottom: -80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: grab;
-            position: relative;
-            font-size: 20px;
-            user-select: none;
-        }
-        .card.red {
-            color: red;
-        }
-        .card:hover {
-            background: #ffcccc;
-        }
-        .card.dragging {
-            opacity: 0.8;
-            z-index: 100;
-        }
-        #ad-space {
-            margin: 20px auto;
-            width: 728px;
-            height: 90px;
-            background: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spider Solitaire (3–4 maata) – korjattu</title>
+
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#006633;
+      color:#fff;
+      margin:0;
+      padding:14px;
+    }
+    h1{ text-align:center; margin:8px 0 10px; }
+
+    .toprow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      margin-bottom:12px;
+    }
+    .btn{
+      border:0;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:800;
+      cursor:pointer;
+      background:rgba(255,255,255,.18);
+      color:#fff;
+    }
+    .btn.primary{ background:rgba(120,255,200,.22); }
+    .pill{
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.15);
+      font-weight:800;
+    }
+
+    /* ⭐ TÄMÄ KORJAA “vain 2 kolumnia”:
+       Ei wrap -> kaikki 10 saraketta samassa rivissä, vaaka-scroll */
+    #game-board{
+      display:flex;
+      flex-wrap:nowrap;
+      gap:10px;
+      overflow-x:auto;
+      padding:10px 8px 14px;
+      border-radius:16px;
+      background:rgba(0,0,0,.14);
+      border:1px solid rgba(255,255,255,.14);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .column{
+      flex:0 0 auto;               /* ei kutistu -> vaaka-scroll */
+      width:78px;
+      position:relative;
+      height:420px;
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding-top:24px;
+    }
+    .coltitle{
+      position:absolute;
+      top:6px; left:0; right:0;
+      text-align:center;
+      font-size:12px;
+      font-weight:900;
+      opacity:.95;
+      pointer-events:none;
+    }
+
+    /* Kortit pinossa: absolute + top-offset => yläreunat näkyy */
+    .card{
+      width:72px;
+      height:104px;
+      background:#fff;
+      color:#000;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.20);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:8px 8px;
+      user-select:none;
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      box-shadow:0 10px 18px rgba(0,0,0,.35);
+      cursor:grab;
+      touch-action: manipulation;
+    }
+    .card.red{ color:#c51818; }
+    .card.dragging{ opacity:.7; cursor:grabbing; }
+    .rank{ font-weight:900; font-size:18px; line-height:1; }
+    .suit{ font-size:16px; align-self:flex-end; }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:14px;
+      background:rgba(0,0,0,.75);
+      border:1px solid rgba(255,255,255,.15);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      max-width:min(92vw,520px);
+      text-align:center;
+      z-index:999;
+    }
+
+    .note{
+      max-width:900px;
+      margin:10px auto 0;
+      opacity:.95;
+      font-size:13px;
+      line-height:1.35;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 12px;
+      border-radius:14px;
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Spider Solitaire (3–4 maata)</h1>
-    <div id="ad-space">
-        <!-- Google AdSense mainos tulee tähän -->
-        <ins class="adsbygoogle"
-             style="display:inline-block;width:728px;height:90px"
-             data-ad-client="ca-pub-7652525244986434"
-             data-ad-slot="1234567890"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-    </div>
-    <div id="game-board"></div>
+  <h1>Spider Solitaire (3–4 maata) – korjattu</h1>
 
-    <script>
-        // Korttipakka
-        const suits = ['♠', '♥', '♣', '♦'];
-        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  <div class="toprow">
+    <button class="btn primary" onclick="initGame(4)">Uusi peli (4 maata)</button>
+    <button class="btn" onclick="initGame(3)">Uusi peli (3 maata)</button>
+    <div class="pill">Siirrot: <span id="moves">0</span></div>
+  </div>
 
-        let draggedCard = null;
-        let draggedFromColumn = null;
+  <div id="game-board" aria-label="Pöytä"></div>
 
-        // Pelilaudan alustus
-        function initGame(suitsCount = 4) {
-            const board = document.getElementById('game-board');
-            board.innerHTML = '';
+  <div class="note">
+    ✅ Korjaukset: 10 saraketta aina yhdessä rivissä (vaaka-scroll), pakka 104 korttia (Spiderin 2 pakkaa),
+    kortit eivät katoa, ja siirrot eivät sotke indeksejä (malli + render).
+    <br>⚠️ Tämä on MVP: siirtää yhden kortin kerrallaan (ei vielä “sarjan siirtoa”).
+  </div>
 
-            // Luodaan pakka (esimerkiksi 4 maata)
-            let deck = [];
-            for (let i = 0; i < suitsCount; i++) {
-                for (const rank of ranks) {
-                    deck.push({ rank, suit: suits[i] });
-                }
-            }
+  <div class="toast" id="toast"></div>
 
-            // Sekoitetaan pakka
-            deck.sort(() => Math.random() - 0.5);
+<script>
+  const suitsAll = ['♠','♥','♣','♦'];
+  const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-            // Jaetaan kortit 10 sarakkeeseen
-            const columns = Array.from({ length: 10 }, () => []);
-            for (let i = 0; i < 54; i++) {
-                columns[i % 10].push(deck.pop());
-            }
+  const STACK_GAP = 22; // näkyvän yläreunan määrä (px)
 
-            // Piirretään pelilauta
-            columns.forEach((col, colIndex) => {
-                const columnElement = document.createElement('div');
-                columnElement.className = 'column';
-                columnElement.dataset.column = colIndex;
-                columnElement.addEventListener('dragover', handleDragOver);
-                columnElement.addEventListener('drop', handleDrop);
+  let columns = [];              // mallidata: 10 saraketta, jokainen array kortti-olioita
+  let dragged = null;            // {fromCol, fromIndex}
+  let moves = 0;
 
-                col.forEach((card, cardIndex) => {
-                    const cardElement = document.createElement('div');
-                    cardElement.className = `card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''}`;
-                    cardElement.textContent = `${card.rank}\n${card.suit}`;
-                    cardElement.dataset.rank = card.rank;
-                    cardElement.dataset.suit = card.suit;
-                    cardElement.dataset.column = colIndex;
-                    cardElement.dataset.index = cardIndex;
-                    cardElement.draggable = true;
+  function toast(msg, ms=1200){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display='block';
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(()=>t.style.display='none', ms);
+  }
 
-                    // Lisätään tapahtumankäsittelijät
-                    cardElement.addEventListener('dragstart', (e) => handleDragStart(e, colIndex));
-                    columnElement.appendChild(cardElement);
-                });
+  function buildDeck(suitsCount){
+    // Spider tarvitsee 104 korttia (2x 52).
+    // 4 maata: 2 täyttä pakkaa.
+    // 3 maata: tehdään 104 korttia 3 maasta (tasataan toistolla).
+    const used = suitsAll.slice(0, Math.max(1, Math.min(4, suitsCount)));
+    const deck = [];
+    while(deck.length < 104){
+      for(const s of used){
+        for(const r of ranks){
+          deck.push({ rank:r, suit:s });
+          if(deck.length >= 104) break;
+        }
+        if(deck.length >= 104) break;
+      }
+    }
+    return deck;
+  }
 
-                board.appendChild(columnElement);
-            });
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+  }
+
+  function dealSpider(deck){
+    // Standard: 10 saraketta, 54 korttia pöytään:
+    // 4 saraketta 6 korttia, 6 saraketta 5 korttia.
+    const cols = Array.from({length:10}, ()=>[]);
+    for(let c=0;c<10;c++){
+      const n = (c<4)?6:5;
+      for(let k=0;k<n;k++){
+        const card = deck.pop();
+        cols[c].push(card);
+      }
+    }
+    return cols;
+  }
+
+  function initGame(suitsCount=4){
+    moves = 0;
+    document.getElementById('moves').textContent = moves;
+
+    const deck = buildDeck(suitsCount);
+    shuffle(deck);
+    columns = dealSpider(deck);
+
+    render();
+    toast(`Uusi peli: ${suitsCount} maata (104 korttia)`);
+  }
+
+  function rankValue(rank){
+    if(rank==='A') return 1;
+    if(rank==='J') return 11;
+    if(rank==='Q') return 12;
+    if(rank==='K') return 13;
+    return parseInt(rank,10);
+  }
+
+  function canMoveOne(card, targetTop){
+    // MVP-sääntö: saa siirtää jos sama maa ja laskeva (esim 7 -> 8 päälle)
+    if(!targetTop) return true; // tyhjään saa
+    return card.suit === targetTop.suit &&
+           rankValue(card.rank) === rankValue(targetTop.rank) - 1;
+  }
+
+  function render(){
+    const board = document.getElementById('game-board');
+    board.innerHTML = '';
+
+    columns.forEach((col, colIndex)=>{
+      const colEl = document.createElement('div');
+      colEl.className='column';
+      colEl.dataset.col = colIndex;
+
+      const title = document.createElement('div');
+      title.className='coltitle';
+      title.textContent = `Pino ${colIndex+1}`;
+      colEl.appendChild(title);
+
+      colEl.addEventListener('dragover', (e)=>e.preventDefault());
+      colEl.addEventListener('drop', (e)=>{
+        e.preventDefault();
+        if(!dragged) return;
+
+        const fromCol = dragged.fromCol;
+        const fromIndex = dragged.fromIndex;
+        const movingCard = columns[fromCol][fromIndex];
+
+        const targetCol = colIndex;
+        const targetTop = columns[targetCol].length ? columns[targetCol][columns[targetCol].length-1] : null;
+
+        if(fromCol === targetCol){
+          dragged = null;
+          return;
         }
 
-        // Raahaamisen aloitus
-        function handleDragStart(e, columnIndex) {
-            draggedCard = e.target;
-            draggedFromColumn = columnIndex;
-            e.dataTransfer.setData('text/plain', e.target.dataset.index);
-            setTimeout(() => {
-                draggedCard.classList.add('dragging');
-            }, 0);
+        if(!canMoveOne(movingCard, targetTop)){
+          toast("Ei voi siirtää tuohon (maa / järjestys)");
+          dragged = null;
+          return;
         }
 
-        // Estetään oletusdragover-käyttäytyminen
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
+        // siirrä mallissa
+        columns[fromCol].splice(fromIndex, 1);
+        columns[targetCol].push(movingCard);
 
-        // Korttien pudottaminen
-        function handleDrop(e) {
-            e.preventDefault();
-            const targetColumn = e.currentTarget;
-            const targetCard = targetColumn.lastElementChild;
+        moves++;
+        document.getElementById('moves').textContent = moves;
 
-            if (canMoveCard(draggedCard, targetCard)) {
-                targetColumn.appendChild(draggedCard);
-            }
+        dragged = null;
+        render();
+      });
 
-            draggedCard.classList.remove('dragging');
-            draggedCard = null;
-            draggedFromColumn = null;
-        }
+      // kortit
+      col.forEach((card, i)=>{
+        const cardEl = document.createElement('div');
+        const isRed = (card.suit==='♥' || card.suit==='♦');
+        cardEl.className = 'card' + (isRed ? ' red' : '');
+        cardEl.style.top = (i * STACK_GAP) + 'px';
+        cardEl.draggable = true;
 
-        // Tarkistetaan, voidaanko kortti siirtää
-        function canMoveCard(card, targetCard) {
-            if (!targetCard) return true; // Tyhjään sarakkeeseen voi aina siirtää
+        cardEl.innerHTML = `
+          <div class="rank">${card.rank}</div>
+          <div class="suit">${card.suit}</div>
+        `;
 
-            // Tarkistetaan, että maat ovat samat ja järjestys laskeva
-            return (
-                card.dataset.suit === targetCard.dataset.suit &&
-                getRankValue(card.dataset.rank) === getRankValue(targetCard.dataset.rank) - 1
-            );
-        }
+        cardEl.addEventListener('dragstart', (e)=>{
+          dragged = { fromCol: colIndex, fromIndex: i };
+          cardEl.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', `${colIndex}:${i}`);
+        });
+        cardEl.addEventListener('dragend', ()=>{
+          cardEl.classList.remove('dragging');
+        });
 
-        // Muuttaa kortin arvon numeeriseksi (A=1, J=11, Q=12, K=13)
-        function getRankValue(rank) {
-            if (rank === 'A') return 1;
-            if (rank === 'J') return 11;
-            if (rank === 'Q') return 12;
-            if (rank === 'K') return 13;
-            return parseInt(rank);
-        }
+        colEl.appendChild(cardEl);
+      });
 
-        // Aloita peli (esimerkiksi 4 maalla)
-        window.onload = () => initGame(4);
-    </script>
+      board.appendChild(colEl);
+    });
+  }
+
+  // start
+  window.onload = ()=> initGame(4);
+</script>
 </body>
 </html>
