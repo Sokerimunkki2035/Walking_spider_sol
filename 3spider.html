@@ -265,7 +265,14 @@ let undoStack = []; // UNDO-historia (viimeisin viimeisenä)
     selected = null;
     render();
   }
+// Tallenna UNDO-tilanne (syväkopio)
+undoStack.push({
+  columns: JSON.parse(JSON.stringify(columns)),
+  moves
+});
 
+// Pidetään UNDO kohtuullisena
+if (undoStack.length > 30) undoStack.shift();
   function tryMoveStack(fromCol, startIndex, count, toCol){
     if(fromCol === toCol) return false;
 
