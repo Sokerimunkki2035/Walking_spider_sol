@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Spider Solitaire (3–4 maata) – korjattu</title>
+  <title>Spider Solitaire (2–4 maata) – sarjasiirto</title>
 
   <style>
     body{
@@ -41,8 +41,7 @@
       font-weight:800;
     }
 
-    /* ⭐ TÄMÄ KORJAA “vain 2 kolumnia”:
-       Ei wrap -> kaikki 10 saraketta samassa rivissä, vaaka-scroll */
+    /* ⭐ 10 saraketta aina yhdessä rivissä (vaaka-scroll) */
     #game-board{
       display:flex;
       flex-wrap:nowrap;
@@ -56,7 +55,7 @@
     }
 
     .column{
-      flex:0 0 auto;               /* ei kutistu -> vaaka-scroll */
+      flex:0 0 auto;
       width:78px;
       position:relative;
       height:420px;
@@ -96,7 +95,18 @@
       touch-action: manipulation;
     }
     .card.red{ color:#c51818; }
+
     .card.dragging{ opacity:.7; cursor:grabbing; }
+    .card.sel{
+      outline:3px solid rgba(255,215,120,.95);
+      box-shadow:0 16px 28px rgba(0,0,0,.45);
+    }
+    .card.locked{
+      opacity:.92;
+      filter:saturate(.9);
+      cursor:default;
+    }
+
     .rank{ font-weight:900; font-size:18px; line-height:1; }
     .suit{ font-size:16px; align-self:flex-end; }
 
@@ -117,7 +127,7 @@
     }
 
     .note{
-      max-width:900px;
+      max-width:980px;
       margin:10px auto 0;
       opacity:.95;
       font-size:13px;
@@ -131,20 +141,22 @@
 </head>
 
 <body>
-  <h1>Spider Solitaire (3–4 maata) – korjattu</h1>
+  <h1>Spider Solitaire (2–4 maata) – sarjasiirto</h1>
 
   <div class="toprow">
-    <button class="btn primary" onclick="initGame(4)">Uusi peli (4 maata)</button>
+    <button class="btn primary" onclick="initGame(2)">Uusi peli (2 maata)</button>
     <button class="btn" onclick="initGame(3)">Uusi peli (3 maata)</button>
+    <button class="btn" onclick="initGame(4)">Uusi peli (4 maata)</button>
     <div class="pill">Siirrot: <span id="moves">0</span></div>
   </div>
 
   <div id="game-board" aria-label="Pöytä"></div>
 
   <div class="note">
-    ✅ Korjaukset: 10 saraketta aina yhdessä rivissä (vaaka-scroll), pakka 104 korttia (Spiderin 2 pakkaa),
-    kortit eivät katoa, ja siirrot eivät sotke indeksejä (malli + render).
-    <br>⚠️ Tämä on MVP: siirtää yhden kortin kerrallaan (ei vielä “sarjan siirtoa”).
+    ✅ Sarjasiirto: voit siirtää <b>koko sarjan</b> vain jos se on <b>laskeva + samaa maata</b> (♠♠♠...).<br>
+    ✅ Muuten saat siirtää vain <b>päällimmäisen</b> kortin (se “lukitusfiilis”).<br>
+    ✅ Siirto toimii myös ilman dragia: <b>napauta</b> korttia (valitse) → <b>napauta</b> kohdepinoa (siirtää).<br>
+    ✅ Pinoon saa laittaa eri maata: vain järjestys ratkaisee (7 → 8).
   </div>
 
   <div class="toast" id="toast"></div>
@@ -153,13 +165,18 @@
   const suitsAll = ['♠','♥','♣','♦'];
   const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-  const STACK_GAP = 22; // näkyvän yläreunan määrä (px)
+  const STACK_GAP = 22;
 
-  let columns = [];              // mallidata: 10 saraketta, jokainen array kortti-olioita
-  let dragged = null;            // {fromCol, fromIndex}
+  let columns = [];
   let moves = 0;
 
-  function toast(msg, ms=1200){
+  // dragged stack info (for drag/drop)
+  let dragged = null; // {fromCol, startIndex, count}
+
+  // tap-select info (works on mobile reliably)
+  let selected = null; // {fromCol, startIndex, count}
+
+  function toast(msg, ms=1300){
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.style.display='block';
@@ -168,9 +185,7 @@
   }
 
   function buildDeck(suitsCount){
-    // Spider tarvitsee 104 korttia (2x 52).
-    // 4 maata: 2 täyttä pakkaa.
-    // 3 maata: tehdään 104 korttia 3 maasta (tasataan toistolla).
+    // Always 104 cards.
     const used = suitsAll.slice(0, Math.max(1, Math.min(4, suitsCount)));
     const deck = [];
     while(deck.length < 104){
@@ -193,22 +208,21 @@
   }
 
   function dealSpider(deck){
-    // Standard: 10 saraketta, 54 korttia pöytään:
-    // 4 saraketta 6 korttia, 6 saraketta 5 korttia.
     const cols = Array.from({length:10}, ()=>[]);
     for(let c=0;c<10;c++){
       const n = (c<4)?6:5;
       for(let k=0;k<n;k++){
-        const card = deck.pop();
-        cols[c].push(card);
+        cols[c].push(deck.pop());
       }
     }
     return cols;
   }
 
-  function initGame(suitsCount=4){
+  function initGame(suitsCount=2){
     moves = 0;
     document.getElementById('moves').textContent = moves;
+    dragged = null;
+    selected = null;
 
     const deck = buildDeck(suitsCount);
     shuffle(deck);
@@ -226,11 +240,51 @@
     return parseInt(rank,10);
   }
 
-  function canMoveOne(card, targetTop){
-    // MVP-sääntö: saa siirtää jos sama maa ja laskeva (esim 7 -> 8 päälle)
-    if(!targetTop) return true; // tyhjään saa
-    return card.suit === targetTop.suit &&
-           rankValue(card.rank) === rankValue(targetTop.rank) - 1;
+  // Placement rule: allow different suits; only order matters (7 onto 8)
+  function canPlace(movingTopCard, targetTop){
+    if(!targetTop) return true;
+    return rankValue(movingTopCard.rank) === rankValue(targetTop.rank) - 1;
+  }
+
+  // Can move as a STACK starting at index i?
+  // Rule: must be descending by 1 AND same suit across the whole run to bottom
+  function stackCountIfMovable(col, i){
+    const last = col.length - 1;
+    if(i === last) return 1; // top card always movable
+    // if not top, must be a perfect same-suit descending run from i..end
+    for(let k=i; k<last; k++){
+      const a = col[k];
+      const b = col[k+1];
+      if(rankValue(a.rank) !== rankValue(b.rank) + 1) return 0;
+      if(a.suit !== b.suit) return 0;
+    }
+    return col.length - i;
+  }
+
+  function clearSelection(){
+    selected = null;
+    render();
+  }
+
+  function tryMoveStack(fromCol, startIndex, count, toCol){
+    if(fromCol === toCol) return false;
+
+    const from = columns[fromCol];
+    const to = columns[toCol];
+    const moving = from.slice(startIndex, startIndex + count);
+    if(moving.length !== count) return false;
+
+    const movingTop = moving[0];
+    const targetTop = to.length ? to[to.length-1] : null;
+
+    if(!canPlace(movingTop, targetTop)) return false;
+
+    // perform move
+    from.splice(startIndex, count);
+    to.push(...moving);
+    moves++;
+    document.getElementById('moves').textContent = moves;
+    return true;
   }
 
   function render(){
@@ -247,57 +301,92 @@
       title.textContent = `Pino ${colIndex+1}`;
       colEl.appendChild(title);
 
+      // Drop (drag)
       colEl.addEventListener('dragover', (e)=>e.preventDefault());
       colEl.addEventListener('drop', (e)=>{
         e.preventDefault();
         if(!dragged) return;
 
-        const fromCol = dragged.fromCol;
-        const fromIndex = dragged.fromIndex;
-        const movingCard = columns[fromCol][fromIndex];
-
-        const targetCol = colIndex;
-        const targetTop = columns[targetCol].length ? columns[targetCol][columns[targetCol].length-1] : null;
-
-        if(fromCol === targetCol){
-          dragged = null;
-          return;
-        }
-
-        if(!canMoveOne(movingCard, targetTop)){
-          toast("Ei voi siirtää tuohon (maa / järjestys)");
-          dragged = null;
-          return;
-        }
-
-        // siirrä mallissa
-        columns[fromCol].splice(fromIndex, 1);
-        columns[targetCol].push(movingCard);
-
-        moves++;
-        document.getElementById('moves').textContent = moves;
-
+        const ok = tryMoveStack(dragged.fromCol, dragged.startIndex, dragged.count, colIndex);
         dragged = null;
+        selected = null;
+
+        if(!ok) toast("Ei voi siirtää tuohon (järjestys)");
         render();
       });
 
-      // kortit
+      // Tap destination (works even if drag is annoying)
+      colEl.addEventListener('click', (e)=>{
+        // ignore if clicking a card (card handles itself)
+        if(e.target && e.target.classList && e.target.classList.contains('card')) return;
+        if(!selected) return;
+
+        const ok = tryMoveStack(selected.fromCol, selected.startIndex, selected.count, colIndex);
+        if(!ok){
+          toast("Ei voi siirtää tuohon (järjestys)");
+        }
+        selected = null;
+        render();
+      });
+
+      // Cards
       col.forEach((card, i)=>{
         const cardEl = document.createElement('div');
         const isRed = (card.suit==='♥' || card.suit==='♦');
         cardEl.className = 'card' + (isRed ? ' red' : '');
         cardEl.style.top = (i * STACK_GAP) + 'px';
-        cardEl.draggable = true;
+
+        const count = stackCountIfMovable(col, i);
+        const draggable = (count > 0);
+        cardEl.draggable = draggable;
+
+        // Mark “locked” cards visually (not draggable)
+        if(!draggable) cardEl.classList.add('locked');
+
+        // highlight selection
+        if(selected && selected.fromCol === colIndex){
+          if(i >= selected.startIndex && i < selected.startIndex + selected.count){
+            cardEl.classList.add('sel');
+          }
+        }
 
         cardEl.innerHTML = `
           <div class="rank">${card.rank}</div>
           <div class="suit">${card.suit}</div>
         `;
 
+        // Tap-select
+        cardEl.addEventListener('click', (e)=>{
+          e.stopPropagation();
+
+          // If already selected -> toggle off
+          if(selected && selected.fromCol === colIndex && selected.startIndex === i){
+            clearSelection();
+            toast("Valinta pois");
+            return;
+          }
+
+          const c = stackCountIfMovable(col, i);
+          if(c === 0){
+            toast("Sarjasiirto vain samaa maata + laskeva. Muuten vain päällimmäinen.");
+            return;
+          }
+          selected = { fromCol: colIndex, startIndex: i, count: c };
+          toast(c > 1 ? `Valittu sarja (${c} korttia)` : "Valittu 1 kortti");
+          render();
+        });
+
+        // Drag start
         cardEl.addEventListener('dragstart', (e)=>{
-          dragged = { fromCol: colIndex, fromIndex: i };
+          const c = stackCountIfMovable(col, i);
+          if(c === 0){
+            e.preventDefault();
+            toast("Et voi raahata tästä: vain samaa maata oleva sarja tai päällimmäinen.");
+            return;
+          }
+          dragged = { fromCol: colIndex, startIndex: i, count: c };
           cardEl.classList.add('dragging');
-          e.dataTransfer.setData('text/plain', `${colIndex}:${i}`);
+          e.dataTransfer.setData('text/plain', `${colIndex}:${i}:${c}`);
         });
         cardEl.addEventListener('dragend', ()=>{
           cardEl.classList.remove('dragging');
@@ -310,8 +399,7 @@
     });
   }
 
-  // start
-  window.onload = ()=> initGame(4);
+  window.onload = ()=> initGame(2);
 </script>
 </body>
 </html>
