@@ -266,14 +266,6 @@ let undoStack = []; // UNDO-historia (viimeisin viimeisenä)
     selected = null;
     render();
   }
-// Tallenna UNDO-tilanne (syväkopio)
-undoStack.push({
-  columns: JSON.parse(JSON.stringify(columns)),
-  moves
-});
-
-// Pidetään UNDO kohtuullisena
-if (undoStack.length > 30) undoStack.shift();
   function tryMoveStack(fromCol, startIndex, count, toCol){
     if(fromCol === toCol) return false;
 
@@ -286,7 +278,12 @@ if (undoStack.length > 30) undoStack.shift();
     const targetTop = to.length ? to[to.length-1] : null;
 
     if(!canPlace(movingTop, targetTop)) return false;
+undoStack.push({
+  columns: JSON.parse(JSON.stringify(columns)),
+  moves
+});
 
+if (undoStack.length > 30) undoStack.shift();
     // perform move
     from.splice(startIndex, count);
     to.push(...moving);
