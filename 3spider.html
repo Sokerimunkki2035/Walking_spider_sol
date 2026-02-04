@@ -12,16 +12,22 @@
             background: #006633;
             color: white;
             margin: 0;
-            padding: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
         }
         #game-board {
             display: flex;
             justify-content: center;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
         .column {
             margin: 0 5px;
             min-width: 80px;
+            position: relative;
+            height: 400px;
         }
         .card {
             background: white;
@@ -35,17 +41,20 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            cursor: pointer;
-            position: relative;
-        }
-        .card.draggable {
             cursor: grab;
+            position: relative;
+            font-size: 20px;
+            user-select: none;
         }
         .card.red {
             color: red;
         }
         .card:hover {
-            background: #ffcccc; /* Korostus kosketettaessa */
+            background: #ffcccc;
+        }
+        .card.dragging {
+            opacity: 0.8;
+            z-index: 100;
         }
         #ad-space {
             margin: 20px auto;
@@ -77,6 +86,9 @@
         const suits = ['♠', '♥', '♣', '♦'];
         const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
+        let draggedCard = null;
+        let draggedFromColumn = null;
+
         // Pelilaudan alustus
         function initGame(suitsCount = 4) {
             const board = document.getElementById('game-board');
@@ -104,6 +116,8 @@
                 const columnElement = document.createElement('div');
                 columnElement.className = 'column';
                 columnElement.dataset.column = colIndex;
+                columnElement.addEventListener('dragover', handleDragOver);
+                columnElement.addEventListener('drop', handleDrop);
 
                 col.forEach((card, cardIndex) => {
                     const cardElement = document.createElement('div');
@@ -116,7 +130,7 @@
                     cardElement.draggable = true;
 
                     // Lisätään tapahtumankäsittelijät
-                    cardElement.addEventListener('dragstart', handleDragStart);
+                    cardElement.addEventListener('dragstart', (e) => handleDragStart(e, colIndex));
                     columnElement.appendChild(cardElement);
                 });
 
@@ -125,29 +139,37 @@
         }
 
         // Raahaamisen aloitus
-        function handleDragStart(e) {
+        function handleDragStart(e, columnIndex) {
+            draggedCard = e.target;
+            draggedFromColumn = columnIndex;
             e.dataTransfer.setData('text/plain', e.target.dataset.index);
-            e.target.classList.add('dragging');
+            setTimeout(() => {
+                draggedCard.classList.add('dragging');
+            }, 0);
         }
 
-        // Korttien siirtämisen logiikka
+        // Estetään oletusdragover-käyttäytyminen
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        // Korttien pudottaminen
         function handleDrop(e) {
             e.preventDefault();
-            const draggedIndex = e.dataTransfer.getData('text/plain');
-            const draggedCard = document.querySelector(`.card[data-index="${draggedIndex}"]`);
             const targetColumn = e.currentTarget;
+            const targetCard = targetColumn.lastElementChild;
 
-            // Tarkistetaan, voidaanko kortti siirtää
-            if (canMoveCard(draggedCard, targetColumn)) {
+            if (canMoveCard(draggedCard, targetCard)) {
                 targetColumn.appendChild(draggedCard);
             }
 
             draggedCard.classList.remove('dragging');
+            draggedCard = null;
+            draggedFromColumn = null;
         }
 
         // Tarkistetaan, voidaanko kortti siirtää
-        function canMoveCard(card, targetColumn) {
-            const targetCard = targetColumn.lastElementChild;
+        function canMoveCard(card, targetCard) {
             if (!targetCard) return true; // Tyhjään sarakkeeseen voi aina siirtää
 
             // Tarkistetaan, että maat ovat samat ja järjestys laskeva
