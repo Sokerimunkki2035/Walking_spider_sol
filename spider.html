@@ -2,76 +2,121 @@
 <html lang="fi">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Spider Solitaire - Toimiva Versio</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #0d4a3a;
       color: white;
-      padding: 20px;
+      padding: 16px;
       margin: 0;
       user-select: none;
     }
-    .controls { margin-bottom: 20px; }
-    button {
-      padding: 10px 20px;
-      margin-right: 10px;
+
+    /* Yläpalkki */
+    .topbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom: 14px;
+    }
+    .leftgroup, .rightgroup{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn, a.btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 14px;
       cursor: pointer;
       background: #2a8b6f;
       color: white;
       border: none;
-      border-radius: 5px;
-      font-weight: bold;
+      border-radius: 999px;
+      font-weight: 800;
+      text-decoration:none;
+      gap:8px;
     }
-    button:hover { background: #3aa382; }
-    
+    .btn:hover, a.btn:hover { background: #3aa382; }
+
+    .pill{
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-weight: 800;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
     #info {
-      margin-bottom: 20px;
-      padding: 15px;
-      background: rgba(0,0,0,0.4);
-      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 12px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 12px;
       min-height: 20px;
+      line-height: 1.25;
     }
-    
+
+    /* 10 saraketta: mobiilissa voi skrollata sivulle */
     #table {
       display: grid;
       grid-template-columns: repeat(10, 1fr);
       gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
     }
-    
+
     .column {
       background: rgba(255,255,255,0.05);
-      border-radius: 5px;
-      padding: 5px;
-      min-height: 500px;
+      border-radius: 10px;
+      padding: 6px;
+      min-height: 520px;
       position: relative;
+      min-width: 78px; /* pakottaa vaakaskrollin jos ruutu kapea */
     }
 
     .card {
       background: white;
       color: black;
       border: 1px solid #333;
-      border-radius: 4px;
+      border-radius: 8px;
       padding: 10px;
       margin-bottom: -50px; /* Kortit päällekkäin */
       font-size: 18px;
-      font-weight: bold;
+      font-weight: 900;
       cursor: pointer;
       height: 70px;
       position: relative;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
       display: flex;
       justify-content: space-between;
+      align-items:center;
     }
-    
+
     .card.face-down {
       background: #1a5f4a;
-      background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 6px,
+        rgba(255,255,255,0.12) 6px,
+        rgba(255,255,255,0.12) 12px
+      );
       color: transparent;
     }
-    
+
     .card.selected {
-      outline: 4px solid yellow;
+      outline: 4px solid rgba(255, 230, 0, 0.95);
       z-index: 1000;
       transform: translateY(-5px);
     }
@@ -82,39 +127,54 @@
       margin-bottom: 10px;
       color: #88c9b6;
       pointer-events: none;
+      font-weight: 900;
+      opacity: .95;
     }
+
+    h2{ margin: 4px 0 10px; }
   </style>
 </head>
 <body>
 
-<h2>Spider Solitaire</h2>
+  <div class="topbar">
+    <div class="leftgroup">
+      <!-- VALIKKOON (muuta polkua jos valikko on muualla) -->
+      <a class="btn" href="index.html">← Valikkoon</a>
+      <button class="btn" onclick="newGame()">🔄 Uusi peli</button>
+      <button class="btn" onclick="undoMove()">↩ Undo</button>
+    </div>
 
-<div class="controls">
-  <button onclick="newGame()">Uusi peli</button>
-  <button onclick="undoMove()">Peru siirto</button>
-</div>
+    <div class="rightgroup">
+      <div class="pill">
+        Siirrot: <span id="moves">0</span>
+      </div>
+    </div>
+  </div>
 
-<div id="info">Ladataan peliä...</div>
-<div id="table"></div>
+  <h2>Spider Solitaire</h2>
+
+  <div id="info">Ladataan peliä...</div>
+  <div id="table"></div>
 
 <script>
 let columns = [];
 let selectedCol = -1;
 let selectedIdx = -1;
 let moveHistory = [];
+let moves = 0;
 
 function newGame() {
   let deck = [];
-  // 104 korttia, vain pataa (Spades)
+  // 104 korttia, vain pataa (Spades) = 8 * 13
   for (let p = 0; p < 8; p++) {
     for (let r = 1; r <= 13; r++) {
       deck.push({rank: r, faceUp: false});
     }
   }
-  
+
   // Sekoitus
   deck.sort(() => Math.random() - 0.5);
-  
+
   columns = Array.from({ length: 10 }, () => []);
   for (let c = 0; c < 10; c++) {
     let count = c < 4 ? 6 : 5;
@@ -123,67 +183,72 @@ function newGame() {
     }
     columns[c][columns[c].length - 1].faceUp = true;
   }
-  
+
   selectedCol = -1;
   selectedIdx = -1;
   moveHistory = [];
+  moves = 0;
+  updateMoves();
+
   drawTable();
-  updateInfo("Peli alkanut. Valitse kortti.");
+  updateInfo("Peli alkanut. Napauta korttia (tai sarjaa) ja napauta kohdesaraketta.");
+}
+
+function updateMoves(){
+  document.getElementById("moves").innerText = String(moves);
 }
 
 function drawTable() {
   const table = document.getElementById("table");
   table.innerHTML = "";
-  
+
   columns.forEach((col, cIdx) => {
     let colDiv = document.createElement("div");
     colDiv.className = "column";
-    
+
     // Klikkaus tyhjään sarakkeeseen tai sarakkeen päälle
-    colDiv.onclick = (e) => {
-      handleColumnClick(cIdx);
-    };
-    
+    colDiv.onclick = () => handleColumnClick(cIdx);
+
     let num = document.createElement("div");
     num.className = "col-num";
-    num.innerText = `(${col.length})`;
+    num.innerText = `Pino ${cIdx+1} (${col.length})`;
     colDiv.appendChild(num);
-    
+
     col.forEach((card, rIdx) => {
       let cardDiv = document.createElement("div");
       cardDiv.className = "card";
       if (!card.faceUp) cardDiv.classList.add("face-down");
-      
-      // Valinnan korostus
-      if (cIdx === selectedCol && rIdx >= selectedIdx) {
+
+      // Valinnan korostus (valittu sarja: selectedIdx -> loppuun)
+      if (cIdx === selectedCol && rIdx >= selectedIdx && selectedIdx !== -1) {
         cardDiv.classList.add("selected");
       }
-      
+
       if (card.faceUp) {
         cardDiv.innerHTML = `<span>${getRankName(card.rank)}</span><span>♠</span>`;
         cardDiv.onclick = (e) => {
-          e.stopPropagation(); // Estetään sarakkeen klikkaus, kun klikataan korttia
+          e.stopPropagation();
           handleCardClick(cIdx, rIdx);
         };
       }
-      
+
       colDiv.appendChild(cardDiv);
     });
+
     table.appendChild(colDiv);
   });
 }
 
 function handleCardClick(cIdx, rIdx) {
-  // Jos on jo valittu kortti ja klikataan eri sarakkeen korttia -> yritetään siirtoa
+  // Jos on jo valittu kortti ja klikataan eri sarakkeen korttia -> yritetään siirtoa kohdesarakkeeseen
   if (selectedCol !== -1 && selectedCol !== cIdx) {
     handleColumnClick(cIdx);
     return;
   }
 
-  // Valinnan tekeminen
   const col = columns[cIdx];
-  
-  // Tarkistetaan onko laskeva sarja, jos valitaan pinon keskeltä
+
+  // Tarkistetaan onko valittu kohta laskeva sarja (rIdx..end)
   let validSequence = true;
   for (let i = rIdx; i < col.length - 1; i++) {
     if (col[i].rank !== col[i+1].rank + 1) {
@@ -193,7 +258,7 @@ function handleCardClick(cIdx, rIdx) {
   }
 
   if (!validSequence) {
-    updateInfo("Voit siirtää vain oikeassa järjestyksessä olevia pinoja.");
+    updateInfo("Voit siirtää vain laskevassa järjestyksessä olevia sarjoja.");
     return;
   }
 
@@ -201,56 +266,59 @@ function handleCardClick(cIdx, rIdx) {
   if (selectedCol === cIdx && selectedIdx === rIdx) {
     selectedCol = -1;
     selectedIdx = -1;
+    updateInfo("Valinta pois.");
   } else {
     selectedCol = cIdx;
     selectedIdx = rIdx;
-    updateInfo(`Valittu ${getRankName(col[rIdx].rank)}. Valitse kohdesarake.`);
+    updateInfo(`Valittu ${getRankName(col[rIdx].rank)}. Napauta kohdesaraketta.`);
   }
+
   drawTable();
 }
 
 function handleColumnClick(targetCol) {
   if (selectedCol === -1) return;
-  
-  // Jos klikataan samaa saraketta, poistetaan valinta
+
+  // Sama sarake -> poista valinta
   if (selectedCol === targetCol) {
     selectedCol = -1;
     selectedIdx = -1;
+    updateInfo("Valinta pois.");
     drawTable();
     return;
   }
 
   const movingCard = columns[selectedCol][selectedIdx];
   const targetColCards = columns[targetCol];
-  
-  // Sääntötarkistus: Kohdekortin on oltava 1 suurempi tai sarake tyhjä
+
+  // Sääntö: kohdekortin oltava 1 suurempi TAI sarake tyhjä
   let canMove = false;
   if (targetColCards.length === 0) {
     canMove = true;
   } else {
     const lastCard = targetColCards[targetColCards.length - 1];
-    if (lastCard.rank === movingCard.rank + 1) {
-      canMove = true;
-    }
+    if (lastCard.rank === movingCard.rank + 1) canMove = true;
   }
 
   if (canMove) {
     // Tallenna historia ennen siirtoa
     moveHistory.push(JSON.parse(JSON.stringify(columns)));
-    
-    // Suorita siirto
+
     const cardsToMove = columns[selectedCol].splice(selectedIdx);
-    columns[targetCol] = [...columns[targetCol], ...cardsToMove];
-    
-    // Käännä edellisen sarakkeen uusi ylin kortti
+    columns[targetCol] = columns[targetCol].concat(cardsToMove);
+
+    // Käännä lähtöpino: uusi ylin auki
     if (columns[selectedCol].length > 0) {
       columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
     }
-    
+
+    moves++;
+    updateMoves();
+
     updateInfo("Siirto onnistui.");
     checkAndRemoveSequence(targetCol);
   } else {
-    updateInfo("Laiton siirto! Kortin täytyy olla yhtä pienempi.");
+    updateInfo("Laiton siirto! Kohdekortin täytyy olla 1 isompi.");
   }
 
   selectedCol = -1;
@@ -262,15 +330,15 @@ function checkAndRemoveSequence(cIdx) {
   const col = columns[cIdx];
   if (col.length < 13) return;
 
-  // Etsitään täyttä sarjaa K-A (13-1)
+  // Etsitään täyttä sarjaa K-A (13..1), faceUp=true
   for (let i = 0; i <= col.length - 13; i++) {
     let sub = col.slice(i, i + 13);
     let isComplete = sub.every((card, idx) => card.faceUp && card.rank === (13 - idx));
-    
+
     if (isComplete) {
       col.splice(i, 13);
       if (col.length > 0) col[col.length - 1].faceUp = true;
-      updateInfo("KUNINGASSARJA VALMIS! Pisteitä poistettu.");
+      updateInfo("🏁 KUNINGASSARJA VALMIS! Sarja poistettu.");
       drawTable();
       break;
     }
@@ -278,13 +346,20 @@ function checkAndRemoveSequence(cIdx) {
 }
 
 function undoMove() {
-  if (moveHistory.length > 0) {
-    columns = moveHistory.pop();
-    selectedCol = -1;
-    selectedIdx = -1;
-    drawTable();
-    updateInfo("Siirto peruttu.");
+  if (moveHistory.length === 0) {
+    updateInfo("Ei peruttavaa.");
+    return;
   }
+  columns = moveHistory.pop();
+  selectedCol = -1;
+  selectedIdx = -1;
+
+  // Siirrot alas (mutta ei alle nollan)
+  moves = Math.max(0, moves - 1);
+  updateMoves();
+
+  drawTable();
+  updateInfo("Siirto peruttu.");
 }
 
 function getRankName(r) {
@@ -296,9 +371,19 @@ function updateInfo(msg) {
   document.getElementById("info").innerText = msg;
 }
 
+// ESC poistaa valinnan (jos joskus koneella)
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape"){
+    selectedCol = -1;
+    selectedIdx = -1;
+    updateInfo("Valinta pois.");
+    drawTable();
+  }
+});
+
 // Aloita peli automaattisesti
 newGame();
 </script>
 
 </body>
-</html> 
+</html>
