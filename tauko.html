@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Taukoajastin + Espanja-mikrokysymys</title>
+  <style>
+    :root{--bg:#064f3b;--card:#ffffff;--txt:#10211e;--muted:#5b6f6b;}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#fff;}
+    .wrap{max-width:760px;margin:0 auto;padding:14px;}
+    .card{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:12px;margin:10px 0;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .pill{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:10px 12px;font-weight:900}
+    button{border:0;border-radius:14px;padding:12px 14px;font-weight:900;cursor:pointer;}
+    .btn{background:rgba(255,255,255,.18);color:#fff}
+    .btn2{background:rgba(120,255,200,.22);color:#fff}
+    select{padding:10px 12px;border-radius:12px;border:0;font-weight:900}
+    .small{opacity:.9;font-size:13px;line-height:1.35}
+
+    /* Modal */
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.65);
+      display:none;align-items:center;justify-content:center;
+      padding:14px;z-index:999;
+    }
+    .modal{
+      width:min(720px, 96vw);
+      background:#fff;color:#10211e;border-radius:18px;
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+      padding:14px;border:1px solid rgba(0,0,0,.06);
+    }
+    .modal h2{margin:6px 0 6px}
+    .krow{display:flex;gap:10px;flex-wrap:wrap}
+    .krow button{flex:1;min-width:180px;background:#f2f6f5;color:#10211e;border:1px solid #e3ecea}
+    .krow button:hover{filter:brightness(.98)}
+    .good{background:#e8fff2 !important;border-color:#b7f0cd !important}
+    .bad{background:#fff1f1 !important;border-color:#ffd0d0 !important}
+    .muted{color:#5b6f6b}
+    .center{text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div class="pill">⏱️ Seuraava tauko: <span id="timeLeft">--:--</span></div>
+        <div class="pill">🔥 Taukoja tänään: <span id="breaks">0</span></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <div class="small">Valitse taukoväli (testaa pienellä ensin)</div>
+          <select id="interval">
+            <option value="1800">30 min</option>
+            <option value="900">15 min</option>
+            <option value="300">5 min</option>
+            <option value="180">3 min</option>
+          </select>
+        </div>
+        <div class="row" style="gap:8px">
+          <button class="btn2" id="start">Käynnistä</button>
+          <button class="btn" id="pause">Pysäytä</button>
+          <button class="btn" id="reset">Nollaa</button>
+        </div>
+      </div>
+      <p class="small" style="margin-top:10px">
+        Idea: kun tauko tulee, sivu “keskeyttää” hetkeksi. Tauon aikana 1 espanjan mikrokysymys.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:6px 0">📌 Tässä voisi olla sun peli / kirjoitusalue</h3>
+      <p class="small">Tämä demo ei sisällä peliä — se näyttää vain taukologiikan. Kun toimii, liitetään Spideriin.</p>
+    </div>
+  </div>
+
+  <!-- Break Modal -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal">
+      <div class="row">
+        <h2>🚶 Tauko nyt</h2>
+        <div class="pill muted">Jatka avautuu: <span id="breakLeft">60</span>s</div>
+      </div>
+
+      <p class="muted" id="breakMsg" style="margin:6px 0 10px">
+        Nouse ylös ja liiku kevyesti. Ei tarvitse ulos — sisällä riittää.
+      </p>
+
+      <div class="card" style="background:#f7fbfa;border-color:#e6f0ee;color:#10211e">
+        <div class="row">
+          <div class="pill">🇪🇸 Mikrokysymys</div>
+          <div class="pill muted" id="qMeta">1/1</div>
+        </div>
+        <h3 id="qText" style="margin:10px 0 10px"></h3>
+        <div class="krow" id="answers"></div>
+        <p class="muted" id="qFeedback" style="margin:10px 0 0"></p>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="skipQ">Vaihda kysymys</button>
+        <button class="btn2" id="continue" disabled>Jatka</button>
+      </div>
+
+      <p class="small center" style="margin-top:10px;opacity:.85">
+        Vinkki: jos haluat, tauon voi myöhemmin sitoa mainokseen / “katso 10s” -porttiin.
+      </p>
+    </div>
+  </div>
+
+<script>
+  // -------------------------
+  // 1) TAUKOAJASTIN
+  // -------------------------
+  const $ = (id)=>document.getElementById(id);
+
+  let intervalSec = 1800;   // 30min
+  let remainingSec = intervalSec;
+  let timer = null;
+
+  let breakTimer = null;
+  let breakRemaining = 60;
+  let breaksToday = 0;
+
+  function fmt(secs){
+    const m = String(Math.floor(secs/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    return `${m}:${s}`;
+  }
+
+  function tick(){
+    remainingSec--;
+    if(remainingSec < 0) remainingSec = 0;
+    $("timeLeft").textContent = fmt(remainingSec);
+
+    if(remainingSec === 0){
+      openBreak();
+    }
+  }
+
+  function startTimer(){
+    if(timer) return;
+    timer = setInterval(tick, 1000);
+  }
+
+  function stopTimer(){
+    clearInterval(timer);
+    timer = null
