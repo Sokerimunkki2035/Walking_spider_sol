@@ -1,378 +1,524 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Spider Solitaire – toimiva + Zoom</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spider Solitaire (2–4 maata) – Stock + Undo</title>
   <style>
-    :root{ --uiZoom: 1; }
-
+    :root{
+      --bg:#0d4a3a;
+      --panel:rgba(0,0,0,.14);
+      --panel2:rgba(255,255,255,.08);
+      --border:rgba(255,255,255,.14);
+      --btn:rgba(255,255,255,.18);
+      --btn2:rgba(120,255,200,.22);
+    }
     body{
-      font-family: system-ui, "Segoe UI", Arial, sans-serif;
-      background:#0d4a3a;
+      font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      background:var(--bg);
       color:#fff;
       margin:0;
-      padding:12px;
+      padding:14px;
       user-select:none;
-      -webkit-text-size-adjust: 100%;
     }
+    h1{ text-align:center; margin:8px 0 10px; font-size:18px; }
 
-    .topbar{
+    .toprow{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:10px;
-    }
-    .leftgroup, .rightgroup{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .btn, a.btn{
-      display:inline-flex;
-      align-items:center;
       justify-content:center;
-      padding:10px 14px;
+      align-items:center;
+      margin-bottom:12px;
+    }
+    .btn{
       border:0;
       border-radius:999px;
-      background:#2a8b6f;
-      color:#fff;
-      font-weight:800;
+      padding:10px 14px;
+      font-weight:900;
       cursor:pointer;
-      text-decoration:none;
-      gap:8px;
+      background:var(--btn);
+      color:#fff;
       white-space:nowrap;
     }
-    .btn:hover, a.btn:hover{ background:#3aa382; }
-
+    .btn.primary{ background:var(--btn2); }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
     .pill{
       padding:10px 14px;
       border-radius:999px;
-      background:rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.18);
-      font-weight:800;
-      display:flex;
-      gap:10px;
-      align-items:center;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.15);
+      font-weight:900;
       white-space:nowrap;
     }
 
-    #info{
-      margin:10px 0;
-      padding:12px;
-      background:rgba(0,0,0,.35);
-      border-radius:12px;
-      line-height:1.25;
-    }
-
-    /* Zoom-kehys: skaalataan koko pelialue */
-    .zoomStage{
-      width:100%;
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.12);
-      padding:10px;
-    }
-    .zoomInner{
-      transform: scale(var(--uiZoom));
-      transform-origin: top left;
-      display:inline-block; /* tärkeä: ettei skaalattu sisältö leikkaannu */
-    }
-
-    /* Pöytä: flex => 10 pinoa rivissä, aina */
-    #table{
+    /* Pöytä: 10 saraketta aina yhdessä rivissä */
+    #game-board{
       display:flex;
+      flex-wrap:nowrap;
       gap:10px;
-      align-items:flex-start;
+      overflow-x:auto;
+      padding:10px 8px 14px;
+      border-radius:16px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
     }
 
     .column{
+      flex:0 0 auto;
       width:78px;
-      min-width:78px;
-      background:rgba(255,255,255,0.05);
-      border-radius:10px;
-      padding:6px;
-      min-height:520px;
       position:relative;
-      border:1px solid rgba(255,255,255,0.10);
+      height:460px;
+      border-radius:14px;
+      background:var(--panel2);
+      border:1px solid rgba(255,255,255,.12);
+      padding-top:26px;
     }
-
-    .col-num{
+    .coltitle{
+      position:absolute;
+      top:7px; left:0; right:0;
       text-align:center;
-      font-size:11px;
-      margin-bottom:10px;
-      color:#88c9b6;
-      pointer-events:none;
+      font-size:12px;
       font-weight:900;
       opacity:.95;
+      pointer-events:none;
     }
 
+    /* Kortit: absolute + top-offset => yläreunat näkyy */
     .card{
+      width:72px;
+      height:104px;
       background:#fff;
       color:#000;
-      border:1px solid #333;
-      border-radius:8px;
-      padding:10px;
-      margin-bottom:-40px;
-      font-size:18px;
-      font-weight:900;
-      cursor:pointer;
-      height:70px;
-      position:relative;
-      box-shadow:0 2px 6px rgba(0,0,0,.35);
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.20);
       display:flex;
+      flex-direction:column;
       justify-content:space-between;
-      align-items:center;
+      padding:8px 8px;
+      user-select:none;
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      box-shadow:0 10px 18px rgba(0,0,0,.35);
+      cursor:grab;
+      touch-action: manipulation;
     }
-
+    .card.red{ color:#c51818; }
     .card.face-down{
-      background:#1a5f4a;
-      background-image: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 6px,
-        rgba(255,255,255,0.12) 6px,
-        rgba(255,255,255,0.12) 12px
-      );
+      background:linear-gradient(135deg, rgba(255,255,255,.14), rgba(0,0,0,.04));
       color:transparent;
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow:none;
+      cursor:default;
     }
 
-    .card.selected{
-      outline:4px solid rgba(255,230,0,.95);
-      z-index:1000;
-      transform:translateY(-5px);
+    .card.dragging{ opacity:.75; cursor:grabbing; }
+    .card.sel{
+      outline:3px solid rgba(255,215,120,.95);
+      box-shadow:0 16px 28px rgba(0,0,0,.45);
+      z-index:20;
+    }
+    .card.locked{
+      opacity:.92;
+      filter:saturate(.9);
+      cursor:default;
+    }
+
+    .rank{ font-weight:1000; font-size:18px; line-height:1; }
+    .suit{ font-size:16px; align-self:flex-end; }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:14px;
+      background:rgba(0,0,0,.75);
+      border:1px solid rgba(255,255,255,.15);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      max-width:min(92vw,520px);
+      text-align:center;
+      z-index:999;
+    }
+
+    .note{
+      max-width:980px;
+      margin:10px auto 0;
+      opacity:.95;
+      font-size:13px;
+      line-height:1.35;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 12px;
+      border-radius:14px;
+    }
+    .subrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      margin-bottom:10px;
     }
   </style>
 </head>
+
 <body>
+  <h1>Spider Solitaire (2–4 maata)</h1>
 
-  <div class="topbar">
-    <div class="leftgroup">
-      <a class="btn" href="index.html">← Valikkoon</a>
-      <button class="btn" onclick="newGame()">🔄 Uusi peli</button>
-      <button class="btn" onclick="undoMove()">↩ Undo</button>
-    </div>
+  <div class="toprow">
+    <!-- Muokkaa tämä linkki sinun valikko-sivuun -->
+    <button class="btn" onclick="location.href='index.html'">← Valikkoon</button>
 
-    <div class="rightgroup">
-      <button class="btn" onclick="zoomBy(-0.1)">➖ Zoom</button>
-      <button class="btn" onclick="setZoom(1)">100%</button>
-      <button class="btn" onclick="zoomBy(0.1)">➕ Zoom</button>
-      <div class="pill">Siirrot: <span id="moves">0</span></div>
-    </div>
+    <button class="btn primary" onclick="initGame(2)">Uusi (2 maata)</button>
+    <button class="btn" onclick="initGame(3)">Uusi (3 maata)</button>
+    <button class="btn" onclick="initGame(4)">Uusi (4 maata)</button>
+
+    <button class="btn" onclick="undoMove()">↩ Undo</button>
+    <div class="pill">Siirrot: <span id="moves">0</span></div>
   </div>
 
-  <div id="info">Ladataan peliä...</div>
-
-  <div class="zoomStage" id="stage">
-    <div class="zoomInner" id="zoomInner">
-      <div id="table" aria-label="Pöytä"></div>
-    </div>
+  <div class="subrow">
+    <button class="btn primary" id="dealBtn" onclick="dealFromStock()">🃏 Jaa 10 korttia</button>
+    <div class="pill">Stock: <span id="stockCount">0</span></div>
   </div>
+
+  <div id="game-board" aria-label="Pöytä"></div>
+
+  <div class="note">
+    ✅ Sarjasiirto: siirrät <b>koko sarjan</b> vain jos se on <b>laskeva + samaa maata</b> (♠♠♠...).<br>
+    ✅ Muuten siirrät vain <b>päällimmäisen</b> kortin.<br>
+    ✅ Siirto ilman dragia: <b>napauta</b> korttia (valitse) → <b>napauta</b> kohdepinoa (siirtää).<br>
+    ✅ Pinoon saa laittaa eri maata: vain järjestys ratkaisee (7 → 8).<br>
+    ✅ Jako (stock): ei saa jakaa, jos joku sarake on tyhjä (Spider-sääntö).
+  </div>
+
+  <div class="toast" id="toast"></div>
 
 <script>
-let columns = [];
-let selectedCol = -1;
-let selectedIdx = -1;
-let moveHistory = [];
-let moves = 0;
+  const suitsAll = ['♠','♥','♣','♦'];
+  const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-// --- ZOOM (sisäinen, toimii aina) ---
-function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
-function setZoom(z){
-  const v = clamp(Number(z), 0.6, 1.4);
-  document.documentElement.style.setProperty('--uiZoom', v);
-  localStorage.setItem('spider_uiZoom', String(v));
-  updateInfo(`Zoom: ${Math.round(v*100)}%`);
-}
-function zoomBy(delta){
-  const cur = Number(getComputedStyle(document.documentElement).getPropertyValue('--uiZoom')) || 1;
-  setZoom(cur + delta);
-}
-// Palauta zoom viimeksi käytettyyn
-(function(){
-  const saved = localStorage.getItem('spider_uiZoom');
-  if(saved) setZoom(saved);
-})();
+  const STACK_GAP = 22;
 
-function updateMoves(){
-  document.getElementById("moves").innerText = String(moves);
-}
+  let columns = [];
+  let stock = [];
+  let moves = 0;
+  let undoStack = []; // {columns, stock, moves}
+  let dragged = null; // {fromCol, startIndex, count}
+  let selected = null; // {fromCol, startIndex, count}
 
-function newGame() {
-  let deck = [];
-  for (let p = 0; p < 8; p++) {
-    for (let r = 1; r <= 13; r++) {
-      deck.push({rank: r, faceUp: false});
-    }
-  }
-  deck.sort(() => Math.random() - 0.5);
-
-  columns = Array.from({ length: 10 }, () => []);
-  for (let c = 0; c < 10; c++) {
-    let count = c < 4 ? 6 : 5;
-    for (let i = 0; i < count; i++) {
-      columns[c].push(deck.pop());
-    }
-    columns[c][columns[c].length - 1].faceUp = true;
+  function toast(msg, ms=1300){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display='block';
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(()=>t.style.display='none', ms);
   }
 
-  selectedCol = -1;
-  selectedIdx = -1;
-  moveHistory = [];
-  moves = 0;
-  updateMoves();
+  function deepCopyState(){
+    return {
+      columns: JSON.parse(JSON.stringify(columns)),
+      stock: JSON.parse(JSON.stringify(stock)),
+      moves
+    };
+  }
 
-  drawTable();
-  updateInfo("Peli alkanut. Napauta korttia (tai sarjaa) ja napauta kohdepinoa.");
-}
+  function pushUndo(){
+    undoStack.push(deepCopyState());
+    if(undoStack.length > 40) undoStack.shift();
+  }
 
-function drawTable() {
-  const table = document.getElementById("table");
-  table.innerHTML = "";
+  function updateTopUI(){
+    document.getElementById('moves').textContent = moves;
+    document.getElementById('stockCount').textContent = stock.length;
+    const dealBtn = document.getElementById('dealBtn');
+    dealBtn.disabled = stock.length < 10 || columns.some(c => c.length === 0);
+  }
 
-  columns.forEach((col, cIdx) => {
-    let colDiv = document.createElement("div");
-    colDiv.className = "column";
-    colDiv.onclick = () => handleColumnClick(cIdx);
-
-    let num = document.createElement("div");
-    num.className = "col-num";
-    num.innerText = `Pino ${cIdx+1} (${col.length})`;
-    colDiv.appendChild(num);
-
-    col.forEach((card, rIdx) => {
-      let cardDiv = document.createElement("div");
-      cardDiv.className = "card";
-      if (!card.faceUp) cardDiv.classList.add("face-down");
-
-      if (cIdx === selectedCol && rIdx >= selectedIdx && selectedIdx !== -1) {
-        cardDiv.classList.add("selected");
+  function buildDeck(suitsCount){
+    // Always 104 cards.
+    const used = suitsAll.slice(0, Math.max(1, Math.min(4, suitsCount)));
+    const deck = [];
+    while(deck.length < 104){
+      for(const s of used){
+        for(const r of ranks){
+          deck.push({ rank:r, suit:s, faceUp:false });
+          if(deck.length >= 104) break;
+        }
+        if(deck.length >= 104) break;
       }
+    }
+    return deck;
+  }
 
-      if (card.faceUp) {
-        cardDiv.innerHTML = `<span>${getRankName(card.rank)}</span><span>♠</span>`;
-        cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+  }
+
+  function dealInitial(deck){
+    const cols = Array.from({length:10}, ()=>[]);
+    // 6 korttia neljään ekaan, 5 muihin (yhteensä 54)
+    for(let c=0;c<10;c++){
+      const n = (c<4)?6:5;
+      for(let k=0;k<n;k++){
+        cols[c].push(deck.pop());
       }
+      // vain päällimmäinen auki
+      cols[c][cols[c].length-1].faceUp = true;
+    }
+    return cols;
+  }
 
-      colDiv.appendChild(cardDiv);
+  function initGame(suitsCount=2){
+    moves = 0;
+    dragged = null;
+    selected = null;
+    undoStack = [];
+
+    const deck = buildDeck(suitsCount);
+    shuffle(deck);
+
+    columns = dealInitial(deck);
+    stock = deck; // loput 50 korttia
+
+    render();
+    toast(`Uusi peli: ${suitsCount} maata`);
+  }
+
+  function rankValue(rank){
+    if(rank==='A') return 1;
+    if(rank==='J') return 11;
+    if(rank==='Q') return 12;
+    if(rank==='K') return 13;
+    return parseInt(rank,10);
+  }
+
+  // Placement rule: allow different suits; only order matters (7 onto 8)
+  function canPlace(movingTopCard, targetTop){
+    if(!targetTop) return true;
+    return rankValue(movingTopCard.rank) === rankValue(targetTop.rank) - 1;
+  }
+
+  // Can move as a STACK starting at index i?
+  // Rule: if not top, must be descending by 1 AND same suit AND all faceUp
+  function stackCountIfMovable(col, i){
+    const last = col.length - 1;
+    const first = col[i];
+    if(!first || !first.faceUp) return 0;
+
+    if(i === last) return 1; // top card always movable (if faceUp)
+
+    for(let k=i; k<last; k++){
+      const a = col[k];
+      const b = col[k+1];
+      if(!a.faceUp || !b.faceUp) return 0;
+      if(rankValue(a.rank) !== rankValue(b.rank) + 1) return 0;
+      if(a.suit !== b.suit) return 0;
+    }
+    return col.length - i;
+  }
+
+  function clearSelection(){
+    selected = null;
+    render();
+  }
+
+  function tryMoveStack(fromCol, startIndex, count, toCol){
+    if(fromCol === toCol) return false;
+
+    const from = columns[fromCol];
+    const to = columns[toCol];
+    const moving = from.slice(startIndex, startIndex + count);
+    if(moving.length !== count) return false;
+
+    const movingTop = moving[0];
+    const targetTop = to.length ? to[to.length-1] : null;
+
+    if(!canPlace(movingTop, targetTop)) return false;
+
+    // OK -> save undo BEFORE change
+    pushUndo();
+
+    // perform move
+    from.splice(startIndex, count);
+    to.push(...moving);
+
+    // flip new top in source if needed
+    if(from.length){
+      from[from.length-1].faceUp = true;
+    }
+
+    moves++;
+    return true;
+  }
+
+  function dealFromStock(){
+    if(stock.length < 10){
+      toast("Lisäpakka on tyhjä.");
+      return;
+    }
+    // Spider-sääntö: ei saa jakaa jos joku sarake tyhjä
+    for(const col of columns){
+      if(col.length === 0){
+        toast("Et voi jakaa, jos jokin sarake on tyhjä.");
+        return;
+      }
+    }
+
+    pushUndo();
+
+    for(let c=0;c<10;c++){
+      const card = stock.pop();
+      card.faceUp = true;
+      columns[c].push(card);
+    }
+    toast("Jako suoritettu (10 korttia).");
+    render();
+  }
+
+  function render(){
+    const board = document.getElementById('game-board');
+    board.innerHTML = '';
+
+    columns.forEach((col, colIndex)=>{
+      const colEl = document.createElement('div');
+      colEl.className='column';
+      colEl.dataset.col = colIndex;
+
+      const title = document.createElement('div');
+      title.className='coltitle';
+      title.textContent = `Pino ${colIndex+1} (${col.length})`;
+      colEl.appendChild(title);
+
+      // Drop (drag)
+      colEl.addEventListener('dragover', (e)=>e.preventDefault());
+      colEl.addEventListener('drop', (e)=>{
+        e.preventDefault();
+        if(!dragged) return;
+
+        const ok = tryMoveStack(dragged.fromCol, dragged.startIndex, dragged.count, colIndex);
+        dragged = null;
+        selected = null;
+
+        if(!ok) toast("Ei voi siirtää tuohon (järjestys)");
+        render();
+      });
+
+      // Tap destination
+      colEl.addEventListener('click', (e)=>{
+        if(e.target && e.target.classList && e.target.classList.contains('card')) return;
+        if(!selected) return;
+
+        const ok = tryMoveStack(selected.fromCol, selected.startIndex, selected.count, colIndex);
+        if(!ok) toast("Ei voi siirtää tuohon (järjestys)");
+        selected = null;
+        render();
+      });
+
+      // Cards
+      col.forEach((card, i)=>{
+        const cardEl = document.createElement('div');
+
+        const isRed = (card.suit==='♥' || card.suit==='♦');
+        cardEl.className = 'card' + (isRed ? ' red' : '');
+        cardEl.style.top = (i * STACK_GAP) + 'px';
+
+        if(!card.faceUp){
+          cardEl.classList.add('face-down');
+          cardEl.draggable = false;
+          colEl.appendChild(cardEl);
+          return;
+        }
+
+        const count = stackCountIfMovable(col, i);
+        const draggable = (count > 0);
+        cardEl.draggable = draggable;
+
+        if(!draggable) cardEl.classList.add('locked');
+
+        if(selected && selected.fromCol === colIndex){
+          if(i >= selected.startIndex && i < selected.startIndex + selected.count){
+            cardEl.classList.add('sel');
+          }
+        }
+
+        cardEl.innerHTML = `
+          <div class="rank">${card.rank}</div>
+          <div class="suit">${card.suit}</div>
+        `;
+
+        // Tap-select
+        cardEl.addEventListener('click', (e)=>{
+          e.stopPropagation();
+
+          if(selected && selected.fromCol === colIndex && selected.startIndex === i){
+            clearSelection();
+            toast("Valinta pois");
+            return;
+          }
+
+          const c = stackCountIfMovable(col, i);
+          if(c === 0){
+            toast("Sarjasiirto vain: kaikki auki + sama maa + laskeva. Muuten vain päällimmäinen.");
+            return;
+          }
+          selected = { fromCol: colIndex, startIndex: i, count: c };
+          toast(c > 1 ? `Valittu sarja (${c})` : "Valittu 1 kortti");
+          render();
+        });
+
+        // Drag start
+        cardEl.addEventListener('dragstart', (e)=>{
+          const c = stackCountIfMovable(col, i);
+          if(c === 0){
+            e.preventDefault();
+            toast("Et voi raahata tästä: vain siirrettävä sarja tai päällimmäinen.");
+            return;
+          }
+          dragged = { fromCol: colIndex, startIndex: i, count: c };
+          cardEl.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', `${colIndex}:${i}:${c}`);
+        });
+        cardEl.addEventListener('dragend', ()=>{
+          cardEl.classList.remove('dragging');
+        });
+
+        colEl.appendChild(cardEl);
+      });
+
+      board.appendChild(colEl);
     });
 
-    table.appendChild(colDiv);
-  });
-}
-
-function handleCardClick(cIdx, rIdx) {
-  if (selectedCol !== -1 && selectedCol !== cIdx) {
-    handleColumnClick(cIdx);
-    return;
-  }
-  const col = columns[cIdx];
-
-  let validSequence = true;
-  for (let i = rIdx; i < col.length - 1; i++) {
-    if (col[i].rank !== col[i+1].rank + 1) { validSequence = false; break; }
-  }
-  if (!validSequence) { updateInfo("Voit siirtää vain laskevia sarjoja."); return; }
-
-  if (selectedCol === cIdx && selectedIdx === rIdx) {
-    selectedCol = -1; selectedIdx = -1;
-    updateInfo("Valinta pois.");
-  } else {
-    selectedCol = cIdx; selectedIdx = rIdx;
-    updateInfo(`Valittu ${getRankName(col[rIdx].rank)}. Napauta kohdepinoa.`);
-  }
-  drawTable();
-}
-
-function handleColumnClick(targetCol) {
-  if (selectedCol === -1) return;
-
-  if (selectedCol === targetCol) {
-    selectedCol = -1; selectedIdx = -1;
-    updateInfo("Valinta pois.");
-    drawTable();
-    return;
+    updateTopUI();
   }
 
-  const movingCard = columns[selectedCol][selectedIdx];
-  const targetColCards = columns[targetCol];
-
-  let canMove = false;
-  if (targetColCards.length === 0) canMove = true;
-  else {
-    const lastCard = targetColCards[targetColCards.length - 1];
-    if (lastCard.rank === movingCard.rank + 1) canMove = true;
-  }
-
-  if (canMove) {
-    moveHistory.push(JSON.parse(JSON.stringify(columns)));
-
-    const cardsToMove = columns[selectedCol].splice(selectedIdx);
-    columns[targetCol] = columns[targetCol].concat(cardsToMove);
-
-    if (columns[selectedCol].length > 0) {
-      columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
+  function undoMove(){
+    if(undoStack.length === 0){
+      toast("Ei peruttavaa");
+      return;
     }
-
-    moves++; updateMoves();
-    updateInfo("Siirto onnistui.");
-    checkAndRemoveSequence(targetCol);
-  } else {
-    updateInfo("Laiton siirto! Kohdekortin täytyy olla 1 isompi.");
+    const prev = undoStack.pop();
+    columns = prev.columns;
+    stock = prev.stock;
+    moves = prev.moves;
+    selected = null;
+    dragged = null;
+    render();
+    toast("Siirto peruttu");
   }
 
-  selectedCol = -1; selectedIdx = -1;
-  drawTable();
-}
-
-function checkAndRemoveSequence(cIdx) {
-  const col = columns[cIdx];
-  if (col.length < 13) return;
-
-  for (let i = 0; i <= col.length - 13; i++) {
-    let sub = col.slice(i, i + 13);
-    let isComplete = sub.every((card, idx) => card.faceUp && card.rank === (13 - idx));
-    if (isComplete) {
-      col.splice(i, 13);
-      if (col.length > 0) col[col.length - 1].faceUp = true;
-      updateInfo("🏁 KUNINGASSARJA VALMIS! Sarja poistettu.");
-      drawTable();
-      break;
-    }
-  }
-}
-
-function undoMove() {
-  if (moveHistory.length === 0) { updateInfo("Ei peruttavaa."); return; }
-  columns = moveHistory.pop();
-  selectedCol = -1; selectedIdx = -1;
-  moves = Math.max(0, moves - 1); updateMoves();
-  drawTable();
-  updateInfo("Siirto peruttu.");
-}
-
-function getRankName(r) {
-  const names = {1:'A',11:'J',12:'Q',13:'K'};
-  return names[r] || r;
-}
-function updateInfo(msg){ document.getElementById("info").innerText = msg; }
-
-// ESC poistaa valinnan (jos koneella)
-window.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape"){
-    selectedCol = -1; selectedIdx = -1;
-    updateInfo("Valinta pois.");
-    drawTable();
-  }
-});
-
-newGame();
+  window.onload = ()=> initGame(2);
 </script>
 </body>
 </html>
