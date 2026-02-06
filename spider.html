@@ -3,21 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spider - Fixed Deck Logic</title>
+    <title>Spider - Final Visuals</title>
     <style>
         :root { --bg: #0d4a3a; --card-w: 82px; --zoom: 1.0; }
         body { background-color: var(--bg); color: white; margin: 0; font-family: sans-serif; overflow-x: hidden; touch-action: manipulation; }
+        
         .controls { display: flex; gap: 8px; padding: 10px; background: rgba(0,0,0,0.4); flex-wrap: wrap; justify-content: center; position: sticky; top: 0; z-index: 1000; }
         button { padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: #2a2a2a; color: white; cursor: pointer; font-weight: bold; }
+        
         .stats-bar { font-size: 12px; text-align: center; padding: 5px; background: rgba(0,0,0,0.2); }
-        #board { display: grid; grid-template-columns: repeat(10, var(--card-w)); justify-content: center; gap: 8px; padding: 20px 5px; transform-origin: top center; transform: scale(var(--zoom)); }
-        .column { width: var(--card-w); min-height: 650px; background: rgba(255,255,255,0.03); border-radius: 4px; position: relative; }
-        .card { width: var(--card-w); height: calc(var(--card-w) * 1.35); background: white; color: black; border-radius: 6px; border: 1px solid #000; margin-bottom: -40px; position: relative; display: flex; flex-direction: column; padding: 5px; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.4); cursor: pointer; z-index: 1; }
+        
+        #board { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            padding: 20px 5px; 
+            transform-origin: top center; 
+            transform: scale(var(--zoom)); 
+        }
+
+        .column { 
+            width: var(--card-w); 
+            min-height: 800px; 
+            background: rgba(255,255,255,0.03); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+        }
+
+        /* TÄMÄ KOHTA KORJAA PINON NÄKYVYYDEN */
+        .card { 
+            width: var(--card-w); 
+            height: calc(var(--card-w) * 1.35); 
+            background: white; 
+            color: black; 
+            border-radius: 6px; 
+            border: 1px solid #000; 
+            margin-bottom: -75px; /* Säädetty niin, että numerot näkyvät aina alla */
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 5px; 
+            box-sizing: border-box; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); 
+            cursor: pointer;
+            transition: transform 0.1s ease; /* Pehmeä pomppu */
+        }
+
         .card-top { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; }
+
         .card.back { background: #1a4a8a; border: 2px solid #fff; }
         .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 24px; }
         .card.back * { display: none; }
-        .card.selected { outline: 4px solid #ffff00; z-index: 999 !important; box-shadow: 0 0 20px #ff0; transform: translateY(-5px); }
+
+        /* TÄMÄ PALAUTTAA POMPPU-EFFEKTIN */
+        .card.selected { 
+            outline: 4px solid #ffff00; 
+            z-index: 5000 !important; 
+            box-shadow: 0 0 25px #ff0; 
+            transform: translateY(-20px) scale(1.05); /* Nousee selkeästi ylös ja kasvaa hieman */
+        }
+
         #stock-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 2000; }
         #stock { width: var(--card-w); height: calc(var(--card-w) * 1.35); background: #1a4a8a; border: 2px solid #fff; border-radius: 6px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 11px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
     </style>
@@ -74,16 +120,13 @@
         const cardValues = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
         deck = [];
         for (let i = 0; i < 8; i++) cardValues.forEach(v => deck.push({v, f:false}));
-        
         shuffle(deck);
         columns = Array.from({length:10}, () => []);
-        
         for (let i = 0; i < 54; i++) {
             let c = deck.pop();
             if (i >= 44) c.f = true;
             columns[i % 10].push(c);
         }
-        
         history = [];
         saveHistory(); 
         startTime = Date.now();
@@ -94,37 +137,24 @@
     function shuffle(a) { for(let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
 
     function saveHistory() {
-        // Syväkopioidaan koko pelin tila, jotta Undo ei sekoita viittauksia
-        const state = JSON.stringify({
-            cols: columns,
-            dk: deck
-        });
-        history.push(state);
+        history.push(JSON.stringify({ cols: columns, dk: deck }));
         if(history.length > 50) history.shift();
     }
     
     function undo() {
         if (history.length > 1) {
-            history.pop(); // Poistetaan nykyinen tila
+            history.pop();
             const prevState = JSON.parse(history[history.length - 1]);
-            columns = prevState.cols;
-            deck = prevState.dk;
-            selected = null;
-            render();
+            columns = prevState.cols; deck = prevState.dk;
+            selected = null; render();
         }
     }
 
     function dealStock() {
         if (deck.length < 10) return;
-        if (columns.some(c => c.length === 0)) {
-            alert("Täytä tyhjät sarakkeet ennen uutta jakoa!");
-            return;
-        }
-        for (let i = 0; i < 10; i++) {
-            let c = deck.pop(); c.f = true; columns[i].push(c);
-        }
-        saveHistory(); // Tallennetaan vasta jaon JÄLKEEN
-        render();
+        if (columns.some(c => c.length === 0)) { alert("Täytä tyhjät sarakkeet!"); return; }
+        for (let i = 0; i < 10; i++) { let c = deck.pop(); c.f = true; columns[i].push(c); }
+        saveHistory(); render();
     }
 
     function render() {
@@ -132,8 +162,10 @@
             el.innerHTML = '';
             columns[ci].forEach((card, ri) => {
                 const div = document.createElement('div');
-                const isSelected = selected && selected.ci === ci && ri >= selected.ri;
-                div.className = `card ${card.f ? '' : 'back'} ${isSelected ? 'selected' : ''}`;
+                // Valittu kortti JA kaikki sen alla olevat kortit nousevat
+                const isPartofSelection = selected && selected.ci === ci && ri >= selected.ri;
+                
+                div.className = `card ${card.f ? '' : 'back'} ${isPartofSelection ? 'selected' : ''}`;
                 div.style.zIndex = ri;
                 div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
                 div.onclick = (e) => { e.stopPropagation(); handleTap(ci, ri); };
@@ -146,34 +178,19 @@
 
     function handleTap(ci, ri) {
         if (selected) {
-            if (canMove(selected.ci, selected.ri, ci)) {
-                doMove(selected.ci, selected.ri, ci);
-            } else {
-                selectCard(ci, ri);
-            }
-        } else {
-            selectCard(ci, ri);
-        }
+            if (canMove(selected.ci, selected.ri, ci)) { doMove(selected.ci, selected.ri, ci); } 
+            else { selectCard(ci, ri); }
+        } else { selectCard(ci, ri); }
         render();
     }
 
     function handleEmptyClick(ci) {
-        if (selected && columns[ci].length === 0) {
-            doMove(selected.ci, selected.ri, ci);
-            render();
-        }
+        if (selected && columns[ci].length === 0) { doMove(selected.ci, selected.ri, ci); render(); }
     }
 
     function selectCard(ci, ri) {
-        if (ri !== -1 && columns[ci][ri].f) {
-            if (isLegalStack(ci, ri)) {
-                selected = {ci, ri};
-            } else {
-                selected = null;
-            }
-        } else {
-            selected = null;
-        }
+        if (ri !== -1 && columns[ci][ri].f && isLegalStack(ci, ri)) { selected = {ci, ri}; } 
+        else { selected = null; }
     }
 
     function isLegalStack(ci, ri) {
@@ -196,15 +213,10 @@
         const cards = columns[fci].splice(fri);
         columns[tci].push(...cards);
         if (columns[fci].length > 0) columns[fci][columns[fci].length-1].f = true;
-        saveHistory(); // Tallennetaan tila siirron jälkeen
-        checkWin(tci);
-        selected = null;
+        saveHistory(); checkWin(tci); selected = null;
     }
 
-    function val(v) { 
-        const m = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13}; 
-        return m[v]; 
-    }
+    function val(v) { const m = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13}; return m[v]; }
 
     function checkWin(ci) {
         const col = columns[ci];
@@ -212,29 +224,17 @@
         for (let j = 0; j <= col.length - 13; j++) {
             if (val(col[j].v) !== 13) continue;
             let match = true;
-            for (let k = 0; k < 12; k++) {
-                if (!col[j+k].f || val(col[j+k].v) !== val(col[j+k+1].v) + 1) {
-                    match = false; break;
-                }
-            }
+            for (let k = 0; k < 12; k++) { if (!col[j+k].f || val(col[j+k].v) !== val(col[j+k+1].v) + 1) { match = false; break; } }
             if (match && val(col[j+12].v) === 1) {
                 col.splice(j, 13);
                 if (col.length > 0) col[col.length-1].f = true;
-                saveHistory(); 
-                alert("Sarja valmis! ♠");
-                if (columns.every(c => c.length === 0) && deck.length === 0) {
-                    const time = Math.floor((Date.now() - startTime) / 1000);
-                    stats.finished++;
-                    if (!stats.bestTime || time < stats.bestTime) stats.bestTime = time;
-                    saveStats(); alert("VOITTO!");
-                }
+                saveHistory(); alert("Sarja valmis!");
                 return;
             }
         }
     }
 
     function formatTime(s) { return `${Math.floor(s/60)}m ${s%60}s`; }
-
     initGame();
 </script>
 </body>
