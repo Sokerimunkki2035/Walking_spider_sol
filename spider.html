@@ -1,481 +1,312 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Walking Spider – Index (taukoautomaatilla)</title>
-  <style>
-    :root{
-      --bg:#0d4a3a;
-      --panel:rgba(0,0,0,.16);
-      --panel2:rgba(255,255,255,.10);
-      --border:rgba(255,255,255,.16);
-      --btn:rgba(255,255,255,.18);
-      --btn2:rgba(120,255,200,.22);
-      --txt:#fff;
-    }
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:var(--bg);
-      color:var(--txt);
-    }
-    .wrap{max-width:1100px;margin:0 auto;padding:12px;}
-    .topbar{
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;
-      margin-bottom:10px;
-    }
-    .btn{
-      border:0;border-radius:999px;
-      padding:10px 14px;
-      font-weight:900;
-      cursor:pointer;
-      background:var(--btn);
-      color:#fff;
-      white-space:nowrap;
-    }
-    .btn.primary{ background:var(--btn2); }
-    .pill{
-      padding:10px 14px;border-radius:999px;
-      background:rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.15);
-      font-weight:900;
-      white-space:nowrap;
-    }
-    .card{
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:12px;
-      margin:10px 0;
-    }
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;}
-    select{
-      padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
-      background:rgba(255,255,255,.10);color:#fff;font-weight:900;
-    }
-    option{color:#000}
-    #appFrame{
-      width:100%;
-      height: calc(100vh - 230px);
-      border:0;
-      border-radius:16px;
-      background:rgba(255,255,255,.08);
-      box-shadow:0 10px 24px rgba(0,0,0,.25);
-    }
-    .small{opacity:.85;font-size:13px;line-height:1.35}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Walking Spider - Pro Version</title>
+    <style>
+        :root {
+            --bg: #0d4a3a;
+            --card-w: 80px;
+            --zoom: 1.0;
+        }
 
-    /* --- BREAK OVERLAY --- */
-    #breakOverlay{
-      display:none;
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      background:rgba(0, 35, 30, .92);
-      backdrop-filter: blur(4px);
-      color:#fff;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-    }
-    .breakBox{
-      max-width:640px;
-      width:100%;
-      background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:18px;
-      padding:16px;
-      text-align:center;
-      box-shadow:0 18px 40px rgba(0,0,0,.35);
-    }
-    .timers{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      justify-content:center;
-      margin:10px 0 2px;
-    }
-    .timerPill{
-      background:rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:999px;
-      padding:10px 14px;
-      font-weight:1000;
-      min-width:220px;
-      text-align:center;
-    }
-    .bigTimer{
-      font-size:44px;
-      font-weight:1100;
-      letter-spacing:1px;
-      margin:6px 0 0;
-    }
-    .progress{
-      height:12px;
-      border-radius:999px;
-      background:rgba(255,255,255,.12);
-      border:1px solid rgba(255,255,255,.14);
-      overflow:hidden;
-      margin:12px 0 14px;
-    }
-    #progBar{
-      height:100%;
-      width:0%;
-      background:rgba(120,255,200,.75);
-    }
-    .qbox{
-      text-align:left;
-      background:rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:14px;
-      padding:12px;
-      margin-top:12px;
-      display:none;
-    }
-    .qbox h3{margin:0 0 8px;font-size:14px}
-    .qrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    .qrow button{flex:1 1 140px}
+        body {
+            background-color: var(--bg);
+            color: white;
+            margin: 0;
+            font-family: sans-serif;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
 
-    .toast{
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:14px;
-      background:rgba(0,0,0,.75);
-      border:1px solid rgba(255,255,255,.15);
-      padding:10px 12px;
-      border-radius:14px;
-      font-weight:900;
-      display:none;
-      max-width:min(92vw,520px);
-      text-align:center;
-      z-index:99999;
-    }
-  </style>
+        /* Ohjauspaneeli */
+        .controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            flex-wrap: wrap;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background: #eee;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover { background: #fff; }
+        .danger { background: #ff4444; color: white; }
+
+        /* Tilastot */
+        .stats-bar {
+            font-size: 12px;
+            text-align: center;
+            padding: 5px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Pelilauta */
+        #board {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px 10px;
+            transform-origin: top center;
+            transform: scale(var(--zoom));
+        }
+
+        .column {
+            width: var(--card-w);
+            min-height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .card {
+            width: var(--card-w);
+            height: calc(var(--card-w) * 1.4);
+            background: white;
+            color: black;
+            border-radius: 5px;
+            border: 1px solid #333;
+            margin-bottom: -100px; /* Korttien pinoaminen */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 5px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card.back {
+            background: #207cca;
+            border: 2px solid #fff;
+        }
+        .card.back::after {
+            content: "🕷️";
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 24px;
+        }
+        .card.back * { display: none; }
+        .card.selected { outline: 3px solid #ffff00; box-shadow: 0 0 15px #ffff00; }
+
+        /* Pakka */
+        #stock-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #stock {
+            width: var(--card-w);
+            height: calc(var(--card-w) * 1.4);
+            background: #207cca;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="topbar">
-        <button class="btn primary" onclick="loadPage('spider.html')">🕷️ Spider (1 maa)</button>
-        <button class="btn" onclick="loadPage('scorpion.html')">🦂 Scorpion</button>
-        <button class="btn" onclick="loadPage('golf.html')">⛳ Golf</button>
 
-        <button class="btn" onclick="forceBreak()">🚶 Tauko nyt</button>
+<div class="controls">
+    <button onclick="zoom(0.1)">➕ Zoom</button>
+    <button onclick="zoom(-0.1)">➖ Zoom</button>
+    <button onclick="undo()">↩️ Undo</button>
+    <button onclick="newGame()">🆕 Uusi peli</button>
+    <button class="danger" onclick="resetGame()">🔄 Alkuun</button>
+    <button onclick="window.parent.location.reload()">🏠 Valikko</button>
+</div>
 
-        <div class="pill">Aktiiviaika: <span id="activeClock">00:00</span></div>
-        <div class="pill" id="breakSoon" style="display:none">⏳ Tauko tulossa</div>
-      </div>
+<div class="stats-bar" id="stats-text">Ladataan tilastoja...</div>
 
-      <div class="row" style="margin-top:8px">
-        <div class="pill">Tauko joka</div>
-        <select id="everySel" title="Tauko joka X minuuttia">
-          <option value="10">10 min</option>
-          <option value="15">15 min</option>
-          <option value="20">20 min</option>
-          <option value="25" selected>25 min</option>
-          <option value="30">30 min</option>
-          <option value="45">45 min</option>
-        </select>
+<div id="board">
+    <div class="column" data-idx="0"></div>
+    <div class="column" data-idx="1"></div>
+    <div class="column" data-idx="2"></div>
+    <div class="column" data-idx="3"></div>
+    <div class="column" data-idx="4"></div>
+    <div class="column" data-idx="5"></div>
+    <div class="column" data-idx="6"></div>
+    <div class="column" data-idx="7"></div>
+    <div class="column" data-idx="8"></div>
+    <div class="column" data-idx="9"></div>
+</div>
 
-        <div class="pill">Tauon pituus</div>
-        <select id="lenSel" title="Tauon pituus">
-          <option value="1">1 min</option>
-          <option value="3" selected>3 min</option>
-          <option value="5">5 min</option>
-          <option value="7">7 min</option>
-        </select>
-
-        <button class="btn" onclick="resetActive()">Nollaa laskuri</button>
-      </div>
-
-      <div class="small" style="text-align:center;margin-top:8px">
-        Pysyt tässä indexissä ja pelit avautuvat ruudun sisään. Tauon aikana peli lukitaan eikä kosketus mene läpi.
-      </div>
-    </div>
-
-    <iframe id="appFrame" src="spider.html" title="Walking Spider"></iframe>
-
-    <div class="card" style="text-align:center">
-      <span class="small">
-        Tietosuoja: <a href="privacy.html" style="color:#eafff5;font-weight:1000;text-decoration:none">privacy.html</a>
-      </span>
-    </div>
-  </div>
-
-  <!-- BREAK OVERLAY -->
-  <div id="breakOverlay">
-    <div class="breakBox">
-      <div style="font-size:18px;font-weight:1100">🚶 Kävelytauko</div>
-      <div class="small" id="breakHint">Nouse ylös ja liiku hetki. Tauon aikana peli on lukittu.</div>
-
-      <div class="timers">
-        <div class="timerPill">
-          Jäljellä
-          <div class="bigTimer" id="breakTimerLeft">03:00</div>
-        </div>
-        <div class="timerPill">
-          Kulunut
-          <div class="bigTimer" id="breakTimerSpent">00:00</div>
-        </div>
-      </div>
-
-      <div class="progress"><div id="progBar"></div></div>
-
-      <div class="row">
-        <button class="btn primary" id="doneBtn" disabled onclick="finishBreak()">Valmis – jatka peliä</button>
-      </div>
-
-      <div class="qbox" id="qbox">
-        <h3>Lyhyt check-in</h3>
-
-        <div class="small">1) Onko ollut hyvä päivä?</div>
-        <div class="qrow">
-          <button class="btn" onclick="pick('day','Juu')">Juu</button>
-          <button class="btn" onclick="pick('day','Ei')">Ei</button>
-        </div>
-
-        <div class="small">2) Miten tauko meni?</div>
-        <div class="qrow">
-          <button class="btn" onclick="pick('break','Kivaa')">Kivaa</button>
-          <button class="btn" onclick="pick('break','Ihan ok')">Ihan ok</button>
-          <button class="btn" onclick="pick('break','Tyhmää')">Tyhmää</button>
-        </div>
-
-        <div class="small">3) Saitko jotain ajatuksia?</div>
-        <div class="qrow">
-          <button class="btn" onclick="pick('idea','Ajatukset rullasi')">Ajatukset rullasi</button>
-          <button class="btn" onclick="pick('idea','Paras idea')">Paras idea</button>
-          <button class="btn" onclick="pick('idea','Tarttee kelata')">Tarttee kelata</button>
-        </div>
-
-        <div class="small" id="qsum" style="margin-top:6px"></div>
-      </div>
-
-      <div class="small" style="margin-top:10px;opacity:.85">
-        (Wake Lock yritetään pitää päällä tauon ajan, jos selaimesi sallii.)
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
+<div id="stock-container">
+    <span id="stock-count">50</span>
+    <div id="stock" onclick="dealStock()"></div>
+</div>
 
 <script>
-/* -----------------------
-   NAV / iframe
------------------------- */
-const frame = document.getElementById('appFrame');
-function loadPage(path){
-  frame.src = path;
-  toast(`Avattu: ${path}`);
-}
+    let deck = [], columns = [], history = [];
+    let startTime = null;
+    let selected = null;
+    let currentZoom = 1.0;
 
-/* -----------------------
-   TAUKOMOOTTORI (globaalisti indexissä)
------------------------- */
-const LSKEY = "walking_break_settings_v2";
+    // Tilastot LocalStorageen
+    let stats = JSON.parse(localStorage.getItem('spider_stats')) || {
+        played: 0, finished: 0, interrupted: 0, bestTime: null
+    };
 
-let activeSeconds = 0;
-let everyMin = 25;
-let breakMin = 3;
+    function saveStats() { localStorage.setItem('spider_stats', JSON.stringify(stats)); updateStatsUI(); }
 
-let tick = null;
-let onBreak = false;
-
-let breakLeft = 0;
-let breakTotal = 0;
-let breakSpent = 0;
-let breakTimerInterval = null;
-
-let wakeLock = null;
-
-const activeClock = document.getElementById('activeClock');
-const everySel = document.getElementById('everySel');
-const lenSel = document.getElementById('lenSel');
-const warnEl = document.getElementById('breakSoon');
-
-function loadSettings(){
-  try{
-    const raw = localStorage.getItem(LSKEY);
-    if(raw){
-      const s = JSON.parse(raw);
-      if(s.everyMin) everyMin = Number(s.everyMin);
-      if(s.breakMin) breakMin = Number(s.breakMin);
-    }
-  }catch(e){}
-  everySel.value = String(everyMin);
-  lenSel.value = String(breakMin);
-}
-function saveSettings(){
-  localStorage.setItem(LSKEY, JSON.stringify({everyMin, breakMin}));
-}
-everySel.addEventListener('change', ()=>{
-  everyMin = Number(everySel.value);
-  saveSettings();
-  toast(`Tauko joka ${everyMin} min`);
-});
-lenSel.addEventListener('change', ()=>{
-  breakMin = Number(lenSel.value);
-  saveSettings();
-  toast(`Tauon pituus ${breakMin} min`);
-});
-
-function formatMMSS(sec){
-  sec = Math.max(0, Math.floor(sec));
-  const m = Math.floor(sec/60);
-  const s = sec % 60;
-  return String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
-}
-
-function startEngine(){
-  if(tick) clearInterval(tick);
-  tick = setInterval(()=>{
-    if(onBreak) return;
-    if(document.visibilityState !== 'visible') return;
-
-    activeSeconds++;
-    activeClock.textContent = formatMMSS(activeSeconds);
-
-    // ennakkovaroitus 1 min ennen taukoa
-    const warnAt = everyMin * 60 - 60;
-    if(activeSeconds >= warnAt && activeSeconds < everyMin * 60){
-      warnEl.style.display = 'inline-block';
-    }else{
-      warnEl.style.display = 'none';
+    function updateStatsUI() {
+        const best = stats.bestTime ? ` | Ennätys: ${formatTime(stats.bestTime)}` : "";
+        document.getElementById('stats-text').innerText = 
+            `Pelattu: ${stats.played} | Valmis: ${stats.finished} | Keskeytetty: ${stats.interrupted}${best}`;
     }
 
-    if(activeSeconds >= everyMin * 60){
-      startBreak(breakMin * 60);
+    function zoom(v) { currentZoom += v; document.documentElement.style.setProperty('--zoom', currentZoom); }
+
+    function newGame() {
+        if (startTime) stats.interrupted++;
+        stats.played++;
+        saveStats();
+        initGame();
     }
-  }, 1000);
 
-  activeClock.textContent = formatMMSS(activeSeconds);
-}
+    function resetGame() { if(confirm("Aloitetaanko tämä jako alusta?")) initGame(true); }
 
-function resetActive(){
-  activeSeconds = 0;
-  activeClock.textContent = formatMMSS(activeSeconds);
-  warnEl.style.display = 'none';
-  toast("Aktiivilaskuri nollattu");
-}
+    function initGame(isReset = false) {
+        if (!isReset) {
+            deck = [];
+            for (let i = 0; i < 8; i++) ['A','2','3','4','5','6','7','8','9','10','J','Q','K'].forEach(v => deck.push({v, f:false}));
+            shuffle(deck);
+            history = [JSON.stringify(getGameState())]; // Alkutilanne talteen
+        } else {
+            const firstState = JSON.parse(history[0]);
+            columns = firstState.columns;
+            deck = firstState.deck;
+        }
 
-function forceBreak(){
-  startBreak(breakMin * 60);
-}
-
-/* -----------------------
-   BREAK OVERLAY
------------------------- */
-const overlay = document.getElementById('breakOverlay');
-const btLeft = document.getElementById('breakTimerLeft');
-const btSpent = document.getElementById('breakTimerSpent');
-const prog = document.getElementById('progBar');
-const doneBtn = document.getElementById('doneBtn');
-const qbox = document.getElementById('qbox');
-const qsum = document.getElementById('qsum');
-
-let answers = {day:null, break:null, idea:null};
-
-function startBreak(seconds){
-  if(onBreak) return;
-
-  onBreak = true;
-  breakTotal = seconds;
-  breakLeft = seconds;
-  breakSpent = 0;
-
-  doneBtn.disabled = true;
-  qbox.style.display = "none";
-  answers = {day:null, break:null, idea:null};
-  qsum.textContent = "";
-
-  overlay.style.display = "flex";
-  updateBreakUI();
-
-  requestWakeLock();
-
-  if(breakTimerInterval) clearInterval(breakTimerInterval);
-  breakTimerInterval = setInterval(()=>{
-    breakLeft--;
-    breakSpent++;
-
-    if(breakLeft <= 0){
-      breakLeft = 0;
-      clearInterval(breakTimerInterval);
-      onBreakEnd();
+        if (!isReset) {
+            columns = Array.from({length:10}, () => []);
+            for (let i = 0; i < 54; i++) {
+                let c = deck.pop();
+                if (i >= 44) c.f = true;
+                columns[i % 10].push(c);
+            }
+        }
+        
+        startTime = Date.now();
+        render();
     }
-    updateBreakUI();
-  }, 1000);
 
-  toast("Tauko alkoi");
-}
+    function shuffle(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
 
-function updateBreakUI(){
-  btLeft.textContent = formatMMSS(breakLeft);
-  btSpent.textContent = formatMMSS(breakSpent);
+    function getGameState() { return { columns: JSON.parse(JSON.stringify(columns)), deck: [...deck] }; }
 
-  const done = (breakTotal - breakLeft);
-  const pct = breakTotal ? (done / breakTotal) * 100 : 0;
-  prog.style.width = Math.min(100, Math.max(0, pct)) + "%";
-}
+    function saveHistory() { history.push(JSON.stringify(getGameState())); if(history.length > 20) history.shift(); }
 
-function onBreakEnd(){
-  doneBtn.disabled = false;
-  qbox.style.display = "block";
-  toast("Tauko valmis – paina Valmis");
-  releaseWakeLock();
-}
-
-function finishBreak(){
-  overlay.style.display = "none";
-  onBreak = false;
-
-  // uusi aktiivijakso alkaa tauon jälkeen
-  activeSeconds = 0;
-  activeClock.textContent = formatMMSS(activeSeconds);
-  warnEl.style.display = 'none';
-
-  toast("Jatketaan peliä");
-}
-
-function pick(key, val){
-  answers[key] = val;
-  const parts = [];
-  if(answers.day) parts.push("Päivä: " + answers.day);
-  if(answers.break) parts.push("Tauko: " + answers.break);
-  if(answers.idea) parts.push("Ajatus: " + answers.idea);
-  qsum.textContent = parts.join(" · ");
-}
-
-/* -----------------------
-   Wake Lock
------------------------- */
-async function requestWakeLock(){
-  try{
-    if('wakeLock' in navigator){
-      wakeLock = await navigator.wakeLock.request('screen');
+    function undo() {
+        if (history.length > 1) {
+            history.pop();
+            const state = JSON.parse(history[history.length - 1]);
+            columns = state.columns;
+            deck = state.deck;
+            render();
+        }
     }
-  }catch(e){}
-}
-function releaseWakeLock(){
-  try{ if(wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){}
-}
 
-/* -----------------------
-   Toast
------------------------- */
-function toast(msg, ms=1400){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display='block';
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>t.style.display='none', ms);
-}
+    function dealStock() {
+        if (deck.length < 10) return;
+        saveHistory();
+        for (let i = 0; i < 10; i++) {
+            let c = deck.pop();
+            c.f = true;
+            columns[i].push(c);
+        }
+        render();
+    }
 
-/* init */
-loadSettings();
-startEngine();
+    function render() {
+        document.querySelectorAll('.column').forEach((el, ci) => {
+            el.innerHTML = '';
+            columns[ci].forEach((card, ri) => {
+                const div = document.createElement('div');
+                div.className = `card ${card.f ? '' : 'back'} ${selected?.ci === ci && selected?.ri === ri ? 'selected' : ''}`;
+                div.innerHTML = `<span>${card.v}</span><span>♠</span>`;
+                div.onclick = (e) => { e.stopPropagation(); handleTap(ci, ri); };
+                el.appendChild(div);
+            });
+            el.onclick = () => handleTap(ci, -1);
+        });
+        document.getElementById('stock-count').innerText = deck.length;
+        updateStatsUI();
+    }
+
+    function handleTap(ci, ri) {
+        if (selected) {
+            if (canMove(selected.ci, selected.ri, ci)) {
+                saveHistory();
+                const cards = columns[selected.ci].splice(selected.ri);
+                columns[ci].push(...cards);
+                if (columns[selected.ci].length > 0) columns[selected.ci][columns[selected.ci].length-1].f = true;
+                checkWin(ci);
+                selected = null;
+            } else {
+                selected = ri !== -1 && columns[ci][ri].f ? {ci, ri} : null;
+            }
+        } else {
+            if (ri !== -1 && columns[ci][ri].f) selected = {ci, ri};
+        }
+        render();
+    }
+
+    function canMove(fci, fri, tci) {
+        const movingCard = columns[fci][fri];
+        // Tarkista onko siirrettävä pino validi (peräkkäiset numerot)
+        for (let i = fri; i < columns[fci].length - 1; i++) {
+            if (val(columns[fci][i].v) !== val(columns[fci][i+1].v) + 1) return false;
+        }
+        if (columns[tci].length === 0) return true;
+        return val(columns[tci][columns[tci].length-1].v) === val(movingCard.v) + 1;
+    }
+
+    function val(v) { const m = {'A':1,'J':11,'Q':12,'K':13}; return m[v] || parseInt(v); }
+
+    function checkWin(ci) {
+        const col = columns[ci];
+        if (col.length < 13) return;
+        for (let i = col.length - 13; i < col.length - 1; i++) {
+            if (!col[i].f || val(col[i].v) !== val(col[i+1].v) + 1) return;
+        }
+        // Jos päästiin tänne, poistetaan täysi sarja
+        col.splice(col.length - 13);
+        if (col.length > 0) col[col.length-1].f = true;
+        alert("Sait sarjan valmiiksi! ♠");
+        
+        // Tarkista onko kaikki loppu
+        if (columns.every(c => c.length === 0) && deck.length === 0) {
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+            stats.finished++;
+            if (!stats.bestTime || timeTaken < stats.bestTime) {
+                stats.bestTime = timeTaken;
+                alert(`UUSI ENNÄTYS: ${formatTime(timeTaken)}!`);
+            }
+            saveStats();
+        }
+    }
+
+    function formatTime(s) { return `${Math.floor(s/60)}m ${s%60}s`; }
+
+    initGame();
 </script>
 </body>
 </html>
