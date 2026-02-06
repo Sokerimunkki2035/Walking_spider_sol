@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Walking Spider - Final Fix</title>
+    <title>Walking Spider - Fixed Deck</title>
     <style>
         :root {
             --bg: #0d4a3a;
-            --card-w: 80px;
+            --card-w: 82px;
             --zoom: 1.0;
         }
 
@@ -33,12 +33,11 @@
 
         .stats-bar { font-size: 12px; text-align: center; padding: 5px; background: rgba(0,0,0,0.2); }
 
-        /* PELILAUTA - Varmistetaan että sarakkeet pysyvät paikoillaan */
         #board {
             display: grid;
             grid-template-columns: repeat(10, var(--card-w));
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             padding: 20px 5px;
             transform-origin: top center;
             transform: scale(var(--zoom));
@@ -46,8 +45,8 @@
 
         .column {
             width: var(--card-w);
-            min-height: 600px;
-            background: rgba(255,255,255,0.05); /* Näyttää missä tyhjä sarake on */
+            min-height: 650px;
+            background: rgba(255,255,255,0.03);
             border-radius: 4px;
             position: relative;
         }
@@ -57,7 +56,7 @@
             height: calc(var(--card-w) * 1.35);
             background: white; color: black; border-radius: 6px;
             border: 1px solid #000;
-            margin-bottom: -90px; /* Jättää numeron näkyviin */
+            margin-bottom: -100px; /* Säädetty pinoamista, jotta numerot näkyvät paremmin */
             position: relative; display: flex; flex-direction: column;
             padding: 5px; box-sizing: border-box;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4);
@@ -69,7 +68,14 @@
         .card.back { background: #1a4a8a; border: 2px solid #fff; }
         .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 24px; }
         .card.back * { display: none; }
-        .card.selected { outline: 4px solid #ffff00; z-index: 999 !important; box-shadow: 0 0 20px #ff0; }
+        
+        /* Valitun kortin korostus */
+        .card.selected { 
+            outline: 4px solid #ffff00; 
+            z-index: 999 !important; 
+            box-shadow: 0 0 20px #ff0;
+            transform: translateY(-5px); /* Nousee hieman ylös pinosta */
+        }
 
         #stock-container {
             position: fixed; bottom: 20px; right: 20px;
@@ -80,6 +86,7 @@
             background: #1a4a8a; border: 2px solid #fff; border-radius: 6px;
             cursor: pointer; display: flex; justify-content: center;
             align-items: center; font-weight: bold; font-size: 11px; text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
     </style>
 </head>
@@ -133,37 +140,57 @@
     }
 
     function initGame() {
+        // TARKISTETTU PAKKA: 8 settiä A-K = 104 korttia
+        const cardValues = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
         deck = [];
-        for (let i = 0; i < 8; i++) ['A','2','3','4','5','6','7','8','9','10','J','Q','K'].forEach(v => deck.push({v, f:false}));
+        for (let i = 0; i < 8; i++) {
+            cardValues.forEach(v => deck.push({v, f:false}));
+        }
+        
         shuffle(deck);
         columns = Array.from({length:10}, () => []);
+        
+        // Alkujako (54 korttia)
         for (let i = 0; i < 54; i++) {
             let c = deck.pop();
             if (i >= 44) c.f = true;
             columns[i % 10].push(c);
         }
+        
+        history = [];
         saveHistory();
         startTime = Date.now();
+        selected = null;
         render();
     }
 
-    function shuffle(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
-    function saveHistory() { history.push(JSON.stringify({columns, deck})); if(history.length > 40) history.shift(); }
+    function shuffle(a) { 
+        for(let i = a.length - 1; i > 0; i--) { 
+            const j = Math.floor(Math.random() * (i + 1)); 
+            [a[i], a[j]] = [a[j], a[i]]; 
+        } 
+    }
+
+    function saveHistory() { 
+        history.push(JSON.stringify({columns, deck})); 
+        if(history.length > 50) history.shift(); 
+    }
     
     function undo() {
         if (history.length > 1) {
             history.pop();
             const state = JSON.parse(history[history.length - 1]);
-            columns = state.columns; deck = state.deck;
-            selected = null; render();
+            columns = state.columns; 
+            deck = state.deck;
+            selected = null; 
+            render();
         }
     }
 
     function dealStock() {
         if (deck.length < 10) return;
-        // Spider-sääntö: tyhjiä sarakkeita ei saa olla kun jaetaan uusia kortteja
         if (columns.some(c => c.length === 0)) {
-            alert("Kaikissa sarakkeissa täytyy olla vähintään yksi kortti ennen jakoa!");
+            alert("Täytä tyhjät sarakkeet ennen uutta jakoa!");
             return;
         }
         saveHistory();
@@ -178,7 +205,10 @@
             el.innerHTML = '';
             columns[ci].forEach((card, ri) => {
                 const div = document.createElement('div');
-                div.className = `card ${card.f ? '' : 'back'} ${selected?.ci === ci && selected?.ri === ri ? 'selected' : ''}`;
+                // Tarkistetaan onko tämä kortti tai osa valittua pinoa
+                const isSelected = selected && selected.ci === ci && ri >= selected.ri;
+                
+                div.className = `card ${card.f ? '' : 'back'} ${isSelected ? 'selected' : ''}`;
                 div.style.zIndex = ri;
                 div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
                 div.onclick = (e) => { e.stopPropagation(); handleTap(ci, ri); };
@@ -194,6 +224,7 @@
             if (canMove(selected.ci, selected.ri, ci)) {
                 doMove(selected.ci, selected.ri, ci);
             } else {
+                // Jos ei voi siirtää, yritetään valita uusi kortti
                 selectCard(ci, ri);
             }
         } else {
@@ -202,22 +233,22 @@
         render();
     }
 
-    // Mahdollistaa siirron tyhjään sarakkeeseen klikkaamalla saraketta
     function handleEmptyClick(ci) {
         if (selected && columns[ci].length === 0) {
-            if (canMove(selected.ci, selected.ri, ci)) {
-                doMove(selected.ci, selected.ri, ci);
-                render();
-            }
+            doMove(selected.ci, selected.ri, ci);
+            render();
         }
     }
 
     function selectCard(ci, ri) {
         if (ri !== -1 && columns[ci][ri].f) {
-            // Varmista että valittu pino on laillinen (peräkkäiset numerot)
             if (isLegalStack(ci, ri)) {
                 selected = {ci, ri};
+            } else {
+                selected = null;
             }
+        } else {
+            selected = null;
         }
     }
 
@@ -232,7 +263,7 @@
     function canMove(fci, fri, tci) {
         if (fci === tci) return false;
         const movingCard = columns[fci][fri];
-        if (columns[tci].length === 0) return true; // Tyhjään saa aina siirtää
+        if (columns[tci].length === 0) return true;
         const targetCard = columns[tci][columns[tci].length - 1];
         return val(targetCard.v) === val(movingCard.v) + 1;
     }
@@ -246,14 +277,17 @@
         selected = null;
     }
 
-    function val(v) { const m = {'A':1,'J':11,'Q':12,'K':13}; return m[v] || parseInt(v); }
+    function val(v) { 
+        const m = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13}; 
+        return m[v]; 
+    }
 
     function checkWin(ci) {
         const col = columns[ci];
         if (col.length < 13) return;
         for (let j = 0; j <= col.length - 13; j++) {
+            if (val(col[j].v) !== 13) continue;
             let match = true;
-            if (val(col[j].v) !== 13) continue; // Pitää alkaa Kuninkaalla
             for (let k = 0; k < 12; k++) {
                 if (!col[j+k].f || val(col[j+k].v) !== val(col[j+k+1].v) + 1) {
                     match = false; break;
@@ -262,12 +296,12 @@
             if (match && val(col[j+12].v) === 1) {
                 col.splice(j, 13);
                 if (col.length > 0) col[col.length-1].f = true;
-                alert("Sarja valmis! ♠");
+                alert("Hienoa! Sarja valmis! ♠");
                 if (columns.every(c => c.length === 0) && deck.length === 0) {
                     const time = Math.floor((Date.now() - startTime) / 1000);
                     stats.finished++;
                     if (!stats.bestTime || time < stats.bestTime) stats.bestTime = time;
-                    saveStats(); alert("VOITIT PELIN!");
+                    saveStats(); alert("ONNEKSI OLKOON! VOITIT PELIN!");
                 }
                 return;
             }
