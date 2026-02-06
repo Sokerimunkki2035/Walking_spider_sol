@@ -3,91 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Walking Spider - Fixed Deck</title>
+    <title>Spider - Fixed Deck Logic</title>
     <style>
-        :root {
-            --bg: #0d4a3a;
-            --card-w: 82px;
-            --zoom: 1.0;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: white;
-            margin: 0;
-            font-family: sans-serif;
-            overflow-x: hidden;
-            touch-action: manipulation;
-        }
-
-        .controls {
-            display: flex; gap: 8px; padding: 10px;
-            background: rgba(0,0,0,0.4); flex-wrap: wrap;
-            justify-content: center; position: sticky; top: 0; z-index: 1000;
-        }
-
-        button {
-            padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
-            background: #2a2a2a; color: white; cursor: pointer; font-weight: bold;
-        }
-
+        :root { --bg: #0d4a3a; --card-w: 82px; --zoom: 1.0; }
+        body { background-color: var(--bg); color: white; margin: 0; font-family: sans-serif; overflow-x: hidden; touch-action: manipulation; }
+        .controls { display: flex; gap: 8px; padding: 10px; background: rgba(0,0,0,0.4); flex-wrap: wrap; justify-content: center; position: sticky; top: 0; z-index: 1000; }
+        button { padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: #2a2a2a; color: white; cursor: pointer; font-weight: bold; }
         .stats-bar { font-size: 12px; text-align: center; padding: 5px; background: rgba(0,0,0,0.2); }
-
-        #board {
-            display: grid;
-            grid-template-columns: repeat(10, var(--card-w));
-            justify-content: center;
-            gap: 8px;
-            padding: 20px 5px;
-            transform-origin: top center;
-            transform: scale(var(--zoom));
-        }
-
-        .column {
-            width: var(--card-w);
-            min-height: 650px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .card {
-            width: var(--card-w);
-            height: calc(var(--card-w) * 1.35);
-            background: white; color: black; border-radius: 6px;
-            border: 1px solid #000;
-            margin-bottom: -100px; /* Säädetty pinoamista, jotta numerot näkyvät paremmin */
-            position: relative; display: flex; flex-direction: column;
-            padding: 5px; box-sizing: border-box;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            cursor: pointer; z-index: 1;
-        }
-
+        #board { display: grid; grid-template-columns: repeat(10, var(--card-w)); justify-content: center; gap: 8px; padding: 20px 5px; transform-origin: top center; transform: scale(var(--zoom)); }
+        .column { width: var(--card-w); min-height: 650px; background: rgba(255,255,255,0.03); border-radius: 4px; position: relative; }
+        .card { width: var(--card-w); height: calc(var(--card-w) * 1.35); background: white; color: black; border-radius: 6px; border: 1px solid #000; margin-bottom: -100px; position: relative; display: flex; flex-direction: column; padding: 5px; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.4); cursor: pointer; z-index: 1; }
         .card-top { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; }
-
         .card.back { background: #1a4a8a; border: 2px solid #fff; }
         .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 24px; }
         .card.back * { display: none; }
-        
-        /* Valitun kortin korostus */
-        .card.selected { 
-            outline: 4px solid #ffff00; 
-            z-index: 999 !important; 
-            box-shadow: 0 0 20px #ff0;
-            transform: translateY(-5px); /* Nousee hieman ylös pinosta */
-        }
-
-        #stock-container {
-            position: fixed; bottom: 20px; right: 20px;
-            display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 2000;
-        }
-        #stock {
-            width: var(--card-w); height: calc(var(--card-w) * 1.35);
-            background: #1a4a8a; border: 2px solid #fff; border-radius: 6px;
-            cursor: pointer; display: flex; justify-content: center;
-            align-items: center; font-weight: bold; font-size: 11px; text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        }
+        .card.selected { outline: 4px solid #ffff00; z-index: 999 !important; box-shadow: 0 0 20px #ff0; transform: translateY(-5px); }
+        #stock-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 2000; }
+        #stock { width: var(--card-w); height: calc(var(--card-w) * 1.35); background: #1a4a8a; border: 2px solid #fff; border-radius: 6px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 11px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -100,7 +32,7 @@
     <button onclick="window.parent.location.reload()">🏠 Valikko</button>
 </div>
 
-<div class="stats-bar" id="stats-text">Ladataan tilastoja...</div>
+<div class="stats-bar" id="stats-text">Ladataan...</div>
 
 <div id="board">
     <div class="column" onclick="handleEmptyClick(0)" data-idx="0"></div>
@@ -117,13 +49,12 @@
 
 <div id="stock-container">
     <div id="stock" onclick="dealStock()">JAA 10 KORTTIA</div>
-    <span id="stock-count" style="background:black; padding:2px 8px; border-radius:10px">50</span>
+    <span id="stock-count" style="background:black; padding:2px 8px; border-radius:10px">0</span>
 </div>
 
 <script>
     let deck = [], columns = [], history = [];
     let startTime = null, selected = null, currentZoom = 1.0;
-
     let stats = JSON.parse(localStorage.getItem('spider_stats')) || { played: 0, finished: 0, interrupted: 0, bestTime: null };
 
     function saveStats() { localStorage.setItem('spider_stats', JSON.stringify(stats)); updateStatsUI(); }
@@ -140,17 +71,13 @@
     }
 
     function initGame() {
-        // TARKISTETTU PAKKA: 8 settiä A-K = 104 korttia
         const cardValues = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
         deck = [];
-        for (let i = 0; i < 8; i++) {
-            cardValues.forEach(v => deck.push({v, f:false}));
-        }
+        for (let i = 0; i < 8; i++) cardValues.forEach(v => deck.push({v, f:false}));
         
         shuffle(deck);
         columns = Array.from({length:10}, () => []);
         
-        // Alkujako (54 korttia)
         for (let i = 0; i < 54; i++) {
             let c = deck.pop();
             if (i >= 44) c.f = true;
@@ -158,31 +85,31 @@
         }
         
         history = [];
-        saveHistory();
+        saveHistory(); 
         startTime = Date.now();
         selected = null;
         render();
     }
 
-    function shuffle(a) { 
-        for(let i = a.length - 1; i > 0; i--) { 
-            const j = Math.floor(Math.random() * (i + 1)); 
-            [a[i], a[j]] = [a[j], a[i]]; 
-        } 
-    }
+    function shuffle(a) { for(let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
 
-    function saveHistory() { 
-        history.push(JSON.stringify({columns, deck})); 
-        if(history.length > 50) history.shift(); 
+    function saveHistory() {
+        // Syväkopioidaan koko pelin tila, jotta Undo ei sekoita viittauksia
+        const state = JSON.stringify({
+            cols: columns,
+            dk: deck
+        });
+        history.push(state);
+        if(history.length > 50) history.shift();
     }
     
     function undo() {
         if (history.length > 1) {
-            history.pop();
-            const state = JSON.parse(history[history.length - 1]);
-            columns = state.columns; 
-            deck = state.deck;
-            selected = null; 
+            history.pop(); // Poistetaan nykyinen tila
+            const prevState = JSON.parse(history[history.length - 1]);
+            columns = prevState.cols;
+            deck = prevState.dk;
+            selected = null;
             render();
         }
     }
@@ -193,10 +120,10 @@
             alert("Täytä tyhjät sarakkeet ennen uutta jakoa!");
             return;
         }
-        saveHistory();
         for (let i = 0; i < 10; i++) {
             let c = deck.pop(); c.f = true; columns[i].push(c);
         }
+        saveHistory(); // Tallennetaan vasta jaon JÄLKEEN
         render();
     }
 
@@ -205,9 +132,7 @@
             el.innerHTML = '';
             columns[ci].forEach((card, ri) => {
                 const div = document.createElement('div');
-                // Tarkistetaan onko tämä kortti tai osa valittua pinoa
                 const isSelected = selected && selected.ci === ci && ri >= selected.ri;
-                
                 div.className = `card ${card.f ? '' : 'back'} ${isSelected ? 'selected' : ''}`;
                 div.style.zIndex = ri;
                 div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
@@ -224,7 +149,6 @@
             if (canMove(selected.ci, selected.ri, ci)) {
                 doMove(selected.ci, selected.ri, ci);
             } else {
-                // Jos ei voi siirtää, yritetään valita uusi kortti
                 selectCard(ci, ri);
             }
         } else {
@@ -269,10 +193,10 @@
     }
 
     function doMove(fci, fri, tci) {
-        saveHistory();
         const cards = columns[fci].splice(fri);
         columns[tci].push(...cards);
         if (columns[fci].length > 0) columns[fci][columns[fci].length-1].f = true;
+        saveHistory(); // Tallennetaan tila siirron jälkeen
         checkWin(tci);
         selected = null;
     }
@@ -296,12 +220,13 @@
             if (match && val(col[j+12].v) === 1) {
                 col.splice(j, 13);
                 if (col.length > 0) col[col.length-1].f = true;
-                alert("Hienoa! Sarja valmis! ♠");
+                saveHistory(); 
+                alert("Sarja valmis! ♠");
                 if (columns.every(c => c.length === 0) && deck.length === 0) {
                     const time = Math.floor((Date.now() - startTime) / 1000);
                     stats.finished++;
                     if (!stats.bestTime || time < stats.bestTime) stats.bestTime = time;
-                    saveStats(); alert("ONNEKSI OLKOON! VOITIT PELIN!");
+                    saveStats(); alert("VOITTO!");
                 }
                 return;
             }
