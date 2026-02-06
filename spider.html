@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Walking Spider - Pro Fixed</title>
+    <style>
+        :root {
+            --bg: #0d4a3a;
+            --card-w: 85px;
+            --zoom: 1.0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            margin: 0;
+            font-family: sans-serif;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Ohjauspaneeli ylhäällä */
+        .controls {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background: rgba(0,0,0,0.4);
+            flex-wrap: wrap;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: #2a2a2a;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        button:active { background: #444; }
+        .danger { background: #882222; }
+
+        .stats-bar {
+            font-size: 12px;
+            text-align: center;
+            padding: 5px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Pelilauta */
+        #board {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 20px 5px;
+            transform-origin: top center;
+            transform: scale(var(--zoom));
+        }
+
+        .column {
+            width: var(--card-w);
+            min-height: 500px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+
+        /* KORTIN TYYLIT */
+        .card {
+            width: var(--card-w);
+            height: calc(var(--card-w) * 1.3);
+            background: white;
+            color: black;
+            border-radius: 6px;
+            border: 1px solid #000;
+            margin-bottom: -95px; /* Säädetty pinoamista: jättää yläreunan näkyviin */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 4px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        /* Tärkeä: Kortin numero näkyviin yläreunassa */
+        .card .card-top {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 1000;
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+        .card.back {
+            background: #1a4a8a;
+            border: 2px solid #fff;
+        }
+        .card.back::after {
+            content: "🕷️";
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 24px;
+        }
+        .card.back * { display: none; }
+        .card.selected { outline: 4px solid #ffff00; z-index: 500; }
+
+        /* Stock / Pakka alhaalla */
+        #stock-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            z-index: 2000;
+        }
+        #stock {
+            width: var(--card-w);
+            height: calc(var(--card-w) * 1.3);
+            background: #1a4a8a;
+            border: 2px solid #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <button onclick="zoom(0.1)">➕ Isompi</button>
+    <button onclick="zoom(-0.1)">➖ Pienempi</button>
+    <button onclick="undo()">↩️ Undo</button>
+    <button onclick="newGame()">🆕 Uusi peli</button>
+    <button class="danger" onclick="resetGame()">🔄 Reset</button>
+    <button onclick="window.parent.location.reload()">🏠 Valikkoon</button>
+</div>
+
+<div class="stats-bar" id="stats-text">Ladataan tilastoja...</div>
+
+<div id="board">
+    <div class="column" data-idx="0"></div>
+    <div class="column" data-idx="1"></div>
+    <div class="column" data-idx="2"></div>
+    <div class="column" data-idx="3"></div>
+    <div class="column" data-idx="4"></div>
+    <div class="column" data-idx="5"></div>
+    <div class="column" data-idx="6"></div>
+    <div class="column" data-idx="7"></div>
+    <div class="column" data-idx="8"></div>
+    <div class="column" data-idx="9"></div>
+</div>
+
+<div id="stock-container">
+    <div id="stock" onclick="dealStock()">JAA 10 KORTTIA</div>
+    <span id="stock-count" style="background:black; padding:2px 8px; border-radius:10px">50</span>
+</div>
+
+<script>
+    let deck = [], columns = [], history = [];
+    let startTime = null;
+    let selected = null;
+    let currentZoom = 1.0;
+
+    let stats = JSON.parse(localStorage.getItem('spider_stats')) || {
+        played: 0, finished: 0, interrupted: 0, bestTime: null
+    };
+
+    function saveStats() { localStorage.setItem('spider_stats', JSON.stringify(stats)); updateStatsUI(); }
+
+    function updateStatsUI() {
+        const best = stats.bestTime ? ` | Ennätys: ${formatTime(stats.bestTime)}` : "";
+        document.getElementById('stats-text').innerText = 
+            `Pelattu: ${stats.played} | Valmis: ${stats.finished} | Keskeytetty: ${stats.interrupted}${best}`;
+    }
+
+    function zoom(v) { currentZoom += v; document.documentElement.style.setProperty('--zoom', currentZoom); }
+
+    function newGame() {
+        if (startTime && !isBoardEmpty()) stats.interrupted++;
+        stats.played++;
+        saveStats();
+        initGame();
+    }
+    
+    function isBoardEmpty() { return columns.every(c => c.length === 0); }
+
+    function resetGame() { if(confirm("Aloitetaanko tämä jako alusta?")) initGame(true); }
+
+    function initGame(isReset = false) {
+        if (!isReset) {
+            deck = [];
+            for (let i = 0; i < 8; i++) ['A','2','3','4','5','6','7','8','9','10','J','Q','K'].forEach(v => deck.push({v, f:false}));
+            shuffle(deck);
+            columns = Array.from({length:10}, () => []);
+            for (let i = 0; i < 54; i++) {
+                let c = deck.pop();
+                if (i >= 44) c.f = true;
+                columns[i % 10].push(c);
+            }
+            history = [JSON.stringify({columns, deck})]; 
+        } else {
+            const firstState = JSON.parse(history[0]);
+            columns = JSON.parse(JSON.stringify(firstState.columns));
+            deck = [...firstState.deck];
+            history = [history[0]];
+        }
+        startTime = Date.now();
+        render();
+    }
+
+    function shuffle(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
+
+    function saveHistory() { history.push(JSON.stringify({columns, deck})); if(history.length > 30) history.shift(); }
+
+    function undo() {
+        if (history.length > 1) {
+            history.pop();
+            const state = JSON.parse(history[history.length - 1]);
+            columns = state.columns;
+            deck = state.deck;
+            render();
+        }
+    }
+
+    function dealStock() {
+        if (deck.length < 10) return;
+        saveHistory();
+        for (let i = 0; i < 10; i++) {
+            let c = deck.pop();
+            c.f = true;
+            columns[i].push(c);
+        }
+        render();
+    }
+
+    function render() {
+        document.querySelectorAll('.column').forEach((el, ci) => {
+            el.innerHTML = '';
+            columns[ci].forEach((card, ri) => {
+                const div = document.createElement('div');
+                div.className = `card ${card.f ? '' : 'back'} ${selected?.ci === ci && selected?.ri === ri ? 'selected' : ''}`;
+                // Z-index nousee pinon myötä, jotta päällimmäinen on aina ylin
+                div.style.zIndex = ri;
+                div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
+                div.onclick = (e) => { e.stopPropagation(); handleTap(ci, ri); };
+                el.appendChild(div);
+            });
+            el.onclick = () => handleTap(ci, -1);
+        });
+        document.getElementById('stock-count').innerText = deck.length;
+        updateStatsUI();
+    }
+
+    function handleTap(ci, ri) {
+        if (selected) {
+            if (canMove(selected.ci, selected.ri, ci)) {
+                saveHistory();
+                const cards = columns[selected.ci].splice(selected.ri);
+                columns[ci].push(...cards);
+                if (columns[selected.ci].length > 0) columns[selected.ci][columns[selected.ci].length-1].f = true;
+                checkWin(ci);
+                selected = null;
+            } else {
+                selected = (ri !== -1 && columns[ci][ri].f) ? {ci, ri} : null;
+            }
+        } else {
+            if (ri !== -1 && columns[ci][ri].f) selected = {ci, ri};
+        }
+        render();
+    }
+
+    function canMove(fci, fri, tci) {
+        if (fci === tci) return false;
+        const movingStack = columns[fci].slice(fri);
+        for (let i = 0; i < movingStack.length - 1; i++) {
+            if (val(movingStack[i].v) !== val(movingStack[i+1].v) + 1) return false;
+        }
+        if (columns[tci].length === 0) return true;
+        const targetCard = columns[tci][columns[tci].length - 1];
+        return val(targetCard.v) === val(movingStack[0].v) + 1;
+    }
+
+    function val(v) { const m = {'A':1,'J':11,'Q':12,'K':13}; return m[v] || parseInt(v); }
+
+    function checkWin(ci) {
+        const col = columns[ci];
+        if (col.length < 13) return;
+        for (let j = 0; j <= col.length - 13; j++) {
+            let match = true;
+            for (let k = 0; k < 12; k++) {
+                if (!col[j+k].f || val(col[j+k].v) !== val(col[j+k+1].v) + 1 || val(col[j].v) !== 13) {
+                    match = false; break;
+                }
+            }
+            if (match && val(col[j+12].v) === 1) {
+                col.splice(j, 13);
+                if (col.length > 0) col[col.length-1].f = true;
+                alert("Sarja valmis! ♠");
+                if (isBoardEmpty() && deck.length === 0) {
+                    const time = Math.floor((Date.now() - startTime) / 1000);
+                    stats.finished++;
+                    if (!stats.bestTime || time < stats.bestTime) stats.bestTime = time;
+                    saveStats();
+                    alert("VOITIT PELIN!");
+                }
+                return;
+            }
+        }
+    }
+
+    function formatTime(s) { return `${Math.floor(s/60)}m ${s%60}s`; }
+
+    initGame();
+</script>
+</body>
+</html>
