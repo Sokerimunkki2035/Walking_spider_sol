@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Walking Spider – Index (taukoautomaatilla)</title>
+
   <style>
     :root{
       --bg:#0d4a3a;
@@ -13,67 +14,183 @@
       --btn2:rgba(120,255,200,.22);
       --txt:#fff;
     }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--txt);}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--txt);
+    }
     .wrap{max-width:1100px;margin:0 auto;padding:12px;}
-    .topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:10px;}
-    .btn{border:0;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;background:var(--btn);color:#fff;white-space:nowrap;}
-    .btn.primary{background:var(--btn2);}
-    .pill{padding:10px 14px;border-radius:999px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.15);font-weight:900;white-space:nowrap;}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px;margin:10px 0;}
+    .topbar{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;
+      margin-bottom:10px;
+    }
+    .btn{
+      border:0;border-radius:999px;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+      background:var(--btn);
+      color:#fff;
+      white-space:nowrap;
+    }
+    .btn.primary{ background:var(--btn2); }
+    .pill{
+      padding:10px 14px;border-radius:999px;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.15);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      margin:10px 0;
+    }
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;}
-    select{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.10);color:#fff;font-weight:900;}
+    select{
+      padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+      background:rgba(255,255,255,.10);color:#fff;font-weight:900;
+    }
     option{color:#000}
-    #appFrame{width:100%;height: calc(100vh - 230px);border:0;border-radius:16px;background:rgba(255,255,255,.08);box-shadow:0 10px 24px rgba(0,0,0,.25);}
+    #appFrame{
+      width:100%;
+      height: calc(100vh - 230px);
+      border:0;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+    }
     .small{opacity:.85;font-size:13px;line-height:1.35}
 
-    /* Break overlay */
+    /* --- BREAK OVERLAY --- */
     #breakOverlay{
-      display:none;position:fixed;inset:0;z-index:9999;
-      background:rgba(0, 35, 30, .92);backdrop-filter: blur(4px);
-      color:#fff;align-items:center;justify-content:center;padding:16px;
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      background:rgba(0, 35, 30, .92);
+      backdrop-filter: blur(4px);
+      color:#fff;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
     }
     .breakBox{
-      max-width:640px;width:100%;
+      max-width:680px;
+      width:100%;
       background:rgba(255,255,255,.08);
       border:1px solid rgba(255,255,255,.14);
-      border-radius:18px;padding:16px;text-align:center;
+      border-radius:18px;
+      padding:16px;
+      text-align:center;
       box-shadow:0 18px 40px rgba(0,0,0,.35);
     }
-    .timers{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:10px 0 2px;}
-    .timerPill{
-      background:rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:999px;padding:10px 14px;
-      font-weight:1000;min-width:220px;text-align:center;
+    .bigTimer{
+      font-size:54px;
+      font-weight:1000;
+      letter-spacing:1px;
+      margin:8px 0 6px;
     }
-    .bigTimer{font-size:44px;font-weight:1100;letter-spacing:1px;margin:6px 0 0;}
-    .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);overflow:hidden;margin:12px 0 14px;}
-    #progBar{height:100%;width:0%;background:rgba(120,255,200,.75);}
-    .qbox{text-align:left;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;margin-top:12px;display:none;}
+    .breakMeta{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin:6px 0 10px;
+    }
+    .progress{
+      height:12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+      margin:10px 0 14px;
+    }
+    #progBar{
+      height:100%;
+      width:0%;
+      background:rgba(120,255,200,.75);
+    }
+    .qbox{
+      text-align:left;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:12px;
+      margin-top:12px;
+      display:none;
+    }
     .qbox h3{margin:0 0 8px;font-size:14px}
     .qrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
     .qrow button{flex:1 1 140px}
 
     .toast{
-      position:fixed;left:50%;transform:translateX(-50%);bottom:14px;
-      background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.15);
-      padding:10px 12px;border-radius:14px;font-weight:900;display:none;
-      max-width:min(92vw,520px);text-align:center;z-index:99999;
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:14px;
+      background:rgba(0,0,0,.75);
+      border:1px solid rgba(255,255,255,.15);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      max-width:min(92vw,520px);
+      text-align:center;
+      z-index:99999;
+    }
+
+    /* --- Embed safety (jos index latautuu iframeen, ei piirretä valikkoa) --- */
+    .embedWarn{
+      max-width:720px;
+      margin:40px auto;
+      padding:16px;
+      border-radius:16px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.18);
+      text-align:center;
     }
   </style>
+
+  <script>
+    // ✅ Estetään “3x valikot”:
+    // Jos index.html päätyy iframeen, EI piirretä normaalia UI:ta,
+    // vaan pyydetään parenttia lataamaan peli takaisin.
+    (function(){
+      try{
+        if(window.self !== window.top){
+          window.parent.postMessage({type:"INDEX_LOADED_IN_IFRAME"}, "*");
+          document.addEventListener("DOMContentLoaded", ()=>{
+            document.body.innerHTML = `
+              <div class="embedWarn">
+                <div style="font-weight:1000;font-size:18px">↩️ Palautetaan peli…</div>
+                <div style="opacity:.9;margin-top:6px">
+                  (Index yritti avautua pelin sisään. Tämä estää valikon monistumisen.)
+                </div>
+              </div>
+            `;
+          });
+        }
+      }catch(e){}
+    })();
+  </script>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" id="topCard">
       <div class="topbar">
-        <button class="btn primary" onclick="loadSpider()">🕷️ Spider (1 maa)</button>
+        <button class="btn primary" onclick="loadPage('spider.html')">🕷️ Spider (1 maa)</button>
         <button class="btn" onclick="loadPage('scorpio.html')">🦂 Scorpion</button>
         <button class="btn" onclick="loadPage('golf.html')">⛳ Golf</button>
 
         <button class="btn" onclick="forceBreak()">🚶 Tauko nyt</button>
+        <button class="btn" onclick="fitToScreen()">🧩 Fit</button>
+
         <div class="pill">Aktiiviaika: <span id="activeClock">00:00</span></div>
-        <div class="pill" id="breakSoon" style="display:none">⏳ Tauko tulossa</div>
       </div>
 
       <div class="row" style="margin-top:8px">
@@ -89,7 +206,7 @@
 
         <div class="pill">Tauon pituus</div>
         <select id="lenSel" title="Tauon pituus">
-          <option value="1">1 min</option>
+          <option value="2">2 min</option>
           <option value="3" selected>3 min</option>
           <option value="5">5 min</option>
           <option value="7">7 min</option>
@@ -99,11 +216,11 @@
       </div>
 
       <div class="small" style="text-align:center;margin-top:8px">
-        Pysyt tässä indexissä ja pelit avautuvat ruudun sisään. Tauon aikana peli lukitaan eikä kosketus mene läpi.
+        Pysy tässä indexissä → pelit avautuvat ruudun sisään. Tauon aikana peli lukitaan (overlay).
       </div>
     </div>
 
-    <iframe id="appFrame" src="about:blank" title="Walking Spider"></iframe>
+    <iframe id="appFrame" src="spider.html" title="Walking Spider"></iframe>
 
     <div class="card" style="text-align:center">
       <span class="small">
@@ -115,18 +232,15 @@
   <!-- BREAK OVERLAY -->
   <div id="breakOverlay">
     <div class="breakBox">
-      <div style="font-size:18px;font-weight:1100">🚶 Kävelytauko</div>
+      <div style="font-size:18px;font-weight:1000">🚶 Kävelytauko</div>
       <div class="small" id="breakHint">Nouse ylös ja liiku hetki. Tauon aikana peli on lukittu.</div>
 
-      <div class="timers">
-        <div class="timerPill">
-          Jäljellä
-          <div class="bigTimer" id="breakTimerLeft">03:00</div>
-        </div>
-        <div class="timerPill">
-          Kulunut
-          <div class="bigTimer" id="breakTimerSpent">00:00</div>
-        </div>
+      <div class="bigTimer" id="breakTimer">03:00</div>
+
+      <!-- ✅ Tauon oma kello (kulunut + jäljellä) -->
+      <div class="breakMeta">
+        <div class="pill">Kulunut: <span id="breakElapsed">00:00</span></div>
+        <div class="pill">Jäljellä: <span id="breakLeft">03:00</span></div>
       </div>
 
       <div class="progress"><div id="progBar"></div></div>
@@ -171,40 +285,42 @@
 
 <script>
 /* -----------------------
-   iframe
+   NAV / iframe
 ------------------------ */
 const frame = document.getElementById('appFrame');
+let lastGoodPage = 'spider.html';
 
 function loadPage(path){
+  // varmistus: älä koskaan lataa indexiä iframeen
+  if(/index\.html/i.test(path)){
+    toast("Indexiä ei ladata peliruudun sisään.");
+    return;
+  }
+  lastGoodPage = path;
   frame.src = path;
   toast(`Avattu: ${path}`);
 }
 
-// Spider: yritä spider.html -> jos 404, yritä Spider.html
-async function loadSpider(){
-  const candidates = ["spider.html","Spider.html"];
-  for(const p of candidates){
-    const ok = await fileExists(p);
-    if(ok){
-      loadPage(p);
+function fitToScreen(){
+  // best-effort: jos spiderissä on fitToScreen(), kutsutaan sitä
+  try{
+    if(frame.contentWindow && typeof frame.contentWindow.fitToScreen === "function"){
+      frame.contentWindow.fitToScreen();
+      toast("Fit-to-screen (spider) ✅");
       return;
     }
-  }
-  toast("Spider ei löydy: tiedosto onko spider.html vai Spider.html?");
-}
-
-// tarkista löytyykö tiedosto (samasta repo/originista)
-async function fileExists(path){
+  }catch(e){}
+  // vaihtoehto: postMessage (voit halutessasi kuunnella spiderissä)
   try{
-    const res = await fetch(path, { cache: "no-store" });
-    return res.ok;
+    frame.contentWindow.postMessage({type:"FIT_TO_SCREEN"}, "*");
+    toast("Fit-to-screen (viesti lähetetty)");
   }catch(e){
-    return false;
+    toast("Fit-to-screen ei käytettävissä tässä pelissä");
   }
 }
 
 /* -----------------------
-   Taukomoottori
+   TAUKOMOOTTORI
 ------------------------ */
 const LSKEY = "walking_break_settings_v2";
 
@@ -217,7 +333,7 @@ let onBreak = false;
 
 let breakLeft = 0;
 let breakTotal = 0;
-let breakSpent = 0;
+let breakElapsed = 0;
 let breakTimerInterval = null;
 
 let wakeLock = null;
@@ -225,7 +341,6 @@ let wakeLock = null;
 const activeClock = document.getElementById('activeClock');
 const everySel = document.getElementById('everySel');
 const lenSel = document.getElementById('lenSel');
-const warnEl = document.getElementById('breakSoon');
 
 function loadSettings(){
   try{
@@ -234,14 +349,17 @@ function loadSettings(){
       const s = JSON.parse(raw);
       if(s.everyMin) everyMin = Number(s.everyMin);
       if(s.breakMin) breakMin = Number(s.breakMin);
+      if(s.activeSeconds) activeSeconds = Number(s.activeSeconds);
     }
   }catch(e){}
   everySel.value = String(everyMin);
   lenSel.value = String(breakMin);
+  activeClock.textContent = formatMMSS(activeSeconds);
 }
 function saveSettings(){
-  localStorage.setItem(LSKEY, JSON.stringify({everyMin, breakMin}));
+  localStorage.setItem(LSKEY, JSON.stringify({everyMin, breakMin, activeSeconds}));
 }
+
 everySel.addEventListener('change', ()=>{
   everyMin = Number(everySel.value);
   saveSettings();
@@ -268,26 +386,18 @@ function startEngine(){
 
     activeSeconds++;
     activeClock.textContent = formatMMSS(activeSeconds);
-
-    const warnAt = everyMin * 60 - 60;
-    if(activeSeconds >= warnAt && activeSeconds < everyMin * 60){
-      warnEl.style.display = 'inline-block';
-    }else{
-      warnEl.style.display = 'none';
-    }
+    saveSettings();
 
     if(activeSeconds >= everyMin * 60){
       startBreak(breakMin * 60);
     }
   }, 1000);
-
-  activeClock.textContent = formatMMSS(activeSeconds);
 }
 
 function resetActive(){
   activeSeconds = 0;
   activeClock.textContent = formatMMSS(activeSeconds);
-  warnEl.style.display = 'none';
+  saveSettings();
   toast("Aktiivilaskuri nollattu");
 }
 
@@ -296,15 +406,16 @@ function forceBreak(){
 }
 
 /* -----------------------
-   Break overlay
+   BREAK OVERLAY
 ------------------------ */
 const overlay = document.getElementById('breakOverlay');
-const btLeft = document.getElementById('breakTimerLeft');
-const btSpent = document.getElementById('breakTimerSpent');
+const bt = document.getElementById('breakTimer');
 const prog = document.getElementById('progBar');
 const doneBtn = document.getElementById('doneBtn');
 const qbox = document.getElementById('qbox');
 const qsum = document.getElementById('qsum');
+const elEl = document.getElementById('breakElapsed');
+const leftEl = document.getElementById('breakLeft');
 
 let answers = {day:null, break:null, idea:null};
 
@@ -314,7 +425,7 @@ function startBreak(seconds){
   onBreak = true;
   breakTotal = seconds;
   breakLeft = seconds;
-  breakSpent = 0;
+  breakElapsed = 0;
 
   doneBtn.disabled = true;
   qbox.style.display = "none";
@@ -329,8 +440,7 @@ function startBreak(seconds){
   if(breakTimerInterval) clearInterval(breakTimerInterval);
   breakTimerInterval = setInterval(()=>{
     breakLeft--;
-    breakSpent++;
-
+    breakElapsed++;
     if(breakLeft <= 0){
       breakLeft = 0;
       clearInterval(breakTimerInterval);
@@ -343,8 +453,9 @@ function startBreak(seconds){
 }
 
 function updateBreakUI(){
-  btLeft.textContent = formatMMSS(breakLeft);
-  btSpent.textContent = formatMMSS(breakSpent);
+  bt.textContent = formatMMSS(breakLeft);
+  leftEl.textContent = formatMMSS(breakLeft);
+  elEl.textContent = formatMMSS(breakElapsed);
 
   const done = (breakTotal - breakLeft);
   const pct = breakTotal ? (done / breakTotal) * 100 : 0;
@@ -361,9 +472,12 @@ function onBreakEnd(){
 function finishBreak(){
   overlay.style.display = "none";
   onBreak = false;
+
+  // Nollataan aktiivimittari uudelle kierrokselle
   activeSeconds = 0;
   activeClock.textContent = formatMMSS(activeSeconds);
-  warnEl.style.display = 'none';
+  saveSettings();
+
   toast("Jatketaan peliä");
 }
 
@@ -376,7 +490,9 @@ function pick(key, val){
   qsum.textContent = parts.join(" · ");
 }
 
-/* Wake Lock */
+/* -----------------------
+   Wake Lock
+------------------------ */
 async function requestWakeLock(){
   try{
     if('wakeLock' in navigator){
@@ -388,7 +504,37 @@ function releaseWakeLock(){
   try{ if(wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){}
 }
 
-/* Toast */
+/* -----------------------
+   Estä indexin monistuminen jos se lipsahtaa iframeen
+------------------------ */
+window.addEventListener("message", (ev)=>{
+  if(!ev || !ev.data) return;
+  if(ev.data.type === "INDEX_LOADED_IN_IFRAME"){
+    // jos jostain syystä index päätyy iframeen, palautetaan viimeiseen peliin
+    toast("Palautetaan peli (index ei saa olla peliruudussa)");
+    frame.src = lastGoodPage || 'spider.html';
+  }
+});
+
+/* -----------------------
+   Iframe load guard:
+   jos iframe yrittää ladata index.html, vaihdetaan takaisin peliin
+------------------------ */
+frame.addEventListener('load', ()=>{
+  try{
+    const href = frame.contentWindow.location.href || "";
+    if(/index\.html/i.test(href)){
+      frame.src = lastGoodPage || "spider.html";
+      toast("Estetty: index iframeen");
+    }
+  }catch(e){
+    // jos joskus cross-origin, ei pääse lukemaan -> ei haittaa
+  }
+});
+
+/* -----------------------
+   Toast
+------------------------ */
 function toast(msg, ms=1400){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -400,9 +546,6 @@ function toast(msg, ms=1400){
 /* init */
 loadSettings();
 startEngine();
-
-// Avaa Spider aluksi (fiksu fallback)
-loadSpider();
 </script>
 </body>
 </html>
