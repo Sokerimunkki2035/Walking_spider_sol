@@ -769,7 +769,7 @@ function render(){
    Zoom
 ------------------------------ */
 function applyZoom(renderAfter=true){
-  zoom = Math.max(0.75, Math.min(1.25, zoom));
+  zoom = Math.max(0.50, Math.min(1.25, zoom));
   document.documentElement.style.setProperty('--z', zoom.toFixed(2));
   localStorage.setItem('spider_zoom', String(zoom));
   updateTopUI();
