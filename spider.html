@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spider - Final Visuals</title>
+    <title>Spider - Tyhjä Paikka Korjattu</title>
     <style>
         :root { --bg: #0d4a3a; --card-w: 82px; --zoom: 1.0; }
         body { background-color: var(--bg); color: white; margin: 0; font-family: sans-serif; overflow-x: hidden; touch-action: manipulation; }
@@ -24,14 +24,15 @@
 
         .column { 
             width: var(--card-w); 
-            min-height: 800px; 
-            background: rgba(255,255,255,0.03); 
+            min-height: 80vh; /* Varmistaa, että tyhjä sarake on pitkä ja klikattavissa */
+            background: rgba(255,255,255,0.05); 
             display: flex; 
             flex-direction: column; 
             align-items: center;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
-        /* TÄMÄ KOHTA KORJAA PINON NÄKYVYYDEN */
         .card { 
             width: var(--card-w); 
             height: calc(var(--card-w) * 1.35); 
@@ -39,7 +40,7 @@
             color: black; 
             border-radius: 6px; 
             border: 1px solid #000; 
-            margin-bottom: -75px; /* Säädetty niin, että numerot näkyvät aina alla */
+            margin-bottom: -95px; /* Säädetty näkyvyyttä varten */
             position: relative; 
             display: flex; 
             flex-direction: column; 
@@ -47,21 +48,21 @@
             box-sizing: border-box; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.4); 
             cursor: pointer;
-            transition: transform 0.1s ease; /* Pehmeä pomppu */
+            transition: transform 0.1s ease;
+            pointer-events: auto;
         }
 
-        .card-top { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; }
+        .card-top { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; pointer-events: none; }
 
         .card.back { background: #1a4a8a; border: 2px solid #fff; }
         .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 24px; }
         .card.back * { display: none; }
 
-        /* TÄMÄ PALAUTTAA POMPPU-EFFEKTIN */
         .card.selected { 
             outline: 4px solid #ffff00; 
             z-index: 5000 !important; 
             box-shadow: 0 0 25px #ff0; 
-            transform: translateY(-20px) scale(1.05); /* Nousee selkeästi ylös ja kasvaa hieman */
+            transform: translateY(-25px); /* Selkeä nousu */
         }
 
         #stock-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 2000; }
@@ -138,7 +139,6 @@
 
     function saveHistory() {
         history.push(JSON.stringify({ cols: columns, dk: deck }));
-        if(history.length > 50) history.shift();
     }
     
     function undo() {
@@ -162,9 +162,7 @@
             el.innerHTML = '';
             columns[ci].forEach((card, ri) => {
                 const div = document.createElement('div');
-                // Valittu kortti JA kaikki sen alla olevat kortit nousevat
                 const isPartofSelection = selected && selected.ci === ci && ri >= selected.ri;
-                
                 div.className = `card ${card.f ? '' : 'back'} ${isPartofSelection ? 'selected' : ''}`;
                 div.style.zIndex = ri;
                 div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
@@ -185,7 +183,10 @@
     }
 
     function handleEmptyClick(ci) {
-        if (selected && columns[ci].length === 0) { doMove(selected.ci, selected.ri, ci); render(); }
+        if (selected && columns[ci].length === 0) { 
+            doMove(selected.ci, selected.ri, ci); 
+            render(); 
+        }
     }
 
     function selectCard(ci, ri) {
@@ -238,4 +239,4 @@
     initGame();
 </script>
 </body>
-</html>
+</html> 
