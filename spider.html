@@ -11,28 +11,29 @@
         .controls { display: flex; gap: 8px; padding: 10px; background: rgba(0,0,0,0.4); flex-wrap: wrap; justify-content: center; position: sticky; top: 0; z-index: 1000; }
         button { padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: #2a2a2a; color: white; cursor: pointer; font-weight: bold; }
         
-        .stats-bar { font-size: 12px; text-align: center; padding: 5px; background: rgba(0,0,0,0.2); }
-        
         #board { 
             display: flex; 
             justify-content: center; 
-            gap: 10px; 
+            gap: 6px; 
             padding: 20px 5px; 
             transform-origin: top center; 
             transform: scale(var(--zoom)); 
         }
 
+        /* TYHJÄ SARAKE - Korjattu klikkausalue */
         .column { 
             width: var(--card-w); 
-            min-height: 80vh; /* Varmistaa, että tyhjä sarake on pitkä ja klikattavissa */
+            min-height: 600px; 
             background: rgba(255,255,255,0.05); 
             display: flex; 
             flex-direction: column; 
             align-items: center;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            position: relative;
         }
 
+        /* Korttien väliä suurennettu, jotta numerot näkyvät paremmin */
         .card { 
             width: var(--card-w); 
             height: calc(var(--card-w) * 1.35); 
@@ -40,7 +41,7 @@
             color: black; 
             border-radius: 6px; 
             border: 1px solid #000; 
-            margin-bottom: -95px; /* Säädetty näkyvyyttä varten */
+            margin-bottom: -70px; 
             position: relative; 
             display: flex; 
             flex-direction: column; 
@@ -49,7 +50,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.4); 
             cursor: pointer;
             transition: transform 0.1s ease;
-            pointer-events: auto;
         }
 
         .card-top { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; pointer-events: none; }
@@ -58,11 +58,12 @@
         .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 24px; }
         .card.back * { display: none; }
 
+        /* Valitun kortin korostus ja pomppu ylös */
         .card.selected { 
             outline: 4px solid #ffff00; 
             z-index: 5000 !important; 
             box-shadow: 0 0 25px #ff0; 
-            transform: translateY(-25px); /* Selkeä nousu */
+            transform: translateY(-30px); 
         }
 
         #stock-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 2000; }
@@ -79,19 +80,17 @@
     <button onclick="window.parent.location.reload()">🏠 Valikko</button>
 </div>
 
-<div class="stats-bar" id="stats-text">Ladataan...</div>
-
 <div id="board">
-    <div class="column" onclick="handleEmptyClick(0)" data-idx="0"></div>
-    <div class="column" onclick="handleEmptyClick(1)" data-idx="1"></div>
-    <div class="column" onclick="handleEmptyClick(2)" data-idx="2"></div>
-    <div class="column" onclick="handleEmptyClick(3)" data-idx="3"></div>
-    <div class="column" onclick="handleEmptyClick(4)" data-idx="4"></div>
-    <div class="column" onclick="handleEmptyClick(5)" data-idx="5"></div>
-    <div class="column" onclick="handleEmptyClick(6)" data-idx="6"></div>
-    <div class="column" onclick="handleEmptyClick(7)" data-idx="7"></div>
-    <div class="column" onclick="handleEmptyClick(8)" data-idx="8"></div>
-    <div class="column" onclick="handleEmptyClick(9)" data-idx="9"></div>
+    <div class="column" onclick="handleEmptyClick(0)"></div>
+    <div class="column" onclick="handleEmptyClick(1)"></div>
+    <div class="column" onclick="handleEmptyClick(2)"></div>
+    <div class="column" onclick="handleEmptyClick(3)"></div>
+    <div class="column" onclick="handleEmptyClick(4)"></div>
+    <div class="column" onclick="handleEmptyClick(5)"></div>
+    <div class="column" onclick="handleEmptyClick(6)"></div>
+    <div class="column" onclick="handleEmptyClick(7)"></div>
+    <div class="column" onclick="handleEmptyClick(8)"></div>
+    <div class="column" onclick="handleEmptyClick(9)"></div>
 </div>
 
 <div id="stock-container">
@@ -101,21 +100,11 @@
 
 <script>
     let deck = [], columns = [], history = [];
-    let startTime = null, selected = null, currentZoom = 1.0;
-    let stats = JSON.parse(localStorage.getItem('spider_stats')) || { played: 0, finished: 0, interrupted: 0, bestTime: null };
-
-    function saveStats() { localStorage.setItem('spider_stats', JSON.stringify(stats)); updateStatsUI(); }
-    function updateStatsUI() {
-        const best = stats.bestTime ? ` | Ennätys: ${formatTime(stats.bestTime)}` : "";
-        document.getElementById('stats-text').innerText = `Pelattu: ${stats.played} | Valmis: ${stats.finished} | Keskeytetty: ${stats.interrupted}${best}`;
-    }
+    let selected = null, currentZoom = 1.0;
 
     function zoom(v) { currentZoom += v; document.documentElement.style.setProperty('--zoom', currentZoom); }
 
-    function newGame() {
-        if (startTime && !columns.every(c => c.length === 0)) stats.interrupted++;
-        stats.played++; saveStats(); initGame();
-    }
+    function newGame() { initGame(); }
 
     function initGame() {
         const cardValues = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -130,7 +119,6 @@
         }
         history = [];
         saveHistory(); 
-        startTime = Date.now();
         selected = null;
         render();
     }
@@ -139,6 +127,7 @@
 
     function saveHistory() {
         history.push(JSON.stringify({ cols: columns, dk: deck }));
+        if(history.length > 50) history.shift();
     }
     
     function undo() {
@@ -160,6 +149,13 @@
     function render() {
         document.querySelectorAll('.column').forEach((el, ci) => {
             el.innerHTML = '';
+            // Jos sarake on tyhjä, lisätään siihen "näkymätön" elementti klikkauksia varten
+            if (columns[ci].length === 0) {
+                el.style.height = "600px";
+            } else {
+                el.style.height = "auto";
+            }
+
             columns[ci].forEach((card, ri) => {
                 const div = document.createElement('div');
                 const isPartofSelection = selected && selected.ci === ci && ri >= selected.ri;
@@ -171,7 +167,6 @@
             });
         });
         document.getElementById('stock-count').innerText = deck.length;
-        updateStatsUI();
     }
 
     function handleTap(ci, ri) {
@@ -234,9 +229,7 @@
             }
         }
     }
-
-    function formatTime(s) { return `${Math.floor(s/60)}m ${s%60}s`; }
     initGame();
 </script>
 </body>
-</html> 
+</html>
