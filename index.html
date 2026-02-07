@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Walking Spider – Pelivalikko</title>
+
+  <style>
+    :root{
+      --bg:#0d4a3a;
+      --panel:rgba(0,0,0,.16);
+      --border:rgba(255,255,255,.16);
+      --btn:rgba(255,255,255,.18);
+      --btn2:rgba(120,255,200,.22);
+      --txt:#fff;
+    }
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--txt);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .wrap{ width: 100%; max-width: 500px; padding: 20px; }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:30px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .topbar{
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 25px;
+    }
+    .btn{
+      border:0;
+      border-radius:16px;
+      padding:16px 20px;
+      font-weight: 900;
+      font-size: 18px;
+      cursor: pointer;
+      background: var(--btn);
+      color: #fff;
+      text-decoration: none;
+      transition: transform 0.2s;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn.primary{ background: var(--btn2); border: 1px solid rgba(255,255,255,0.1); }
+    
+    h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+    .info-text { opacity: 0.7; font-size: 14px; margin-top: 20px; line-height: 1.4; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Walking Spider Solitaire</h1>
+      
+      <div class="topbar">
+        <a href="spider.html" target="_blank" class="btn primary">🕷️ Pelaa Spideria</a>
+        <a href="scorpio.html" target="_blank" class="btn">🦂 Pelaa Scorpionia</a>
+        <a href="golf.html" target="_blank" class="btn">⛳ Pelaa Golfia</a>
+      </div>
+
+      <p class="info-text">
+        Pelit avautuvat uuteen välilehteen.<br>
+        Puhelimesi taukosovellus huolehtii tauoista.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
