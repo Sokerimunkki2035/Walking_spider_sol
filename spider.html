@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spider - Tyhjä Paikka Korjattu</title>
+    <title>Spider - Numerot Näkyviin</title>
     <style>
         :root { --bg: #0d4a3a; --card-w: 82px; --zoom: 1.0; }
         body { background-color: var(--bg); color: white; margin: 0; font-family: sans-serif; overflow-x: hidden; touch-action: manipulation; }
@@ -14,69 +14,70 @@
         #board { 
             display: flex; 
             justify-content: center; 
-            gap: 6px; 
-            padding: 20px 5px; 
+            gap: 5px; 
+            padding: 20px 2px; 
             transform-origin: top center; 
             transform: scale(var(--zoom)); 
         }
 
-        /* TYHJÄ SARAKE - Korjattu klikkausalue */
         .column { 
             width: var(--card-w); 
-            min-height: 600px; 
+            min-height: 70vh; 
             background: rgba(255,255,255,0.05); 
             display: flex; 
             flex-direction: column; 
             align-items: center;
-            border-radius: 6px;
-            cursor: pointer;
-            position: relative;
+            border-radius: 4px;
         }
 
-        /* Korttien väliä suurennettu, jotta numerot näkyvät paremmin */
+        /* TÄRKEÄ: Muutettu marginaalia niin, että numero (9, 8 jne.) näkyy kokonaan */
         .card { 
             width: var(--card-w); 
             height: calc(var(--card-w) * 1.35); 
             background: white; 
             color: black; 
-            border-radius: 6px; 
+            border-radius: 5px; 
             border: 1px solid #000; 
-            margin-bottom: -70px; 
+            margin-bottom: -82px; /* Jättää kortista näkyviin n. 30px (riittää numerolle ja maalle) */
             position: relative; 
             display: flex; 
             flex-direction: column; 
-            padding: 5px; 
+            padding: 4px; 
             box-sizing: border-box; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); 
             cursor: pointer;
-            transition: transform 0.1s ease;
         }
 
-        .card-top { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; pointer-events: none; }
+        .card-top { 
+            display: flex; 
+            flex-direction: column; /* Numero ja maa päällekkäin, jotta ne mahtuvat kapeaan tilaan */
+            line-height: 0.9;
+            font-weight: 900; 
+            font-size: 18px; 
+        }
 
-        .card.back { background: #1a4a8a; border: 2px solid #fff; }
-        .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 24px; }
+        .card.back { background: #1a4a8a; border: 1.5px solid #fff; }
+        .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 20px; }
         .card.back * { display: none; }
 
-        /* Valitun kortin korostus ja pomppu ylös */
         .card.selected { 
             outline: 4px solid #ffff00; 
             z-index: 5000 !important; 
-            box-shadow: 0 0 25px #ff0; 
-            transform: translateY(-30px); 
+            transform: translateY(-35px); /* Pomppaa selkeästi ylös pinosta */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
-        #stock-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 2000; }
-        #stock { width: var(--card-w); height: calc(var(--card-w) * 1.35); background: #1a4a8a; border: 2px solid #fff; border-radius: 6px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 11px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        #stock-container { position: fixed; bottom: 15px; right: 15px; z-index: 2000; text-align: center; }
+        #stock { width: 70px; height: 95px; background: #1a4a8a; border: 2px solid #fff; border-radius: 5px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
 <div class="controls">
-    <button onclick="zoom(0.1)">➕ Isompi</button>
-    <button onclick="zoom(-0.1)">➖ Pienempi</button>
+    <button onclick="zoom(0.1)">➕</button>
+    <button onclick="zoom(-0.1)">➖</button>
     <button onclick="undo()">↩️ Undo</button>
-    <button onclick="newGame()">🆕 Uusi peli</button>
+    <button onclick="newGame()">🆕 Uusi</button>
     <button onclick="window.parent.location.reload()">🏠 Valikko</button>
 </div>
 
@@ -94,8 +95,8 @@
 </div>
 
 <div id="stock-container">
-    <div id="stock" onclick="dealStock()">JAA 10 KORTTIA</div>
-    <span id="stock-count" style="background:black; padding:2px 8px; border-radius:10px">0</span>
+    <div id="stock" onclick="dealStock()">JAA</div>
+    <span id="stock-count" style="background:black; color:white; padding:2px 6px; border-radius:10px; font-size:12px;">50</span>
 </div>
 
 <script>
@@ -103,8 +104,6 @@
     let selected = null, currentZoom = 1.0;
 
     function zoom(v) { currentZoom += v; document.documentElement.style.setProperty('--zoom', currentZoom); }
-
-    function newGame() { initGame(); }
 
     function initGame() {
         const cardValues = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -149,19 +148,13 @@
     function render() {
         document.querySelectorAll('.column').forEach((el, ci) => {
             el.innerHTML = '';
-            // Jos sarake on tyhjä, lisätään siihen "näkymätön" elementti klikkauksia varten
-            if (columns[ci].length === 0) {
-                el.style.height = "600px";
-            } else {
-                el.style.height = "auto";
-            }
-
             columns[ci].forEach((card, ri) => {
                 const div = document.createElement('div');
                 const isPartofSelection = selected && selected.ci === ci && ri >= selected.ri;
                 div.className = `card ${card.f ? '' : 'back'} ${isPartofSelection ? 'selected' : ''}`;
                 div.style.zIndex = ri;
-                div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
+                // Asetetaan numero ja maa päällekkäin, jotta näkyy mahdollisimman paljon
+                div.innerHTML = `<div class="card-top"><span>${card.v}</span><span style="font-size:12px">♠</span></div>`;
                 div.onclick = (e) => { e.stopPropagation(); handleTap(ci, ri); };
                 el.appendChild(div);
             });
@@ -178,10 +171,7 @@
     }
 
     function handleEmptyClick(ci) {
-        if (selected && columns[ci].length === 0) { 
-            doMove(selected.ci, selected.ri, ci); 
-            render(); 
-        }
+        if (selected && columns[ci].length === 0) { doMove(selected.ci, selected.ri, ci); render(); }
     }
 
     function selectCard(ci, ri) {
@@ -196,40 +186,3 @@
         }
         return true;
     }
-
-    function canMove(fci, fri, tci) {
-        if (fci === tci) return false;
-        const movingCard = columns[fci][fri];
-        if (columns[tci].length === 0) return true;
-        const targetCard = columns[tci][columns[tci].length - 1];
-        return val(targetCard.v) === val(movingCard.v) + 1;
-    }
-
-    function doMove(fci, fri, tci) {
-        const cards = columns[fci].splice(fri);
-        columns[tci].push(...cards);
-        if (columns[fci].length > 0) columns[fci][columns[fci].length-1].f = true;
-        saveHistory(); checkWin(tci); selected = null;
-    }
-
-    function val(v) { const m = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13}; return m[v]; }
-
-    function checkWin(ci) {
-        const col = columns[ci];
-        if (col.length < 13) return;
-        for (let j = 0; j <= col.length - 13; j++) {
-            if (val(col[j].v) !== 13) continue;
-            let match = true;
-            for (let k = 0; k < 12; k++) { if (!col[j+k].f || val(col[j+k].v) !== val(col[j+k+1].v) + 1) { match = false; break; } }
-            if (match && val(col[j+12].v) === 1) {
-                col.splice(j, 13);
-                if (col.length > 0) col[col.length-1].f = true;
-                saveHistory(); alert("Sarja valmis!");
-                return;
-            }
-        }
-    }
-    initGame();
-</script>
-</body>
-</html>
