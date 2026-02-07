@@ -95,9 +95,11 @@
 </div>
 
 <div id="info">Ladataan peliä...</div>
+<button onclick="dealStock()" style="background: #1a5f4a;">JAA PAKKA</button>
 <div id="table"></div>
 
 <script>
+let stockDeck = []; 
 let columns = [];
 let selectedCol = -1;
 let selectedIdx = -1;
@@ -123,7 +125,8 @@ function newGame() {
     }
     columns[c][columns[c].length - 1].faceUp = true;
   }
-  
+  stockDeck = deck; // Tämä tallentaa loput kortit pakan jakamista varten
+
   selectedCol = -1;
   selectedIdx = -1;
   moveHistory = [];
@@ -298,6 +301,32 @@ function updateInfo(msg) {
 
 // Aloita peli automaattisesti
 newGame();
+  function dealStock() {
+  // Tarkistetaan sääntö: ei saa jakaa jos sarakkeita on tyhjänä
+  if (columns.some(col => col.length === 0)) {
+    updateInfo("Täytä tyhjät sarakkeet ensin!");
+    return;
+  }
+
+  if (stockDeck.length > 0) {
+    // Tallenna historia peruutusta varten
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    
+    // Jaetaan 10 korttia pakasta
+    for (let c = 0; c < 10; c++) {
+      if (stockDeck.length > 0) {
+        let card = stockDeck.pop();
+        card.faceUp = true;
+        columns[c].push(card);
+      }
+    }
+    drawTable();
+    updateInfo(`Kortit jaettu. Pakassa jäljellä: ${stockDeck.length}`);
+  } else {
+    updateInfo("Pakka on tyhjä!");
+  }
+}
+
 </script>
 
 </body>
