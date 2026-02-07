@@ -33,6 +33,8 @@
       background:var(--btn);
       color:#fff;
       white-space:nowrap;
+      text-decoration: none;
+      display: inline-block;
     }
     .btn.primary{ background:var(--btn2); }
     .pill{
@@ -183,9 +185,11 @@
   <div class="wrap">
     <div class="card" id="topCard">
       <div class="topbar">
-        <button class="btn primary" onclick="loadPage('spider.html')">🕷️ Spider (1 maa)</button>
-        <button class="btn" onclick="loadPage('scorpio.html')">🦂 Scorpion</button>
-        <button class="btn" onclick="loadPage('golf.html')">⛳ Golf</button>
+        <a href="spider.html" target="_blank" class="btn primary">🕷️ Spider (1 maa)</a>
+
+  <a href="scorpio.html" target="_blank" class="btn">🦂 Scorpion</a>
+<a href="golf.html" target="_blank" class="btn">⛳ Golf</a>
+
 
         <button class="btn" onclick="forceBreak()">🚶 Tauko nyt</button>
         <button class="btn" onclick="fitToScreen()">🧩 Fit</button>
@@ -219,8 +223,6 @@
         Pysy tässä indexissä → pelit avautuvat ruudun sisään. Tauon aikana peli lukitaan (overlay).
       </div>
     </div>
-
-    <iframe id="appFrame" src="spider.html" title="Walking Spider"></iframe>
 
     <div class="card" style="text-align:center">
       <span class="small">
