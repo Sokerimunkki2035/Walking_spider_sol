@@ -1,1 +1,230 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spider Solitaire - Fixed</title>
+    <style>
+        :root { --bg: #0d4a3a; --card-w: 85px; }
+        body { background-color: var(--bg); color: white; margin: 0; font-family: sans-serif; overflow-x: hidden; touch-action: manipulation; }
+        
+        /* Valikko */
+        .controls { display: flex; gap: 8px; padding: 10px; background: rgba(0,0,0,0.6); justify-content: center; position: sticky; top: 0; z-index: 1000; }
+        button { padding: 10px 15px; border-radius: 8px; border: 1px solid #666; background: #333; color: white; font-weight: bold; cursor: pointer; }
+        
+        /* Pelialue */
+        #board { 
+            display: flex; 
+            justify-content: center; 
+            gap: 4px; 
+            padding: 20px 5px; 
+            min-height: 80vh;
+        }
 
+        /* SARAKKEET: Näkyvät aina, vaikka olisivat tyhjiä */
+        .column { 
+            width: var(--card-w); 
+            min-height: 500px; 
+            background: rgba(255,255,255,0.05); 
+            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: 8px;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            position: relative;
+        }
+
+        /* KORTIT: Numero (8, 9 jne.) näkyy kokonaan */
+        .card { 
+            width: var(--card-w); 
+            height: calc(var(--card-w) * 1.35); 
+            background: white; 
+            color: black; 
+            border-radius: 6px; 
+            border: 1px solid #000; 
+            margin-bottom: -75px; /* TÄRKEÄ: Jättää numeron näkyviin */
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 5px; 
+            box-sizing: border-box; 
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4); 
+            cursor: pointer;
+        }
+
+        .card-top { font-weight: 900; font-size: 20px; display: flex; justify-content: space-between; pointer-events: none; }
+
+        /* Selkäpuoli */
+        .card.back { background: #1a4a8a; border: 2px solid #fff; }
+        .card.back::after { content: "🕷️"; display: flex; justify-content: center; align-items: center; height: 100%; font-size: 28px; }
+        .card.back * { display: none; }
+
+        /* Valittu kortti */
+        .card.selected { 
+            outline: 4px solid #ffff00; 
+            z-index: 5000 !important; 
+            transform: translateY(-20px); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        }
+
+        /* Pakka alhaalla */
+        #stock-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; text-align: center; }
+        #stock { width: 75px; height: 105px; background: #1a4a8a; border: 2px solid #fff; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
+        #stock-count { background: black; padding: 2px 10px; border-radius: 10px; margin-top: 5px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <button onclick="undo()">↩️ Undo</button>
+    <button onclick="initGame()">🆕 Uusi</button>
+    <button onclick="location.reload()">🔄 Lataa uudelleen</button>
+</div>
+
+<div id="board">
+    <div class="column" data-ci="0" onclick="handleEmptyClick(0)"></div>
+    <div class="column" data-ci="1" onclick="handleEmptyClick(1)"></div>
+    <div class="column" data-ci="2" onclick="handleEmptyClick(2)"></div>
+    <div class="column" data-ci="3" onclick="handleEmptyClick(3)"></div>
+    <div class="column" data-ci="4" onclick="handleEmptyClick(4)"></div>
+    <div class="column" data-ci="5" onclick="handleEmptyClick(5)"></div>
+    <div class="column" data-ci="6" onclick="handleEmptyClick(6)"></div>
+    <div class="column" data-ci="7" onclick="handleEmptyClick(7)"></div>
+    <div class="column" data-ci="8" onclick="handleEmptyClick(8)"></div>
+    <div class="column" data-ci="9" onclick="handleEmptyClick(9)"></div>
+</div>
+
+<div id="stock-container">
+    <div id="stock" onclick="dealStock()">JAA</div>
+    <div id="stock-count">50</div>
+</div>
+
+<script>
+    let deck = [], columns = [[],[],[],[],[],[],[],[],[],[]], history = [], selected = null;
+
+    function initGame() {
+        const values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+        deck = [];
+        // Luodaan 8 sarjaa yhtä maata (pata)
+        for (let i = 0; i < 8; i++) values.forEach(v => deck.push({v, f:false}));
+        
+        // Sekoitus
+        for(let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        
+        // Jaetaan kortit sarakkeisiin
+        columns = Array.from({length:10}, () => []);
+        for (let i = 0; i < 54; i++) {
+            let c = deck.pop();
+            if (i >= 44) c.f = true; // Alimmat kortit auki
+            columns[i % 10].push(c);
+        }
+        history = [];
+        saveHistory();
+        render();
+    }
+
+    function saveHistory() {
+        history.push(JSON.stringify({ c: columns, d: deck }));
+        if(history.length > 30) history.shift();
+    }
+    
+    function undo() {
+        if (history.length > 1) {
+            history.pop();
+            const prev = JSON.parse(history[history.length - 1]);
+            columns = prev.c; deck = prev.d;
+            selected = null; render();
+        }
+    }
+
+    function render() {
+        const colEls = document.querySelectorAll('.column');
+        colEls.forEach((el, ci) => {
+            el.innerHTML = '';
+            columns[ci].forEach((card, ri) => {
+                const div = document.createElement('div');
+                const isSel = selected && selected.ci === ci && ri >= selected.ri;
+                div.className = `card ${card.f ? '' : 'back'} ${isSel ? 'selected' : ''}`;
+                div.style.zIndex = ri;
+                div.innerHTML = `<div class="card-top"><span>${card.v}</span><span>♠</span></div>`;
+                div.onclick = (e) => { e.stopPropagation(); handleTap(ci, ri); };
+                el.appendChild(div);
+            });
+        });
+        document.getElementById('stock-count').innerText = deck.length;
+    }
+
+    function handleTap(ci, ri) {
+        if (selected) {
+            if (canMove(selected.ci, selected.ri, ci)) { 
+                const cards = columns[selected.ci].splice(selected.ri);
+                columns[ci].push(...cards);
+                if (columns[selected.ci].length > 0) columns[selected.ci][columns[selected.ci].length-1].f = true;
+                saveHistory(); checkWin(ci); selected = null;
+            } else { selectCard(ci, ri); }
+        } else { selectCard(ci, ri); }
+        render();
+    }
+
+    function handleEmptyClick(ci) {
+        if (selected && columns[ci].length === 0) {
+            const cards = columns[selected.ci].splice(selected.ri);
+            columns[ci].push(...cards);
+            if (columns[selected.ci].length > 0) columns[selected.ci][columns[selected.ci].length-1].f = true;
+            saveHistory(); selected = null; render();
+        }
+    }
+
+    function selectCard(ci, ri) {
+        if (columns[ci][ri] && columns[ci][ri].f && isLegalStack(ci, ri)) { selected = {ci, ri}; } 
+        else { selected = null; }
+    }
+
+    function isLegalStack(ci, ri) {
+        const s = columns[ci].slice(ri);
+        for (let i = 0; i < s.length - 1; i++) {
+            if (val(s[i].v) !== val(s[i+1].v) + 1) return false;
+        }
+        return true;
+    }
+
+    function canMove(fci, fri, tci) {
+        if (fci === tci) return false;
+        if (columns[tci].length === 0) return true;
+        const target = columns[tci][columns[tci].length-1];
+        const moving = columns[fci][fri];
+        return val(target.v) === val(moving.v) + 1;
+    }
+
+    function dealStock() {
+        if (deck.length < 10) return;
+        if (columns.some(c => c.length === 0)) { alert("Täytä tyhjät sarakkeet!"); return; }
+        for (let i = 0; i < 10; i++) {
+            let c = deck.pop();
+            c.f = true;
+            columns[i].push(c);
+        }
+        saveHistory(); render();
+    }
+
+    function val(v) { return {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13}[v]; }
+
+    function checkWin(ci) {
+        const col = columns[ci];
+        if (col.length < 13) return;
+        for (let i = 0; i <= col.length - 13; i++) {
+            let stack = col.slice(i, i + 13);
+            if (stack[0].v === 'K' && stack[12].v === 'A' && isLegalStack(ci, i)) {
+                col.splice(i, 13);
+                if (col.length > 0) col[col.length-1].f = true;
+                alert("Hienoa! Sait sarjan valmiiksi!"); saveHistory(); return;
+            }
+        }
+    }
+    initGame();
+</script>
+</body>
+</html>
