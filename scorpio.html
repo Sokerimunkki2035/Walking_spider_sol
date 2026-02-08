@@ -2,204 +2,297 @@
 <html lang="fi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scorpio - Koko Pino Näkyvissä</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Walking Scorpio - Täysi Versio</title>
   <style>
-    body { font-family: sans-serif; background: #0d4a3a; color: white; text-align: center; margin: 0; padding: 5px; touch-action: manipulation; }
-    .controls { padding: 5px; display: flex; justify-content: space-around; }
-    button { padding: 10px; background: #2a8b6f; color: white; border: none; border-radius: 5px; font-weight: bold; }
+    :root {
+      --card-aspect-ratio: 1.35; 
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d4a3a;
+      color: white;
+      padding: 10px;
+      margin: 0;
+      user-select: none;
+    }
     
-    #msg { background: rgba(0,0,0,0.5); padding: 8px; font-size: 12px; color: #00ffcc; min-height: 30px; margin-bottom: 5px; border-radius: 5px; }
-    
-    #table { 
-      display: grid; 
-      grid-template-columns: repeat(7, 1fr); 
-      gap: 2px; 
-      padding: 5px; 
-      align-items: start;
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
 
+    .controls { 
+      margin-bottom: 15px; 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 10px; 
+    }
+    
+    button, select {
+      padding: 10px 16px;
+      cursor: pointer;
+      background: #2a8b6f;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    
+    #info {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    #table {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 6px;
+    }
+    
     .column {
+      background: rgba(255,255,255,0.05);
+      border-radius: 5px;
+      min-height: 70vh;
+      position: relative;
+    }
+
+    /* KORTTIEN PINONTA (KORJATTU HARVEMMAKSI) */
+    .card {
+      background: white;
+      color: black;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 5px;
+      margin-bottom: -32px; /* Säädetty harvemmaksi, jotta numerot näkyvät */
+      aspect-ratio: 1 / var(--card-aspect-ratio);
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       display: flex;
       flex-direction: column;
-      min-height: 400px;
+      box-sizing: border-box;
+    }
+    
+    @media (max-width: 600px) {
+      .card {
+        margin-bottom: -28px; /* Harva pinonta myös mobiilissa */
+        font-size: 13px;
+      }
     }
 
-    .card { 
-      background: white; 
-      color: black; 
-      border: 1px solid #333; 
-      border-radius: 3px; 
-      height: 60px; /* Kortin korkeus */
-      margin-bottom: -20px; /* TÄMÄ tuo koko pinon näkyviin limitettynä */
-      font-size: 13px; 
-      font-weight: bold; 
-      display: flex; 
-      flex-direction: column;
-      align-items: center; 
-      justify-content: flex-start;
-      padding-top: 2px;
-      position: relative; 
-      box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+    .card.face-down {
+      background: #1a5f4a;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
+      color: transparent;
     }
+    
+    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; transform: translateY(-5px); }
 
-    .face-down { 
-      background: #1a5f4a; 
-      color: transparent; 
-      background-image: repeating-linear-gradient(45deg, #165240, #165240 5px, #1a5f4a 5px, #1a5f4a 10px);
+    /* --- TAUKO-RUUTU --- */
+    #breakOverlay {
+      display: none; position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0, 30, 25, 0.98); backdrop-filter: blur(10px);
+      align-items: center; justify-content: center; padding: 20px;
     }
-
-    .selected { 
-      background: #ffffcc !important;
-      outline: 3px solid yellow; 
-      z-index: 100; 
-      transform: translateY(-5px); 
+    .breakBox {
+      max-width: 400px; width: 100%; background: rgba(255,255,255,0.1);
+      padding: 30px; border-radius: 20px; text-align: center; border: 1px solid #78ffc8;
     }
-
-    /* Opettajan kohdeapu */
-    .target-hint { 
-      outline: 3px solid #00ff00; 
-      z-index: 50;
-    }
-
-    .suit { font-size: 16px; }
+    .bigTimer { font-size: 60px; font-weight: bold; color: #78ffc8; margin: 20px 0; }
   </style>
 </head>
 <body>
-  <div class="controls">
-    <button onclick="initScorpio()">Uusi Peli</button>
-    <button onclick="location.href='index.html'">Valikkoon</button>
-  </div>
-  <div id="msg">Valitse kortti siirtääksesi pinon.</div>
-  <div id="table"></div>
+
+<div class="header-row">
+    <h2 style="margin:0">🦂 Walking Scorpio</h2>
+    <div style="background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 15px;">
+        🚶 <span id="activeClock">00:00</span>
+    </div>
+</div>
+
+<div class="controls">
+  <button onclick="newGame()">Uusi peli</button>
+  <button onclick="dealStock()" style="background: #1a5f4a;">JAA PAKKA</button>
+  <button onclick="undoMove()" style="background: #444;">Peru</button>
+  <select id="timeSelect" onchange="updateTargetTime()">
+      <option value="15">Tauko: 15 min</option>
+      <option value="25" selected>Tauko: 25 min</option>
+      <option value="45">Tauko: 45 min</option>
+  </select>
+</div>
+
+<div id="info">Ladataan peliä...</div>
+<div id="table"></div>
+
+<div id="breakOverlay">
+    <div class="breakBox">
+        <h2 style="margin-top:0">👨‍🏫 Opettajan tauko</h2>
+        <p>Aika nousta ylös ja kävellä.</p>
+        <div class="bigTimer" id="breakTimer">03:00</div>
+        
+        <div style="border: 1px dashed #78ffc8; padding: 10px; border-radius: 10px; font-size: 12px; opacity: 0.7;">
+            🛠️ PALAUTEKYSELY (Under Construction)
+        </div>
+
+        <button id="doneBtn" onclick="finishBreak()" disabled style="width:100%; margin-top:20px; padding:15px; border-radius:10px; font-weight:bold; background:#333; color:#888;">
+            Odotetaan...
+        </button>
+    </div>
+</div>
 
 <script>
-let columns = [], selected = null;
-const suits = ['♠', '♣', '♥', '♦'];
+let stockDeck = []; 
+let columns = [];
+let selectedCol = -1;
+let selectedIdx = -1;
+let moveHistory = [];
 
-function initScorpio() {
+function newGame() {
   let deck = [];
-  // Luodaan 52 korttia (4 maata, 13 arvoa)
-  for(let s=0; s<4; s++) {
-    for(let r=1; r<=13; r++) {
-      deck.push({rank: r, suit: suits[s], faceUp: false});
-    }
+  for (let p = 0; p < 8; p++) {
+    for (let r = 1; r <= 13; r++) { deck.push({rank: r, faceUp: false}); }
   }
-  
   deck.sort(() => Math.random() - 0.5);
-  
-  columns = Array.from({length: 7}, () => []);
-  for(let i=0; i<52; i++) {
-    let card = deck.pop();
-    let colIdx = i % 7;
-    let rowIdx = Math.floor(i / 7);
-    // Kolme ensimmäistä saraketta: ekat 3 korttia piilossa
-    card.faceUp = (colIdx < 3 && rowIdx < 3) ? false : true;
-    columns[colIdx].push(card);
+  columns = Array.from({ length: 10 }, () => []);
+  for (let c = 0; c < 10; c++) {
+    let count = c < 4 ? 6 : 5;
+    for (let i = 0; i < count; i++) { columns[c].push(deck.pop()); }
+    columns[c][columns[c].length - 1].faceUp = true;
   }
-  selected = null;
-  draw();
+  stockDeck = deck;
+  selectedCol = -1; selectedIdx = -1; moveHistory = [];
+  drawTable();
+  updateInfo("Peli alkanut!");
 }
 
-function draw() {
-  const t = document.getElementById("table");
-  t.innerHTML = "";
-  
-  columns.forEach((col, c) => {
+function drawTable() {
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+  columns.forEach((col, cIdx) => {
     let colDiv = document.createElement("div");
     colDiv.className = "column";
-    colDiv.onclick = () => handleColClick(c);
-    
-    col.forEach((card, r) => {
-      let cDiv = document.createElement("div");
-      cDiv.className = "card" + (card.faceUp ? "" : " face-down");
-      
-      if(selected && selected.c === c && r >= selected.r) {
-        cDiv.classList.add("selected");
+    colDiv.onclick = () => handleColumnClick(cIdx);
+    col.forEach((card, rIdx) => {
+      let cardDiv = document.createElement("div");
+      cardDiv.className = "card";
+      if (!card.faceUp) cardDiv.classList.add("face-down");
+      if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
+      if (card.faceUp) {
+        cardDiv.innerHTML = `<div>${getRankName(card.rank)}</div><div style="margin-top:auto; text-align:right">♠</div>`;
+        cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
       }
-
-      // OPETTAJA: Näytetään vihreä reuna, jos kortti on sopiva kohde valitulle pinolle
-      if(selected && card.faceUp && r === col.length - 1) {
-        let selCard = columns[selected.c][selected.r];
-        if(card.rank === selCard.rank + 1 && card.suit === selCard.suit) {
-          cDiv.classList.add("target-hint");
-        }
-      }
-      
-      if(card.faceUp) {
-        let rankName = getRankName(card.rank);
-        cDiv.innerHTML = `<span>${rankName}</span><span class="suit">${card.suit}</span>`;
-        if(card.suit === '♥' || card.suit === '♦') cDiv.style.color = "red";
-        
-        cDiv.onclick = (e) => {
-          e.stopPropagation();
-          handleCardClick(c, r);
-        };
-      }
-      colDiv.appendChild(cDiv);
+      colDiv.appendChild(cardDiv);
     });
-    t.appendChild(colDiv);
+    table.appendChild(colDiv);
   });
 }
 
-function handleCardClick(c, r) {
-  if(!selected) {
-    selected = {c, r};
-  } else {
-    tryMove(c);
+function handleCardClick(cIdx, rIdx) {
+  if (selectedCol !== -1 && selectedCol !== cIdx) { handleColumnClick(cIdx); return; }
+  const col = columns[cIdx];
+  let validSequence = true;
+  for (let i = rIdx; i < col.length - 1; i++) {
+    if (col[i].rank !== col[i+1].rank + 1) { validSequence = false; break; }
   }
-  draw();
+  if (!validSequence) { updateInfo("Vain laskeva sarja siirtyy."); return; }
+  if (selectedCol === cIdx && selectedIdx === rIdx) { selectedCol = -1; selectedIdx = -1; }
+  else { selectedCol = cIdx; selectedIdx = rIdx; }
+  drawTable();
 }
 
-function handleColClick(c) {
-  if(selected) tryMove(c);
-  draw();
+function handleColumnClick(targetCol) {
+  if (selectedCol === -1) return;
+  const movingCard = columns[selectedCol][selectedIdx];
+  const targetColCards = columns[targetCol];
+  let canMove = targetColCards.length === 0 || targetColCards[targetColCards.length - 1].rank === movingCard.rank + 1;
+  if (canMove) {
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    const cardsToMove = columns[selectedCol].splice(selectedIdx);
+    columns[targetCol] = [...columns[targetCol], ...cardsToMove];
+    if (columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
+    checkAndRemoveSequence(targetCol);
+  }
+  selectedCol = -1; selectedIdx = -1; drawTable();
 }
 
-function tryMove(toC) {
-  let fromC = selected.c, fromR = selected.r;
-  let card = columns[fromC][fromR];
-  let targetCol = columns[toC];
-  
-  let canMove = false;
-  if(targetCol.length === 0) {
-    if(card.rank === 13) canMove = true; // Vain Kuningas tyhjään
-    else updateMsg("Vain Kuningas (K) voi mennä tyhjään paikkaan!");
-  } else {
-    let lastTarget = targetCol[targetCol.length - 1];
-    if(lastTarget.rank === card.rank + 1 && lastTarget.suit === card.suit) {
-      canMove = true;
-    } else {
-      updateMsg("Väärä kortti! Etsi " + getRankName(card.rank + 1) + card.suit);
+function dealStock() {
+  if (columns.some(col => col.length === 0)) { updateInfo("Täytä tyhjät sarakkeet!"); return; }
+  if (stockDeck.length > 0) {
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    for (let c = 0; c < 10; c++) {
+      let card = stockDeck.pop();
+      if(card) { card.faceUp = true; columns[c].push(card); }
+    }
+    drawTable();
+  }
+}
+
+function checkAndRemoveSequence(cIdx) {
+  const col = columns[cIdx];
+  if (col.length < 13) return;
+  for (let i = 0; i <= col.length - 13; i++) {
+    let sub = col.slice(i, i + 13);
+    let isComplete = sub.every((card, idx) => card.faceUp && card.rank === (13 - idx));
+    if (isComplete) {
+      col.splice(i, 13);
+      if (col.length > 0) col[col.length - 1].faceUp = true;
+      updateInfo("Sarja poistettu!"); drawTable(); break;
     }
   }
+}
 
-  if(canMove && fromC !== toC) {
-    let movedCards = columns[fromC].splice(fromR);
-    columns[toC] = columns[toC].concat(movedCards);
-    
-    // Käännetään uusi ylin kortti auki
-    if(columns[fromC].length > 0) {
-      columns[fromC][columns[fromC].length - 1].faceUp = true;
+function undoMove() { if (moveHistory.length > 0) { columns = moveHistory.pop(); drawTable(); } }
+function getRankName(r) { const names = {1:'A', 11:'J', 12:'Q', 13:'K'}; return names[r] || r; }
+function updateInfo(msg) { document.getElementById("info").innerText = msg; }
+
+// --- TAUKOKELLO ---
+let activeSeconds = 0;
+let targetMinutes = 25;
+let isOnBreak = false;
+
+function updateTargetTime() {
+    targetMinutes = parseInt(document.getElementById("timeSelect").value);
+    activeSeconds = 0;
+}
+
+setInterval(() => {
+    if (!isOnBreak) {
+        activeSeconds++;
+        document.getElementById("activeClock").innerText = Math.floor(activeSeconds / 60).toString().padStart(2,'0') + ":" + (activeSeconds % 60).toString().padStart(2,'0');
+        if (activeSeconds >= targetMinutes * 60) startBreak();
     }
-    updateMsg("Hieno siirto!");
-    checkWin(toC);
-  }
-  selected = null;
+}, 1000);
+
+function startBreak() {
+    isOnBreak = true;
+    let secondsLeft = 180;
+    document.getElementById("breakOverlay").style.display = "flex";
+    let breakInterval = setInterval(() => {
+        secondsLeft--;
+        document.getElementById("breakTimer").innerText = Math.floor(secondsLeft / 60).toString().padStart(2,'0') + ":" + (secondsLeft % 60).toString().padStart(2,'0');
+        if (secondsLeft <= 0) {
+            clearInterval(breakInterval);
+            let btn = document.getElementById("doneBtn");
+            btn.disabled = false; btn.style.background = "#2a8b6f"; btn.style.color = "white"; btn.innerText = "Jatka peliä";
+        }
+    }, 1000);
 }
 
-function updateMsg(m) { document.getElementById("msg").innerText = m; }
-
-function getRankName(r) {
-  return {1:'A', 11:'J', 12:'Q', 13:'K'}[r] || r;
+function finishBreak() {
+    isOnBreak = false; activeSeconds = 0;
+    document.getElementById("breakOverlay").style.display = "none";
 }
 
-function checkWin(cIdx) {
-  // Scorpio voitettaessa sarja K-A poistuu tai peli loppuu kun kaikki on järjestyksessä
-  // (Yksinkertaistettu versio: ei automaattista poistoa tässä)
-}
-
-initScorpio();
+newGame();
 </script>
+
 </body>
 </html>
