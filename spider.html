@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walking Spider Solitaire</title>
+  
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
+
+  <style>
+    :root { --card-aspect-ratio: 1.4; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0d4a3a; color: white; padding: 10px; margin: 0; user-select: none; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .active-pill { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(255,255,255,0.1); }
+    .controls { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px; }
+    button, select { padding: 10px 14px; cursor: pointer; background: #2a8b6f; color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; }
+    #info { margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 13px; min-height: 1.2em; }
+    #table { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-width: 1000px; margin: 0 auto; }
+    .column { background: rgba(255,255,255,0.03); border-radius: 4px; min-height: 60vh; position: relative; }
+    .card { background: white; color: black; border: 1px solid #333; border-radius: 4px; padding: 4px; margin-bottom: -25px; aspect-ratio: 0.8 / var(--card-aspect-ratio); font-size: 16px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; flex-direction: column; box-sizing: border-box; }
+    @media (max-width: 600px) { .card { margin-bottom: -15px; font-size: 12px; } }
+    .card.face-down { background: #1a5f4a; color: transparent; border: 1px solid rgba(255,255,255,0.2); }
+    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; transform: translateY(-4px); }
+  </style>
+</head>
+<body>
+
+<div class="header-row">
+    <h2 style="margin:0; font-size: 20px;">🕷️ Walking Spider</h2>
+    <div class="active-pill">🚶 <span id="activeClock">00:00</span></div>
+</div>
+
+<div class="controls">
+  <button onclick="newGame()">Uusi peli</button>
+  <button onclick="dealStock()" style="background: #1a5f4a;">JAA PAKKA</button>
+  <select id="timeSelect" onchange="updateTargetTime()">
+      <option value="15">Tauko: 15 min</option>
+      <option value="25" selected>Tauko: 25 min</option>
+      <option value="45">Tauko: 45 min</option>
+  </select>
+  <button onclick="undoMove()" style="background: #444;">Peru</button>
+</div>
+
+<div id="info">Ladataan...</div>
+<div id="table"></div>
+
+<script>
+let stockDeck = [], columns = [], selectedCol = -1, selectedIdx = -1, moveHistory = [];
+
+function newGame() {
+  let deck = [];
+  for (let p = 0; p < 8; p++) { for (let r = 1; r <= 13; r++) { deck.push({rank: r, faceUp: false}); } }
+  deck.sort(() => Math.random() - 0.5);
+  columns = Array.from({ length: 10 }, () => []);
+  for (let c = 0; c < 10; c++) {
+    let count = c < 4 ? 6 : 5;
+    for (let i = 0; i < count; i++) { columns[c].push(deck.pop()); }
+    columns[c][columns[c].length - 1].faceUp = true;
+  }
+  stockDeck = deck; selectedCol = -1; selectedIdx = -1; moveHistory = [];
+  drawTable(); updateInfo("Spider alkanut! (Vain pata)");
+}
+
+function drawTable() {
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+  columns.forEach((col, cIdx) => {
+    let colDiv = document.createElement("div");
+    colDiv.className = "column";
+    colDiv.onclick = () => handleColumnClick(cIdx);
+    col.forEach((card, rIdx) => {
+      let cardDiv = document.createElement("div");
+      cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
+      if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
+      if (card.faceUp) {
+        cardDiv.innerHTML = `<div style="text-align:left">${getRankName(card.rank)}</div><div style="text-align:right; font-size:1.2em; margin-top:auto">♠</div>`;
+        cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
+      }
+      colDiv.appendChild(cardDiv);
+    });
+    table.appendChild(colDiv);
+  });
+}
+
+function handleCardClick(cIdx, rIdx) {
+  if (selectedCol !== -1 && selectedCol !== cIdx) { handleColumnClick(cIdx); return; }
+  const col = columns[cIdx];
+  let validSequence = true;
+  for (let i = rIdx; i < col.length - 1; i++) {
+    if (col[i].rank !== col[i+1].rank + 1) { validSequence = false; break; }
+  }
+  if (!validSequence) { updateInfo("Vain laskeva pino siirtyy."); return; }
+  selectedCol = (selectedCol === cIdx && selectedIdx === rIdx) ? -1 : cIdx;
+  selectedIdx = (selectedCol === -1) ? -1 : rIdx;
+  drawTable();
+}
+
+function handleColumnClick(targetCol) {
+  if (selectedCol === -1) return;
+  const movingCard = columns[selectedCol][selectedIdx];
+  const targetColCards = columns[targetCol];
+  let canMove = targetColCards.length === 0 || targetColCards[targetColCards.length - 1].rank === movingCard.rank + 1;
+  if (canMove && selectedCol !== targetCol) {
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    const cardsToMove = columns[selectedCol].splice(selectedIdx);
+    columns[targetCol] = [...columns[targetCol], ...cardsToMove];
+    if (columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
+    checkAndRemoveSequence(targetCol);
+  }
+  selectedCol = -1; selectedIdx = -1; drawTable();
+}
+
+function dealStock() {
+  if (columns.some(col => col.length === 0)) { updateInfo("Täytä tyhjät sarakkeet!"); return; }
+  if (stockDeck.length > 0) {
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    for (let c = 0; c < 10; c++) {
+      let card = stockDeck.pop();
+      if(card) { card.faceUp = true; columns[c].push(card); }
+    }
+    drawTable();
+  }
+}
+
+function checkAndRemoveSequence(cIdx) {
+  const col = columns[cIdx];
+  for (let i = 0; i <= col.length - 13; i++) {
+    let sub = col.slice(i, i + 13);
+    if (sub.every((card, idx) => card.faceUp && card.rank === (13 - idx))) {
+      col.splice(i, 13);
+      if (col.length > 0) col[col.length - 1].faceUp = true;
+      updateInfo("SARJA VALMIS!"); drawTable(); break;
+    }
+  }
+}
+
+function undoMove() { if (moveHistory.length > 0) { columns = moveHistory.pop(); drawTable(); } }
+function getRankName(r) { const names = {1:'A', 11:'J', 12:'Q', 13:'K'}; return names[r] || r; }
+function updateInfo(msg) { document.getElementById("info").innerText = msg; }
+
+newGame();
+</script>
+</body>
+</html>
