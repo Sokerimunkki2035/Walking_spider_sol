@@ -9,16 +9,48 @@
 
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #072b22; color: white; margin: 0; padding: 10px; text-align: center; }
-    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 400px; margin: 20px auto; }
-    .card { 
-      aspect-ratio: 1/1.4; background: #1a5f4a; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2);
-      cursor: pointer; position: relative; font-size: 24px; display: flex; align-items: center; justify-content: center;
-      transition: transform 0.3s;
+    .grid { 
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 10px; 
+        max-width: 400px; 
+        margin: 20px auto; 
     }
-    .card.flipped { background: white; color: black; transform: rotateY(180deg); }
-    .card.matched { visibility: hidden; pointer-events: none; }
+    
+    .card { 
+      aspect-ratio: 1 / 1.4; 
+      background: #134537; /* Kortin selkäpuoli (tummanvihreä) */
+      border-radius: 8px; 
+      border: 2px solid rgba(255,255,255,0.1);
+      cursor: pointer; 
+      font-size: 22px; 
+      font-weight: bold;
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    /* Kun kortti on käännetty (Etuapuoli) */
+    .card.flipped { 
+      background: white; 
+      color: black; 
+    }
+
+    .card.matched { 
+      visibility: hidden; 
+      pointer-events: none; 
+    }
+
+    .suit-red { color: #d32f2f; }
+    .suit-black { color: #222; }
+
     .controls { margin-bottom: 20px; }
-    button { padding: 10px 20px; background: #1e6b54; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    button { padding: 12px 24px; background: #1e6b54; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    
+    #info { margin-top: 10px; font-weight: bold; color: #78ffc8; }
+
     footer { margin-top: 40px; font-size: 12px; opacity: 0.7; border-top: 1px solid #1e6b54; padding-top: 10px; }
   </style>
 </head>
@@ -32,77 +64,90 @@
 
 <div id="gameGrid" class="grid"></div>
 
-<div id="info">Etsi samanarvoiset kortit!</div>
+<div id="info">Etsi kaksi samanarvoista korttia!</div>
 
 <footer>
     <div>&copy; 2026 Walking Games</div>
-    <div>Julkaisija: [Yrityksesi Nimi Tähän]</div>
+    <div>Julkaisija: [Yrityksesi Nimi]</div>
 </footer>
 
 <script>
-    const symbols = ['♠', '♣', '♥', '♦', '♠', '♣', '♥', '♦'];
+    const suits = ['♠', '♥', '♣', '♦'];
     const ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7'];
-    let gameCards = [];
     let flippedCards = [];
     let matches = 0;
+    let lockBoard = false;
 
     function resetGame() {
         const grid = document.getElementById('gameGrid');
         grid.innerHTML = '';
-        gameCards = [];
         flippedCards = [];
         matches = 0;
+        lockBoard = false;
         document.getElementById('score').innerText = matches;
+        document.getElementById('info').innerText = "Etsi kaksi samanarvoista korttia!";
         
-        // Luodaan 8 paria (16 korttia)
-        let pairs = [];
+        // Luodaan 16 korttia (8 paria)
+        let deck = [];
         for(let i=0; i<8; i++) {
-            pairs.push({rank: ranks[i], symbol: (i < 4 ? '♠' : '♥')});
-            pairs.push({rank: ranks[i], symbol: (i < 4 ? '♠' : '♥')});
+            // Lisätään kaksi samanarvoista korttia eri mailla
+            deck.push({ rank: ranks[i], suit: '♠', colorClass: 'suit-black' });
+            deck.push({ rank: ranks[i], suit: '♥', colorClass: 'suit-red' });
         }
-        pairs.sort(() => Math.random() - 0.5);
+        
+        // Sekoitetaan pakka
+        deck.sort(() => Math.random() - 0.5);
 
-        pairs.forEach((data, index) => {
+        deck.forEach((cardData) => {
             const card = document.createElement('div');
             card.className = 'card';
-            card.dataset.rank = data.rank;
-            card.dataset.index = index;
-            card.onclick = () => flipCard(card);
+            card.dataset.rank = cardData.rank;
+            card.onclick = () => flipCard(card, cardData);
             grid.appendChild(card);
-            gameCards.push(card);
         });
     }
 
-    function flipCard(card) {
-        if (flippedCards.length < 2 && !card.classList.contains('flipped')) {
-            card.classList.add('flipped');
-            card.innerHTML = card.dataset.rank;
-            flippedCards.push(card);
+    function flipCard(card, data) {
+        if (lockBoard) return;
+        if (card.classList.contains('flipped')) return;
 
-            if (flippedCards.length === 2) {
-                checkMatch();
-            }
+        // Näytetään kortin tiedot
+        card.classList.add('flipped');
+        card.classList.add(data.colorClass);
+        card.innerHTML = `<div>${data.rank}</div><div style="font-size: 1.2em;">${data.suit}</div>`;
+        
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+            checkMatch();
         }
     }
 
     function checkMatch() {
+        lockBoard = true;
         const [card1, card2] = flippedCards;
-        if (card1.dataset.rank === card2.dataset.rank) {
+        const isMatch = card1.dataset.rank === card2.dataset.rank;
+
+        if (isMatch) {
             setTimeout(() => {
                 card1.classList.add('matched');
                 card2.classList.add('matched');
                 matches++;
                 document.getElementById('score').innerText = matches;
                 flippedCards = [];
-                if (matches === 8) alert('Onneksi olkoon! Tyhjensit pöydän.');
+                lockBoard = false;
+                if (matches === 8) {
+                    document.getElementById('info').innerText = "MAHTAVAA! Tyhjensit pöydän.";
+                }
             }, 600);
         } else {
             setTimeout(() => {
-                card1.classList.remove('flipped');
-                card2.classList.remove('flipped');
+                card1.classList.remove('flipped', 'suit-black', 'suit-red');
+                card2.classList.remove('flipped', 'suit-black', 'suit-red');
                 card1.innerHTML = '';
                 card2.innerHTML = '';
                 flippedCards = [];
+                lockBoard = false;
             }, 1000);
         }
     }
