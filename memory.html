@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Solitaire - Walking Games</title>
+  
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
+
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #072b22; color: white; margin: 0; padding: 10px; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 400px; margin: 20px auto; }
+    .card { 
+      aspect-ratio: 1/1.4; background: #1a5f4a; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2);
+      cursor: pointer; position: relative; font-size: 24px; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s;
+    }
+    .card.flipped { background: white; color: black; transform: rotateY(180deg); }
+    .card.matched { visibility: hidden; pointer-events: none; }
+    .controls { margin-bottom: 20px; }
+    button { padding: 10px 20px; background: #1e6b54; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    footer { margin-top: 40px; font-size: 12px; opacity: 0.7; border-top: 1px solid #1e6b54; padding-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>🧠 Memory Solitaire</h1>
+<div class="controls">
+    <button onclick="resetGame()">Uusi peli</button>
+    <p>Löydetyt parit: <span id="score">0</span> / 8</p>
+</div>
+
+<div id="gameGrid" class="grid"></div>
+
+<div id="info">Etsi samanarvoiset kortit!</div>
+
+<footer>
+    <div>&copy; 2026 Walking Games</div>
+    <div>Julkaisija: [Yrityksesi Nimi Tähän]</div>
+</footer>
+
+<script>
+    const symbols = ['♠', '♣', '♥', '♦', '♠', '♣', '♥', '♦'];
+    const ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7'];
+    let gameCards = [];
+    let flippedCards = [];
+    let matches = 0;
+
+    function resetGame() {
+        const grid = document.getElementById('gameGrid');
+        grid.innerHTML = '';
+        gameCards = [];
+        flippedCards = [];
+        matches = 0;
+        document.getElementById('score').innerText = matches;
+        
+        // Luodaan 8 paria (16 korttia)
+        let pairs = [];
+        for(let i=0; i<8; i++) {
+            pairs.push({rank: ranks[i], symbol: (i < 4 ? '♠' : '♥')});
+            pairs.push({rank: ranks[i], symbol: (i < 4 ? '♠' : '♥')});
+        }
+        pairs.sort(() => Math.random() - 0.5);
+
+        pairs.forEach((data, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.rank = data.rank;
+            card.dataset.index = index;
+            card.onclick = () => flipCard(card);
+            grid.appendChild(card);
+            gameCards.push(card);
+        });
+    }
+
+    function flipCard(card) {
+        if (flippedCards.length < 2 && !card.classList.contains('flipped')) {
+            card.classList.add('flipped');
+            card.innerHTML = card.dataset.rank;
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                checkMatch();
+            }
+        }
+    }
+
+    function checkMatch() {
+        const [card1, card2] = flippedCards;
+        if (card1.dataset.rank === card2.dataset.rank) {
+            setTimeout(() => {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matches++;
+                document.getElementById('score').innerText = matches;
+                flippedCards = [];
+                if (matches === 8) alert('Onneksi olkoon! Tyhjensit pöydän.');
+            }, 600);
+        } else {
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                card1.innerHTML = '';
+                card2.innerHTML = '';
+                flippedCards = [];
+            }, 1000);
+        }
+    }
+
+    resetGame();
+</script>
+</body>
+</html>
