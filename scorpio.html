@@ -3,32 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Walking Scorpio - Final Fix</title>
- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434"
-     crossorigin="anonymous"></script>
+  <title>Walking Scorpio - Pelaa Scorpion Pasianssia</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
   <style>
-    :root { --card-aspect-ratio: 1.35; }
-    body { font-family: 'Segoe UI', sans-serif; background: #072b22; color: white; padding: 10px; margin: 0; user-select: none; }
+    :root { --card-aspect-ratio: 1.35; --bg: #072b22; --accent: #1e6b54; --text-light: #78ffc8; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 10px; margin: 0; user-select: none; line-height: 1.4; }
     .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
     .pill { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 1px solid rgba(255,255,255,0.2); }
     .controls { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px; }
-    button { padding: 10px 14px; cursor: pointer; background: #1e6b54; color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; }
-    #info { margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; font-size: 14px; border-left: 5px solid #78ffc8; min-height: 1.4em; }
-    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 900px; margin: 0 auto; }
-    .column { background: rgba(255,255,255,0.05); border-radius: 4px; min-height: 70vh; position: relative; padding-bottom: 60px; border: 1px dashed rgba(255,255,255,0.1); }
-    .card { background: white; border: 1px solid #222; border-radius: 5px; padding: 4px; margin-bottom: -36px; aspect-ratio: 1 / var(--card-aspect-ratio); font-size: 17px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box; }
+    button { padding: 10px 14px; cursor: pointer; background: var(--accent); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; }
+    #info { margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; font-size: 14px; border-left: 5px solid var(--text-light); min-height: 1.4em; }
+    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 900px; margin: 0 auto 30px; min-height: 400px; }
+    .column { background: rgba(255,255,255,0.05); border-radius: 4px; min-height: 60vh; position: relative; padding-bottom: 60px; }
+    .card { background: white; border: 1px solid #222; border-radius: 5px; padding: 4px; margin-bottom: -36px; aspect-ratio: 1 / var(--card-aspect-ratio); font-size: 17px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box; color: black; }
     .suit-spade { color: #1a4d8c; } .suit-club { color: #1b5e20; } .suit-heart { color: #d32f2f; } .suit-diamond { color: #e67e22; }
     .card-suit-large { position: absolute; bottom: 0px; right: 2px; font-size: 1.8em; opacity: 0.9; }
-    .card.face-down { background: #134537; color: transparent; }
+    .card.face-down { background: #134537; color: transparent; border: 1px solid rgba(255,255,255,0.1); }
     .card.selected { outline: 4px solid #ffeb3b; z-index: 100; transform: translateY(-5px); }
+    .content-section { max-width: 800px; margin: 20px auto; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: left; font-size: 14px; }
+    footer { margin-top: 40px; padding: 20px; opacity: 0.6; font-size: 12px; border-top: 1px solid var(--accent); }
   </style>
 </head>
 <body>
 
 <div class="header-row">
-    <h2 style="margin:0;">🦂 Walking Scorpio</h2>
+    <h2 style="margin:0; color:var(--text-light);">🦂 Walking Scorpio</h2>
     <div class="status-group" style="display:flex; gap:8px;">
-        <div class="pill">🔄 Siirrot: <span id="moveCount">0</span></div>
+        <div class="pill">💡 Siirtoja jäljellä: <span id="moveCount">0</span></div>
+        <div class="pill">🔄 Tehdyt: <span id="actualMovesUI">0</span></div>
     </div>
 </div>
 
@@ -38,12 +40,22 @@
   <button onclick="undoMove()" style="background: #444;">Peru</button>
 </div>
 
-<div id="info">Peli valmiina!</div>
+<div id="info">Ladataan peliä...</div>
 <div id="table"></div>
+
+<section class="content-section">
+    <h3>Pelin säännöt</h3>
+    <p>Tavoitteena on järjestää kortit neljään maapinoon kuninkaasta ässään. Voit siirtää mitä tahansa kuvapuoli ylöspäin olevaa korttipinoa toisen kortin päälle, jos se on samaa maata ja tasan yhtä suurempi.</p>
+    <p><strong>Vinkki:</strong> Tyhjään sarakkeeseen voi siirtää vain kuninkaan (K).</p>
+</section>
+
+<footer>
+    &copy; 2026 Walking Games - Itsmyid Oy
+</footer>
 
 <script>
 let deck = [], columns = [[],[],[],[],[],[],[]], stock = [], moveHistory = [];
-let selectedCol = -1, selectedIdx = -1;
+let selectedCol = -1, selectedIdx = -1, actualMovesCount = 0;
 
 function newGame() {
     deck = [];
@@ -57,12 +69,21 @@ function newGame() {
         card.faceUp = !(c < 3 && columns[c].length < 3);
         columns[c].push(card);
     }
-    stock = deck; selectedCol = -1; moveHistory = [];
-    updateStockBtn(); drawTable(); updatePossibleMoves();
+    stock = deck; selectedCol = -1; moveHistory = []; actualMovesCount = 0;
+    document.getElementById("info").innerText = "Onnea peliin!";
+    updateUI();
+}
+
+function updateUI() {
+    drawTable();
+    updatePossibleMoves();
+    document.getElementById("stockBtn").innerText = `VARA (${stock.length})`;
+    document.getElementById("actualMovesUI").innerText = actualMovesCount;
 }
 
 function drawTable() {
     const table = document.getElementById("table");
+    if (!table) return;
     table.innerHTML = "";
     columns.forEach((col, cIdx) => {
         let colDiv = document.createElement("div");
@@ -95,46 +116,60 @@ function handleColumnClick(targetCol) {
     const movingCard = columns[selectedCol][selectedIdx];
     const targetColCards = columns[targetCol];
     let canMove = false;
+    let shouldCountMove = false;
+
     if (targetColCards.length === 0) {
-        if (movingCard.rank === 13) canMove = true;
+        if (movingCard.rank === 13) {
+            canMove = true;
+            if (selectedIdx !== 0) shouldCountMove = true; // King-sääntösi muistista
+        }
     } else {
         const lastCard = targetColCards[targetColCards.length - 1];
-        if (lastCard.rank === movingCard.rank + 1 && lastCard.suit === movingCard.suit) canMove = true;
+        if (lastCard.rank === movingCard.rank + 1 && lastCard.suit === movingCard.suit) {
+            canMove = true;
+            shouldCountMove = true;
+        }
     }
+
     if (canMove && selectedCol !== targetCol) {
-        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock})));
+        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock, moves: actualMovesCount})));
+        if (shouldCountMove) actualMovesCount++;
         const cardsToMove = columns[selectedCol].splice(selectedIdx);
         columns[targetCol] = [...columns[targetCol], ...cardsToMove];
         if (columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
-        checkSequence(targetCol);
+        checkWin(targetCol);
     }
-    selectedCol = -1; selectedIdx = -1; drawTable(); updatePossibleMoves();
+    selectedCol = -1; selectedIdx = -1; updateUI();
 }
 
 function updatePossibleMoves() {
     let count = 0;
-    for (let c = 0; c < columns.length; c++) {
-        for (let r = 0; r < columns[c].length; r++) {
-            const card = columns[c][r];
-            if (!card.faceUp) continue;
-            if (r > 0 && columns[c][r-1].rank === card.rank + 1 && columns[c][r-1].suit === card.suit) continue;
-            for (let t = 0; t < columns.length; t++) {
-                if (c === t) continue;
-                if (columns[t].length === 0) {
-                    if (card.rank === 13 && r !== 0) count++; // Älykäs kuningassääntö
+    columns.forEach((col, c) => {
+        col.forEach((card, r) => {
+            if (!card.faceUp) return;
+            if (r > 0 && col[r-1].rank === card.rank + 1 && col[r-1].suit === card.suit) return;
+            columns.forEach((tCol, t) => {
+                if (c === t) return;
+                if (tCol.length === 0) {
+                    if (card.rank === 13 && r !== 0) count++;
                 } else {
-                    const last = columns[t][columns[t].length - 1];
+                    const last = tCol[tCol.length - 1];
                     if (last.rank === card.rank + 1 && last.suit === card.suit) count++;
                 }
-            }
-        }
-    }
+            });
+        });
+    });
     document.getElementById("moveCount").innerText = count;
-    document.getElementById("info").style.color = (count === 0 && stock.length === 0) ? "#ff6b6b" : "white";
-    if (count === 0 && stock.length === 0) document.getElementById("info").innerHTML = "🚨 <strong>PELI JUMISSA!</strong>";
+    const info = document.getElementById("info");
+    if (count === 0 && stock.length === 0) {
+        info.innerHTML = "🚨 <strong>PELI JUMISSA!</strong>";
+        info.style.color = "#ff6b6b";
+    } else {
+        info.style.color = "white";
+    }
 }
 
-function checkSequence(cIdx) {
+function checkWin(cIdx) {
     const col = columns[cIdx];
     for (let i = 0; i <= col.length - 13; i++) {
         let sub = col.slice(i, i + 13);
@@ -148,25 +183,26 @@ function checkSequence(cIdx) {
 
 function dealStock() {
     if (stock.length > 0) {
-        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock})));
+        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock, moves: actualMovesCount})));
         for (let i = 0; i < 3; i++) { if(stock.length) { let c = stock.pop(); c.faceUp = true; columns[i].push(c); } }
-        updateStockBtn(); drawTable(); updatePossibleMoves();
+        actualMovesCount++;
+        updateUI();
     }
 }
 
 function undoMove() {
     if (moveHistory.length > 0) {
         let prev = moveHistory.pop();
-        columns = prev.cols; stock = prev.stock;
-        selectedCol = -1; drawTable(); updateStockBtn(); updatePossibleMoves();
+        columns = prev.cols; stock = prev.stock; actualMovesCount = prev.moves || 0;
+        selectedCol = -1; updateUI();
     }
 }
 
 function getSuitClass(s) { return {'♠':'suit-spade','♣':'suit-club','♥':'suit-heart','♦':'suit-diamond'}[s]; }
 function getRankName(r) { return {1:'A',11:'J',12:'Q',13:'K'}[r] || r; }
-function updateStockBtn() { document.getElementById("stockBtn").innerText = `VARA (${stock.length})`; }
 
-newGame();
+window.onload = newGame;
 </script>
 </body>
 </html>
+ 
