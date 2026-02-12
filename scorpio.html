@@ -127,10 +127,6 @@
         border: 1px solid rgba(255,255,255,0.1);
     }
     
-    .content-section h2 { color: var(--text-light); font-size: 22px; margin-top: 0; }
-    .content-section h3 { color: var(--text-light); font-size: 18px; }
-    .content-section p, .content-section li { font-size: 15px; opacity: 0.9; }
-
     footer { 
         margin-top: 50px; 
         padding: 30px; 
@@ -146,9 +142,9 @@
 <div class="header-row">
     <h1 style="margin:0; font-size: 22px; color:var(--text-light);">🦂 Walking Scorpio</h1>
     <div class="status-group">
+        <div class="pill">💡 Siirtoja jäljellä: <span id="possibleMoves">0</span></div>
         <div class="pill">🏆 Voitot: <span id="winCount">0</span></div>
-        <div class="pill">❌ Luovutukset: <span id="quitCount">0</span></div>
-        <div class="pill">🔄 Siirrot: <span id="actualMoveCount">0</span></div>
+        <div class="pill">🔄 Tehdyt siirrot: <span id="actualMoveCount">0</span></div>
     </div>
 </div>
 
@@ -169,167 +165,9 @@
     <h3>Säännöt ja vinkit</h3>
     <ul>
         <li><strong>Samat maat:</strong> Kortin voi siirtää vain sellaisen kortin päälle, joka on samaa maata ja tasan yhtä suurempi (esim. risti-7 risti-8:n päälle).</li>
-        <li><strong>Kuninkaat:</strong> Tyhjään paikkaan pöydällä saa siirtää vain kuninkaan (K).</li>
+        <li><strong>Kuninkaat:</strong> Tyhjään paikkaan pöydällä saa siirtää vain kuninkaan (K). Laskuri ei huomioi siirtoa, jos kuningas on jo sarakkeen ylimpänä.</li>
         <li><strong>Vara-kortit:</strong> Käytä "VARA"-painiketta jakaaksesi viimeiset kolme korttia sarakkeisiin, kun olet jumissa.</li>
     </ul>
-    
-    <h3>Terveellistä pelaamista</h3>
-    <p>Walking Games kannustaa pitämään taukoja. Pasianssi on loistavaa aivojumppaa, mutta muista välillä nousta ylös ja liikkua. Meidän pelimme on optimoitu Android-laitteille ja Termux-ympäristöön, tarjoten sujuvan kokemuksen ilman turhaa odottelua.</p>
 </section>
 
 <footer>
-    <div>&copy; 2026 Walking Games - Itsmyid Oy</div>
-    <div style="margin-top:10px;">
-        <a href="index.html" style="color:var(--text-light); text-decoration:none; margin-right:15px;">Päävalikko</a>
-        <a href="tietosuoja.html" style="color:var(--text-light); text-decoration:none;">Tietosuojaseloste</a>
-    </div>
-</footer>
-
-<script>
-let deck = [], columns = [[],[],[],[],[],[],[]], stock = [], moveHistory = [];
-let selectedCol = -1, selectedIdx = -1, actualMoves = 0;
-let stats = JSON.parse(localStorage.getItem('scorpio_stats')) || { won: 0, quit: 0 };
-
-function saveStats() {
-    localStorage.setItem('scorpio_stats', JSON.stringify(stats));
-    updateStatsUI();
-}
-
-function updateStatsUI() {
-    document.getElementById("winCount").innerText = stats.won;
-    document.getElementById("quitCount").innerText = stats.quit;
-}
-
-function newGame() {
-    if (actualMoves > 5 && !isGameWon()) {
-        stats.quit++;
-        saveStats();
-    }
-    deck = [];
-    const suits = ['♠', '♣', '♥', '♦'];
-    for (let s of suits) for (let r = 1; r <= 13; r++) deck.push({ rank: r, suit: s, faceUp: false });
-    deck.sort(() => Math.random() - 0.5);
-    columns = [[],[],[],[],[],[],[]];
-    for (let i = 0; i < 49; i++) {
-        let c = i % 7;
-        let card = deck.pop();
-        card.faceUp = !(c < 3 && columns[c].length < 3);
-        columns[c].push(card);
-    }
-    stock = deck; selectedCol = -1; moveHistory = []; actualMoves = 0;
-    document.getElementById("info").innerText = "Onnea peliin!";
-    updateUI(); drawTable();
-}
-
-function isGameWon() {
-    return columns.every(col => col.length === 0) && stock.length === 0;
-}
-
-function drawTable() {
-    const table = document.getElementById("table");
-    table.innerHTML = "";
-    columns.forEach((col, cIdx) => {
-        let colDiv = document.createElement("div");
-        colDiv.className = "column";
-        colDiv.onclick = () => handleColumnClick(cIdx);
-        col.forEach((card, rIdx) => {
-            let cardDiv = document.createElement("div");
-            cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
-            if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
-            if (card.faceUp) {
-                cardDiv.classList.add(getSuitClass(card.suit));
-                cardDiv.innerHTML = `<div>${getRankName(card.rank)}</div><div class="card-suit-large">${card.suit}</div>`;
-                cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
-            }
-            colDiv.appendChild(cardDiv);
-        });
-        table.appendChild(colDiv);
-    });
-}
-
-function handleCardClick(cIdx, rIdx) {
-    if (selectedCol !== -1 && selectedCol !== cIdx) { handleColumnClick(cIdx); return; }
-    selectedCol = (selectedCol === cIdx && selectedIdx === rIdx) ? -1 : cIdx;
-    selectedIdx = (selectedCol === -1) ? -1 : rIdx;
-    drawTable();
-}
-
-function handleColumnClick(targetCol) {
-    if (selectedCol === -1) return;
-    const movingCard = columns[selectedCol][selectedIdx];
-    const targetColCards = columns[targetCol];
-    let canMove = false;
-
-    if (targetColCards.length === 0) {
-        if (movingCard.rank === 13) {
-            canMove = true;
-            if (selectedIdx !== 0) actualMoves++;
-        }
-    } else {
-        const lastCard = targetColCards[targetColCards.length - 1];
-        if (lastCard.rank === movingCard.rank + 1 && lastCard.suit === movingCard.suit) {
-            canMove = true;
-            actualMoves++;
-        }
-    }
-
-    if (canMove && selectedCol !== targetCol) {
-        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock, moves: actualMoves})));
-        const cardsToMove = columns[selectedCol].splice(selectedIdx);
-        columns[targetCol] = [...columns[targetCol], ...cardsToMove];
-        if (columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
-        checkSequence(targetCol);
-    }
-    selectedCol = -1; selectedIdx = -1; 
-    updateUI(); drawTable();
-}
-
-function checkSequence(cIdx) {
-    const col = columns[cIdx];
-    for (let i = 0; i <= col.length - 13; i++) {
-        let sub = col.slice(i, i + 13);
-        if (sub.every((c, idx) => c.faceUp && c.rank === (13 - idx) && c.suit === sub[0].suit)) {
-            col.splice(i, 13);
-            if (col.length > 0) col[col.length - 1].faceUp = true;
-            break;
-        }
-    }
-}
-
-function updateUI() {
-    document.getElementById("actualMoveCount").innerText = actualMoves;
-    document.getElementById("stockBtn").innerText = `VARA (${stock.length})`;
-    updateStatsUI();
-    const infoBox = document.getElementById("info");
-    if (isGameWon()) {
-        infoBox.innerHTML = "🎉 <strong>JEEEEEEEEEEE! LÄPI MENI!</strong> 🏆";
-        if (actualMoves > 0) { stats.won++; actualMoves = 0; saveStats(); }
-    }
-}
-
-function dealStock() {
-    if (stock.length > 0) {
-        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock, moves: actualMoves})));
-        for (let i = 0; i < 3; i++) { if(stock.length) { let c = stock.pop(); c.faceUp = true; columns[i].push(c); } }
-        actualMoves++;
-        updateUI(); drawTable();
-    }
-}
-
-function undoMove() {
-    if (moveHistory.length > 0) {
-        let prev = moveHistory.pop();
-        columns = prev.cols; stock = prev.stock; actualMoves = prev.moves || 0;
-        selectedCol = -1; updateUI(); drawTable();
-    }
-}
-
-function getSuitClass(s) { return {'♠':'suit-spade','♣':'suit-club','♥':'suit-heart','♦':'suit-diamond'}[s]; }
-function getRankName(r) { return {1:'A',11:'J',12:'Q',13:'K'}[r] || r; }
-
-updateStatsUI();
-newGame();
-</script>
-</body>
-</html>
- 
