@@ -64,6 +64,7 @@
         border-radius: 12px; 
         border-left: 5px solid var(--text-light); 
         font-size: 15px;
+        min-height: 20px;
     }
 
     #table { 
@@ -72,6 +73,7 @@
         gap: 4px; 
         max-width: 100%; 
         margin: 0 auto 40px;
+        min-height: 300px; /* Varmistaa että tilaa on ennen kortteja */
     }
 
     .column { 
@@ -80,7 +82,6 @@
         min-height: 60vh; 
         position: relative; 
         padding-bottom: 50px; 
-        border: 1px dashed rgba(255,255,255,0.05);
     }
 
     .card { 
@@ -115,7 +116,7 @@
     }
 
     .card.face-down { background: #134537; color: transparent; border: 1px solid rgba(255,255,255,0.1); }
-    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; transform: translateY(-5px); }
 
     .content-section { 
         max-width: 800px; 
@@ -142,9 +143,9 @@
 <div class="header-row">
     <h1 style="margin:0; font-size: 22px; color:var(--text-light);">🦂 Walking Scorpio</h1>
     <div class="status-group">
-        <div class="pill">💡 Siirtoja jäljellä: <span id="possibleMoves">0</span></div>
+        <div class="pill">💡 Siirtoja: <span id="possibleMoves">0</span></div>
         <div class="pill">🏆 Voitot: <span id="winCount">0</span></div>
-        <div class="pill">🔄 Tehdyt siirrot: <span id="actualMoveCount">0</span></div>
+        <div class="pill">🔄 Siirrot: <span id="actualMoveCount">0</span></div>
     </div>
 </div>
 
@@ -154,20 +155,21 @@
   <button onclick="undoMove()" style="background: #444;">Peru</button>
 </div>
 
-<div id="info">Tavoitteesi on järjestää kortit maittain K-A. Voit siirtää mitä tahansa pinoa!</div>
+<div id="info">Ladataan peliä...</div>
 
 <div id="table"></div>
 
 <section class="content-section">
     <h2>Pelaa Scorpion Pasianssia Ilmaiseksi</h2>
-    <p>Scorpion Solitaire on yksi strategisimmista korttipeleistä. Toisin kuin perinteisessä pasianssissa, tässä versiossa voit siirtää mitä tahansa kuvapuoli ylöspäin olevaa korttia riippumatta siitä, mitä kortteja sen päällä on.</p>
+    <p>Scorpion Solitaire on haastava korttipeli, jossa tavoitteena on muodostaa neljä 13 kortin sarjaa kuninkaasta ässään saman maan sisällä. Peli vaatii tarkkaa strategista suunnittelua.</p>
     
-    <h3>Säännöt ja vinkit</h3>
+    <h3>Säännöt lyhyesti</h3>
     <ul>
-        <li><strong>Samat maat:</strong> Kortin voi siirtää vain sellaisen kortin päälle, joka on samaa maata ja tasan yhtä suurempi (esim. risti-7 risti-8:n päälle).</li>
-        <li><strong>Kuninkaat:</strong> Tyhjään paikkaan pöydällä saa siirtää vain kuninkaan (K). Laskuri ei huomioi siirtoa, jos kuningas on jo sarakkeen ylimpänä.</li>
-        <li><strong>Vara-kortit:</strong> Käytä "VARA"-painiketta jakaaksesi viimeiset kolme korttia sarakkeisiin, kun olet jumissa.</li>
+        <li><strong>Siirtäminen:</strong> Voit siirtää korttipinoa, jos kohdekortti on samanlainen ja arvoltaan yhtä suurempi.</li>
+        <li><strong>Tyhjät sarakkeet:</strong> Tyhjään paikkaan saa siirtää vain kuninkaan (K). Laskuri ei kasva, jos kuningas on jo sarakkeen huipulla.</li>
+        <li><strong>Voittaminen:</strong> Peli päättyy, kun kaikki kortit on kerätty ja järjestetty oikein.</li>
     </ul>
 </section>
 
 <footer>
+    <div>&copy; 2026 Walking Games - Itsmyid Oy
