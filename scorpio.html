@@ -3,25 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Walking Scorpio - Pelaa Scorpion Pasianssia</title>
+  <title>Walking Scorpio - Selkeät Värit</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
   <style>
     :root { --card-aspect-ratio: 1.35; --bg: #072b22; --accent: #1e6b54; --text-light: #78ffc8; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 10px; margin: 0; user-select: none; line-height: 1.4; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 10px; margin: 0; user-select: none; }
+    
     .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
     .pill { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 1px solid rgba(255,255,255,0.2); }
+    
     .controls { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px; }
     button { padding: 10px 14px; cursor: pointer; background: var(--accent); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; }
-    #info { margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; font-size: 14px; border-left: 5px solid var(--text-light); min-height: 1.4em; }
-    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 900px; margin: 0 auto 30px; min-height: 400px; }
-    .column { background: rgba(255,255,255,0.05); border-radius: 4px; min-height: 60vh; position: relative; padding-bottom: 60px; }
-    .card { background: white; border: 1px solid #222; border-radius: 5px; padding: 4px; margin-bottom: -36px; aspect-ratio: 1 / var(--card-aspect-ratio); font-size: 17px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box; color: black; }
-    .suit-spade { color: #1a4d8c; } .suit-club { color: #1b5e20; } .suit-heart { color: #d32f2f; } .suit-diamond { color: #e67e22; }
-    .card-suit-large { position: absolute; bottom: 0px; right: 2px; font-size: 1.8em; opacity: 0.9; }
+    
+    #info { margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; font-size: 14px; border-left: 5px solid var(--text-light); }
+    
+    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 900px; margin: 0 auto 30px; min-height: 450px; }
+    .column { background: rgba(255,255,255,0.05); border-radius: 4px; min-height: 65vh; position: relative; padding-bottom: 60px; }
+    
+    /* KORTTIEN TYYLIT JA UUDET VÄRIT */
+    .card { background: white; border: 1px solid #222; border-radius: 5px; padding: 4px; margin-bottom: -36px; aspect-ratio: 1 / var(--card-aspect-ratio); font-size: 16px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box; color: black; }
+    
+    .suit-spade { color: #000000; }   /* Pata - Musta */
+    .suit-club { color: #666666; }    /* Risti - Harmaa */
+    .suit-heart { color: #d32f2f; }   /* Hertta - Punainen */
+    .suit-diamond { color: #e67e22; } /* Ruutu - Oranssi/Kulta */
+
+    .card-label { font-size: 0.65em; opacity: 0.6; margin-left: 1px; vertical-align: top; }
+    .card-suit-large { position: absolute; bottom: 0px; right: 2px; font-size: 1.6em; opacity: 0.8; }
     .card.face-down { background: #134537; color: transparent; border: 1px solid rgba(255,255,255,0.1); }
     .card.selected { outline: 4px solid #ffeb3b; z-index: 100; transform: translateY(-5px); }
+
     .content-section { max-width: 800px; margin: 20px auto; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: left; font-size: 14px; }
-    footer { margin-top: 40px; padding: 20px; opacity: 0.6; font-size: 12px; border-top: 1px solid var(--accent); }
+    footer { margin-top: 40px; padding: 20px; opacity: 0.6; font-size: 12px; border-top: 1px solid var(--accent); text-align: center; }
   </style>
 </head>
 <body>
@@ -29,7 +42,7 @@
 <div class="header-row">
     <h2 style="margin:0; color:var(--text-light);">🦂 Walking Scorpio</h2>
     <div class="status-group" style="display:flex; gap:8px;">
-        <div class="pill">💡 Siirtoja jäljellä: <span id="moveCount">0</span></div>
+        <div class="pill">💡 Siirtoja: <span id="moveCount">0</span></div>
         <div class="pill">🔄 Tehdyt: <span id="actualMovesUI">0</span></div>
     </div>
 </div>
@@ -40,22 +53,27 @@
   <button onclick="undoMove()" style="background: #444;">Peru</button>
 </div>
 
-<div id="info">Ladataan peliä...</div>
+<div id="info">Ladataan...</div>
 <div id="table"></div>
 
 <section class="content-section">
-    <h3>Pelin säännöt</h3>
-    <p>Tavoitteena on järjestää kortit neljään maapinoon kuninkaasta ässään. Voit siirtää mitä tahansa kuvapuoli ylöspäin olevaa korttipinoa toisen kortin päälle, jos se on samaa maata ja tasan yhtä suurempi.</p>
-    <p><strong>Vinkki:</strong> Tyhjään sarakkeeseen voi siirtää vain kuninkaan (K).</p>
+    <h3>Pelin säännöt ja tunnistusapua</h3>
+    <p>Voit siirtää korttipinoja, jos kohdekortti on samaa maata ja arvoltaan yhtä suurempi. Jotta maat erottuvat paremmin, olemme lisänneet pienen tunnisteen numeron viereen:</p>
+    <ul>
+        <li><strong>P</strong> = Pata (Musta)</li>
+        <li><strong>R</strong> = Risti (Harmaa)</li>
+        <li><strong>H</strong> = Hertta (Punainen)</li>
+        <li><strong>Ru</strong> = Ruutu (Oranssi)</li>
+    </ul>
 </section>
 
-<footer>
-    &copy; 2026 Walking Games - Itsmyid Oy
-</footer>
+<footer>&copy; 2026 Walking Games - Itsmyid Oy</footer>
 
 <script>
 let deck = [], columns = [[],[],[],[],[],[],[]], stock = [], moveHistory = [];
 let selectedCol = -1, selectedIdx = -1, actualMovesCount = 0;
+
+const suitLabels = {'♠': 'P', '♣': 'R', '♥': 'H', '♦': 'Ru'};
 
 function newGame() {
     deck = [];
@@ -70,7 +88,7 @@ function newGame() {
         columns[c].push(card);
     }
     stock = deck; selectedCol = -1; moveHistory = []; actualMovesCount = 0;
-    document.getElementById("info").innerText = "Onnea peliin!";
+    document.getElementById("info").innerText = "Peli valmis! Onnea matkaan.";
     updateUI();
 }
 
@@ -95,7 +113,11 @@ function drawTable() {
             if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
             if (card.faceUp) {
                 cardDiv.classList.add(getSuitClass(card.suit));
-                cardDiv.innerHTML = `<div>${getRankName(card.rank)}</div><div class="card-suit-large">${card.suit}</div>`;
+                // Lisätään selkeä kirjain-tunniste maan erottamiseksi
+                cardDiv.innerHTML = `
+                    <div>${getRankName(card.rank)}<span class="card-label">${suitLabels[card.suit]}</span></div>
+                    <div class="card-suit-large">${card.suit}</div>
+                `;
                 cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
             }
             colDiv.appendChild(cardDiv);
@@ -121,7 +143,7 @@ function handleColumnClick(targetCol) {
     if (targetColCards.length === 0) {
         if (movingCard.rank === 13) {
             canMove = true;
-            if (selectedIdx !== 0) shouldCountMove = true; // King-sääntösi muistista
+            if (selectedIdx !== 0) shouldCountMove = true;
         }
     } else {
         const lastCard = targetColCards[targetColCards.length - 1];
@@ -160,13 +182,6 @@ function updatePossibleMoves() {
         });
     });
     document.getElementById("moveCount").innerText = count;
-    const info = document.getElementById("info");
-    if (count === 0 && stock.length === 0) {
-        info.innerHTML = "🚨 <strong>PELI JUMISSA!</strong>";
-        info.style.color = "#ff6b6b";
-    } else {
-        info.style.color = "white";
-    }
 }
 
 function checkWin(cIdx) {
