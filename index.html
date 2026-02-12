@@ -13,6 +13,7 @@
             --card-bg: rgba(255, 255, 255, 0.05);
             --primary-accent: #1e6b54;
             --hover-accent: #2a8b6f;
+            --text-light: #78ffc8;
         }
         
         body { 
@@ -29,20 +30,20 @@
             flex: 1; 
             display: flex; 
             flex-direction: column; 
-            justify-content: center; 
             align-items: center; 
             padding: 20px; 
         }
 
         .hero-section {
             text-align: center;
+            margin-top: 40px;
             margin-bottom: 30px;
         }
 
         .hero-section h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
-            color: #78ffc8;
+            color: var(--text-light);
         }
 
         .menu-container { 
@@ -54,6 +55,7 @@
             max-width: 400px; 
             width: 100%; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 40px;
         }
 
         .menu-btn { 
@@ -76,35 +78,36 @@
         .menu-btn:hover { 
             background: var(--hover-accent); 
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        .btn-icon { font-size: 1.5em; }
+        /* AdSense-sisältölohko */
+        .info-section {
+            max-width: 600px; 
+            margin: 20px auto; 
+            text-align: left; 
+            background: var(--card-bg); 
+            padding: 25px; 
+            border-radius: 15px; 
+            line-height: 1.6;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .info-section h2, .info-section h3 { color: var(--text-light); }
 
         footer { 
             background: rgba(0,0,0,0.4); 
-            padding: 25px; 
+            padding: 30px 20px; 
             text-align: center; 
             font-size: 14px; 
             border-top: 1px solid var(--primary-accent); 
+            margin-top: auto;
         }
 
-        .company-info { 
-            opacity: 0.8; 
-            margin-top: 10px; 
-            font-style: italic; 
-            color: #78ffc8;
-        }
+        .footer-links { margin: 15px 0; }
+        .footer-links a { color: var(--text-light); text-decoration: none; font-weight: bold; margin: 0 10px; }
+        .footer-links a:hover { text-decoration: underline; }
 
-        .disclaimer {
-            margin-top: 15px;
-            font-size: 11px;
-            opacity: 0.5;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.4;
-        }
+        .company-info { opacity: 0.8; margin-top: 10px; font-style: italic; color: var(--text-light); }
+        .disclaimer { font-size: 11px; opacity: 0.5; max-width: 600px; margin: 15px auto 0; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -133,25 +136,30 @@
             <span class="btn-icon">➔</span>
         </a>
     </div>
+
+    <section class="info-section">
+        <h2>Miksi valita Walking Games?</h2>
+        <p>Walking Games tarjoaa viihdyttäviä korttipelejä, kuten <strong>Scorpio</strong>, <strong>Spider</strong> ja <strong>Memory Solitaire</strong>. Pelimme on optimoitu toimimaan nopeasti ja kevyesti suoraan puhelimesi selaimessa.</p>
+        
+        <h3>Pelaa ja liiku</h3>
+        <p>Haluamme edistää terveellisiä pelitapoja. Pelimme sisältävät taukotoiminnon, joka muistuttaa sinua nousemaan ylös ja liikkumaan 25 minuutin välein. Tämä pieni tapa auttaa jaksamaan paremmin ja säästää selkääsi.</p>
+        
+        <h3>Aivojumppaa missä vain</h3>
+        <p>Pasianssit ja muistipelit kehittävät loogista päättelykykyä ja muistia. Itsmyid Oy:n kehittämät pelit on tehty kotimaisena käsityönä tukemaan aktiivista ja älykästä ajanvietettä.</p>
+    </section>
 </div>
 
 <footer>
     <div>&copy; 2026 Walking Games - Kaikki oikeudet pidätetään.</div>
-    <div class="company-info">Julkaisija: [Itsmyid Oy]</div>
-    <div class="disclaimer">
-        Pelikoodit on optimoitu Android-laitteille ja Termux-ympäristöön. 
-        Käyttämällä sivustoa tuet kotimaista pelinkehitystä ja yritystoimintaa.
-        <section style="max-width: 600px; margin: 40px auto; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; line-height: 1.6;">
-    <h2 style="color: #78ffc8;">Miksi valita Walking Games?</h2>
-    <p>Walking Games tarjoaa viihdyttäviä korttipelejä, kuten <strong>Scorpio</strong>, <strong>Spider</strong> ja <strong>Memory Solitaire</strong>, jotka on suunniteltu erityisesti mobiilikäyttäjille. Toisin kuin tavalliset pelisivustot, me välitämme pelaajiemme terveydestä.</p>
     
-    <h3 style="color: #78ffc8;">Pelaa ja liiku</h3>
-    <p>Istumatyö ja jatkuva ruudun katselu rasittavat kehoa. Pelimme sisältävät sisäänrakennetun taukotoiminnon, joka muistuttaa sinua nousemaan ylös ja kävelemään hetken 25 minuutin välein. Tämä auttaa ehkäisemään selkävaivoja ja parantaa keskittymiskykyäsi.</p>
-    
-    <h3 style="color: #78ffc8;">Strategiaa ja muistia</h3>
-    <p>Pasianssit ja muistipelit ovat loistavaa aivojumppaa. Scorpio haastaa loogisen päättelykyvyn, kun taas Memory Solitaire kehittää lyhytkestoista muistia. Kaikki pelimme on koodattu kevyiksi, jotta ne toimivat nopeasti kaikilla laitteilla.</p>
-</section>
+    <div class="footer-links">
+        <a href="tietosuoja.html">Tietosuojaseloste</a>
+    </div>
 
+    <div class="company-info">Julkaisija: Itsmyid Oy</div>
+    <div class="disclaimer">
+        Pelikoodit on optimoitu Android-laitteille ja Termux-ympäristöön. <br>
+        Käyttämällä sivustoa tuet suomalaista pelinkehitystä ja pienyrittäjyyttä.
     </div>
 </footer>
 
