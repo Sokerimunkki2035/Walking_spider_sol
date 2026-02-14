@@ -17,27 +17,6 @@
         }
         
         body { 
-            <div id="lukituskerros" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000000; font-family: sans-serif;">
-    <h1 style="margin-bottom: 20px;">Walking Spider Sol</h1>
-    <p>Sivusto on yksityisessä kehityskäytössä.</p>
-    <div style="margin-top: 20px;">
-        <input type="password" id="salasana_kentta" placeholder="Salasana" style="padding: 10px; border-radius: 5px; border: none;">
-        <button onclick="tarkistaSalasana()" style="padding: 10px 20px; border-radius: 5px; border: none; background: #4CAF50; color: white; cursor: pointer;">Avaa</button>
-    </div>
-</div>
-
-<script>
-function tarkistaSalasana() {
-    var syote = document.getElementById("salasana_kentta").value;
-    // PÄÄTÄ TÄHÄN SALASANASI (esim. 'friba2024')
-    if (syote === 'VALITSE_OMA_SALASANA') {
-        document.getElementById("lukituskerros").style.display = "none";
-    } else {
-        alert("Väärä salasana.");
-    }
-}
-</script>
-
             font-family: 'Segoe UI', sans-serif; 
             background: var(--bg-color); 
             color: white; 
@@ -101,7 +80,6 @@ function tarkistaSalasana() {
             transform: translateY(-2px);
         }
 
-        /* AdSense-sisältölohko */
         .info-section {
             max-width: 600px; 
             margin: 20px auto; 
@@ -133,6 +111,32 @@ function tarkistaSalasana() {
 </head>
 <body>
 
+<div id="lukituskerros" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#072b22; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000000; font-family: sans-serif; text-align: center;">
+    <h1 style="color: #78ffc8;">Walking Games</h1>
+    <p>Sivusto on yksityisessä kehityskäytössä.</p>
+    <div style="margin-top: 20px;">
+        <input type="password" id="salasana_kentta" placeholder="Salasana" style="padding: 12px; border-radius: 8px; border: none; outline: none;">
+        <button onclick="tarkistaSalasana()" style="padding: 12px 24px; border-radius: 8px; border: none; background: #1e6b54; color: white; cursor: pointer; font-weight: bold; margin-left: 5px;">Avaa</button>
+    </div>
+</div>
+
+<script>
+function tarkistaSalasana() {
+    var syote = document.getElementById("salasana_kentta").value;
+    // VAIHDA TÄHÄN OMA SALASANASI
+    if (syote === 'VALITSE_OMA_SALASANA') {
+        document.getElementById("lukituskerros").style.display = "none";
+    } else {
+        alert("Väärä salasana.");
+    }
+}
+// Sallii "Enter" -näppäimen käytön salasanakentässä
+document.getElementById("salasana_kentta").addEventListener("keyup", function(event) {
+    if (event.key === "Enter") {
+        tarkistaSalasana();
+    }
+});
+</script>
 <div class="main-content">
     <div class="hero-section">
         <h1>Walking Games</h1>
