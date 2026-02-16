@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walking Games - Portti</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #072b22; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: rgba(0,0,0,0.6); padding: 30px; border-radius: 15px; border: 2px solid #78ffc8; text-align: center; width: 95%; max-width: 400px; }
+        h2 { margin-top: 0; color: #78ffc8; }
+        input { padding: 15px; border-radius: 8px; border: none; width: 100%; margin-bottom: 15px; font-size: 16px; text-align: center; box-sizing: border-box; background: white; color: black; }
+        button { padding: 15px; background: #1e6b54; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 18px; }
+        #error { color: #ff6b6b; font-weight: bold; margin-top: 15px; min-height: 1.2em; }
+        .menu a { text-decoration: none; color: #78ffc8; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 10px; display: block; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="login-card" id="authBox">
+    <h2>🦂 Walking Games</h2>
+    <p>Syötä Keeper-salasana:</p>
+    <input type="password" id="passInput" placeholder="Syötä pitkä numerosarja...">
+    <button onclick="checkPassword()">KIRJAUDU</button>
+    <p id="error"></p>
+</div>
+
+<div class="login-card" id="menuBox" style="display:none;">
+    <h2>Valitse peli</h2>
+    <div class="menu">
+        <a href="scorpio.html">🦂 Walking Scorpio</a>
+        <a href="freecell.html">🃏 FreeCell Solitaire</a>
+        <a href="yukon.html">🌲 Yukon Solitaire</a>
+        <a href="memory.html">🧠 Memory Solitaire</a>
+    </div>
+    <button onclick="logout()" style="background:#444; margin-top:10px;">Kirjaudu ulos</button>
+</div>
+
+<script>
+    // SHA-256 Hash Keeper-sarjalle: 777488816856464168145068596431000121047676
+    const secretHash = "57984852062cc157a415309328f4139988133379a2f7637f5d93375323561a06"; 
+
+    async function hashPassword(string) {
+        const utf8 = new TextEncoder().encode(string);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function checkPassword() {
+        const input = document.getElementById('passInput').value.trim();
+        const errorMsg = document.getElementById('error');
+        
+        const hashedInput = await hashPassword(input);
+        
+        if (hashedInput === secretHash) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            showMenu();
+        } else {
+            errorMsg.innerText = "VÄÄRÄ SALASANA!";
+            document.getElementById('passInput').value = "";
+        }
+    }
+
+    function showMenu() {
+        document.getElementById('authBox').style.display = 'none';
+        document.getElementById('menuBox').style.display = 'block';
+    }
+
+    function logout() {
+        sessionStorage.removeItem('isLoggedIn');
+        location.reload();
+    }
+
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        showMenu();
+    }
+</script>
+</body>
+</html>
