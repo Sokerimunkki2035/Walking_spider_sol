@@ -3,190 +3,84 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Walking Games - Pelikeskus</title>
-    
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
-
+    <title>Walking Games - Portti</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YOUR_ID');
+    </script>
     <style>
-        :root {
-            --bg-color: #072b22;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --primary-accent: #1e6b54;
-            --hover-accent: #2a8b6f;
-            --text-light: #78ffc8;
-        }
-        
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-color); 
-            color: white; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh; 
-        }
-
-        .main-content { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px; 
-        }
-
-        .hero-section {
-            text-align: center;
-            margin-top: 40px;
-            margin-bottom: 30px;
-        }
-
-        .hero-section h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            color: var(--text-light);
-        }
-
-        .menu-container { 
-            background: var(--card-bg); 
-            padding: 30px; 
-            border-radius: 20px; 
-            border: 2px solid var(--primary-accent); 
-            text-align: center; 
-            max-width: 400px; 
-            width: 100%; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 40px;
-        }
-
-        .menu-btn { 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%; 
-            padding: 18px; 
-            margin: 12px 0; 
-            background: var(--primary-accent); 
-            color: white; 
-            text-decoration: none; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            border: 1px solid rgba(255,255,255,0.1); 
-            box-sizing: border-box; 
-            transition: all 0.2s ease;
-        }
-
-        .menu-btn:hover { 
-            background: var(--hover-accent); 
-            transform: translateY(-2px);
-        }
-
-        .info-section {
-            max-width: 600px; 
-            margin: 20px auto; 
-            text-align: left; 
-            background: var(--card-bg); 
-            padding: 25px; 
-            border-radius: 15px; 
-            line-height: 1.6;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .info-section h2, .info-section h3 { color: var(--text-light); }
-
-        footer { 
-            background: rgba(0,0,0,0.4); 
-            padding: 30px 20px; 
-            text-align: center; 
-            font-size: 14px; 
-            border-top: 1px solid var(--primary-accent); 
-            margin-top: auto;
-        }
-
-        .footer-links { margin: 15px 0; }
-        .footer-links a { color: var(--text-light); text-decoration: none; font-weight: bold; margin: 0 10px; }
-        .footer-links a:hover { text-decoration: underline; }
-
-        .company-info { opacity: 0.8; margin-top: 10px; font-style: italic; color: var(--text-light); }
-        .disclaimer { font-size: 11px; opacity: 0.5; max-width: 600px; margin: 15px auto 0; line-height: 1.4; }
+        body { font-family: 'Segoe UI', sans-serif; background: #072b22; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px; border: 1px solid #78ffc8; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { padding: 12px; border-radius: 8px; border: none; width: 200px; margin-bottom: 10px; font-size: 16px; }
+        button { padding: 12px 24px; background: #1e6b54; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .menu { display: none; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
+        .menu a { text-decoration: none; color: #78ffc8; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
+        .menu a:hover { background: rgba(120, 255, 200, 0.2); }
     </style>
 </head>
 <body>
 
-<div id="lukituskerros" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#072b22; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000000; font-family: sans-serif; text-align: center;">
-    <h1 style="color: #78ffc8;">Walking Games</h1>
-    <p>Sivusto on yksityisessä kehityskäytössä.</p>
-    <div style="margin-top: 20px;">
-        <input type="password" id="salasana_kentta" placeholder="Salasana" style="padding: 12px; border-radius: 8px; border: none; outline: none;">
-        <button onclick="tarkistaSalasana()" style="padding: 12px 24px; border-radius: 8px; border: none; background: #1e6b54; color: white; cursor: pointer; font-weight: bold; margin-left: 5px;">Avaa</button>
+<div class="login-card" id="authBox">
+    <h2>🦂 Walking Games</h2>
+    <p>Syötä salasana päästäksesi peleihin:</p>
+    <input type="password" id="passInput" placeholder="Salasana...">
+    <br>
+    <button onclick="checkPassword()">Kirjaudu</button>
+    <p id="error" style="color: #ff6b6b; font-size: 14px; margin-top: 10px;"></p>
+</div>
+
+<div class="login-card" id="menuBox" style="display:none;">
+    <h2>Valitse peli</h2>
+    <div class="menu" id="gameMenu" style="display:grid;">
+        <a href="scorpio.html">🦂 Walking Scorpio</a>
+        <a href="freecell.html">🃏 FreeCell Solitaire</a>
+        <a href="yukon.html">🌲 Yukon Solitaire</a>
+        <a href="memory.html">🧠 Memory Solitaire</a>
     </div>
+    <br>
+    <button onclick="logout()" style="background:#444;">Kirjaudu ulos</button>
 </div>
 
 <script>
-function tarkistaSalasana() {
-    var syote = document.getElementById("salasana_kentta").value;
-    // VAIHDA TÄHÄN OMA SALASANASI
-    if (syote === 'voisent44n.') {
-        document.getElementById("lukituskerros").style.display = "none";
-    } else {
-        alert("Väärä salasana.");
+    // Salasanan "index.html" SHA-256 tiiviste
+    const secretHash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; 
+
+    async function hashPassword(string) {
+        const utf8 = new TextEncoder().encode(string);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
-}
-// Sallii "Enter" -näppäimen käytön salasanakentässä
-document.getElementById("salasana_kentta").addEventListener("keyup", function(event) {
-    if (event.key === "Enter") {
-        tarkistaSalasana();
+
+    async function checkPassword() {
+        const input = document.getElementById('passInput').value;
+        const hashedInput = await hashPassword(input);
+        
+        if (hashedInput === secretHash) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            showMenu();
+        } else {
+            document.getElementById('error').innerText = "Väärä salasana!";
+        }
     }
-});
+
+    function showMenu() {
+        document.getElementById('authBox').style.display = 'none';
+        document.getElementById('menuBox').style.display = 'block';
+    }
+
+    function logout() {
+        sessionStorage.removeItem('isLoggedIn');
+        location.reload();
+    }
+
+    // Tarkistetaan onko jo kirjauduttu
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        showMenu();
+    }
 </script>
-<div class="main-content">
-    <div class="hero-section">
-        <h1>Walking Games</h1>
-        <p>Pelaa, liiku ja voi hyvin.</p>
-    </div>
-
-    <div class="menu-container">
-        <a href="scorpio.html" class="menu-btn">
-            <span>🦂 Scorpion Solitaire</span>
-            <span class="btn-icon">➔</span>
-        </a>
-        <a href="spider.html" class="menu-btn">
-            <span>🕷️ Spider Solitaire</span>
-            <span class="btn-icon">➔</span>
-        </a>
-        <a href="golf.html" class="menu-btn">
-            <span>⛳ Golf Solitaire</span>
-            <span class="btn-icon">➔</span>
-        </a>
-        <a href="memory.html" class="menu-btn" style="background: #2d5a8e;">
-            <span>🧠 Memory Game</span>
-            <span class="btn-icon">➔</span>
-        </a>
-    </div>
-
-    <section class="info-section">
-        <h2>Miksi valita Walking Games?</h2>
-        <p>Walking Games tarjoaa viihdyttäviä korttipelejä, kuten <strong>Scorpio</strong>, <strong>Spider</strong> ja <strong>Memory Solitaire</strong>. Pelimme on optimoitu toimimaan nopeasti ja kevyesti suoraan puhelimesi selaimessa.</p>
-        
-        <h3>Pelaa ja liiku</h3>
-        <p>Haluamme edistää terveellisiä pelitapoja. Pelimme sisältävät taukotoiminnon, joka muistuttaa sinua nousemaan ylös ja liikkumaan 25 minuutin välein. Tämä pieni tapa auttaa jaksamaan paremmin ja säästää selkääsi.</p>
-        
-        <h3>Aivojumppaa missä vain</h3>
-        <p>Pasianssit ja muistipelit kehittävät loogista päättelykykyä ja muistia. Itsmyid Oy:n kehittämät pelit on tehty kotimaisena käsityönä tukemaan aktiivista ja älykästä ajanvietettä.</p>
-    </section>
-</div>
-
-<footer>
-    <div>&copy; 2026 Walking Games - Kaikki oikeudet pidätetään.</div>
-    
-    <div class="footer-links">
-        <a href="tietosuoja.html">Tietosuojaseloste</a>
-    </div>
-
-    <div class="company-info">Julkaisija: Itsmyid Oy</div>
-    <div class="disclaimer">
-        Pelikoodit on optimoitu Android-laitteille ja Termux-ympäristöön. <br>
-        Käyttämällä sivustoa tuet suomalaista pelinkehitystä ja pienyrittäjyyttä.
-    </div>
-</footer>
-
 </body>
 </html>
