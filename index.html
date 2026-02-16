@@ -39,7 +39,8 @@
         const hashed = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
         // TÄMÄ ON NYT TIIVISTE SANALLE: voisent44n
-        if (hashed === "88939634e9f50629c159892182069e2954845582236d33301a916362540b68a3") {
+        if (hashed === "
+8a25f8779572330f8030a28ae0befb689d5db5038593727aadacfd281aff470d") {
             sessionStorage.setItem('isLoggedIn', 'true');
             document.getElementById('auth').style.display = 'none';
             document.getElementById('menu').style.display = 'block';
