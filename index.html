@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-N8Z8Z9M6');</script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walking Games</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #072b22; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: rgba(0,0,0,0.8); padding: 35px; border-radius: 20px; border: 1px solid #78ffc8; text-align: center; width: 320px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
+        h2 { color: #78ffc8; margin-bottom: 20px; font-weight: 300; letter-spacing: 1px; }
+        input { width: 100%; padding: 14px; margin: 15px 0; box-sizing: border-box; font-size: 18px; border-radius: 10px; border: 1px solid #1e6b54; background: #0a1a16; color: white; outline: none; text-align: center; }
+        button { width: 100%; padding: 14px; background: #1e6b54; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #2a8a6d; }
+        .menu-link { color: #78ffc8; text-decoration: none; display: block; padding: 14px; border: 1px solid #1e6b54; margin-bottom: 12px; border-radius: 10px; transition: 0.3s; font-weight: bold; }
+        .menu-link:hover { background: rgba(120, 255, 200, 0.1); border-color: #78ffc8; }
+        #msg { color: #ff6b6b; margin-top: 15px; font-size: 14px; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N8Z8Z9M6" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+    <div class="box" id="auth">
+        <h2>Walking Games</h2>
+        <p style="opacity: 0.8;">Tunnistautuminen</p>
+        <input type="password" id="field" placeholder="••••" onkeypress="if(event.key==='Enter') verify()">
+        <button onclick="verify()">JATKA</button>
+        <div id="msg"></div>
+    </div>
+
+    <div class="box" id="menu" style="display:none;">
+        <h2>Valikko</h2>
+        <a href="scorpio.html" class="menu-link">🦂 Scorpio</a>
+        <a href="golf.html" class="menu-link">⛳ Golf</a>
+        <a href="spider.html" class="menu-link">🕷️ Spider</a>
+        <a href="ar.html" class="menu-link" style="opacity: 0.6; font-size: 0.9em;">🐘 Elefantti AR</a>
+        
+        <button onclick="sessionStorage.clear(); location.reload();" style="margin-top:20px; background:#444; font-size: 12px;">Sulje istunto</button>
+    </div>
+
+    <script>
+        async function verify() {
+            const val = document.getElementById('field').value.trim();
+            if(!val) return;
+
+            const msgUint8 = new TextEncoder().encode(val);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashed = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            // voisent44n tiiviste
+            if (hashed === "8a25f8779572330f8030a28ae0befb689d5db5038593727aadacfd281aff470d") {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                showMenu();
+            } else {
+                document.getElementById('msg').innerText = "Yhteysvirhe.";
+                document.getElementById('field').value = "";
+            }
+        }
+
+        function showMenu() {
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
+        }
+
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            showMenu();
+        }
+    </script>
+</body>
+</html>
