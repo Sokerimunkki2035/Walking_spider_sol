@@ -25,12 +25,13 @@
     #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 900px; margin: 0 auto 30px; min-height: 400px; }
     .column { background: rgba(255,255,255,0.03); border-radius: 4px; min-height: 60vh; position: relative; padding-bottom: 60px; border: 1px dashed rgba(255,255,255,0.05); }
     
+    /* KORTTIEN TYYLIT */
     .card { background: white; border: 1px solid #222; border-radius: 5px; padding: 4px; margin-bottom: -36px; aspect-ratio: 1 / var(--card-aspect-ratio); font-size: 16px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.4); display: flex; flex-direction: column; box-sizing: border-box; color: black; }
     
-    .suit-spade { color: #000000; }
-    .suit-club { color: #5a5a5a; }
-    .suit-heart { color: #d32f2f; }
-    .suit-diamond { color: #e67e22; }
+    .suit-spade { color: #000000; }   /* Pata - Musta */
+    .suit-club { color: #5a5a5a; }    /* Risti - Tummanharmaa */
+    .suit-heart { color: #d32f2f; }   /* Hertta - Punainen */
+    .suit-diamond { color: #e67e22; } /* Ruutu - Oranssi */
 
     .mini-suit { font-size: 0.75em; margin-left: 2px; vertical-align: middle; }
     .card-suit-large { position: absolute; bottom: 2px; right: 4px; font-size: 1.8em; opacity: 0.8; }
@@ -43,7 +44,8 @@
   </style>
 </head>
 <body>
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N8Z8Z9M6" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N8Z8Z9M6"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="header-row">
     <h2 style="margin:0; color:var(--text-light);">🦂 Walking Scorpio</h2>
     <div class="status-group" style="display:flex; gap:8px;">
@@ -56,7 +58,6 @@
   <button onclick="newGame()">Uusi peli</button>
   <button id="stockBtn" onclick="dealStock()">VARA (3)</button>
   <button onclick="undoMove()" style="background: #444;">Peru</button>
-  <a href="index.html" style="text-decoration:none;"><button style="background: #222;">Valikkoon</button></a>
 </div>
 
 <div id="info">Ladataan peliä...</div>
@@ -67,8 +68,8 @@
     <p>Scorpion Solitaire on älyllinen haaste, jossa jokainen siirto ratkaisee. Toisin kuin muissa pasiansseissa, voit siirtää mitä tahansa näkyvää korttipinoa riippumatta siitä, mitä kortteja sen päällä on.</p>
     <ul>
         <li><strong>Samat maat:</strong> Kortin voi siirtää vain sellaisen kortin päälle, joka on samaa maata ja tasan yhtä suurempi.</li>
-        <li><strong>Kuninkaat:</strong> Tyhjään paikkaan pöydällä saa siirtää vain kuninkaan (K).</li>
-        <li><strong>Pisteet:</strong> Tehdyt-laskuri ei kasva, jos siirrät kuninkaan sarakkeen huipulta toiseen tyhjään sarakkeeseen.</li>
+        <li><strong>Kuninkaat:</strong> Tyhjään paikkaan pöydällä saa siirtää vain kuninkaan (K). Laskuri ei huomioi siirtoa, jos kuningas on jo sarakkeen ylimpänä.</li>
+        <li><strong>Vara-kortit:</strong> Käytä "VARA"-painiketta jakaaksesi viimeiset kolme korttia sarakkeisiin, kun olet jumissa.</li>
     </ul>
 </section>
 
@@ -78,9 +79,203 @@
 let deck = [], columns = [[],[],[],[],[],[],[]], stock = [], moveHistory = [];
 let selectedCol = -1, selectedIdx = -1, actualMovesCount = 0;
 
+// Alustusfunktio joka varmistaa että peli käynnistyy
 function init() {
     newGame();
 }
 
-function
- 
+function newGame() {
+    deck = [];
+    const suits = ['♠', '♣', '♥', '♦'];
+    for (let s of suits) for (let r = 1; r <= 13; r++) deck.push({ rank: r, suit: s, faceUp: false });
+    
+    // Sekoitus
+    deck.sort(() => Math.random() - 0.5);
+    
+    columns = [[],[],[],[],[],[],[]];
+    for (let i = 0; i < 49; i++) {
+        let c = i % 7;
+        let card = deck.pop();
+        // Sarakkeet 0-2: ensimmäiset 3 korttia nurin, muut oikein. Muut sarakkeet: kaikki oikein.
+        card.faceUp = !(c < 3 && columns[c].length < 3);
+        columns[c].push(card);
+    }
+    
+    stock = deck; 
+    selectedCol = -1; 
+    selectedIdx = -1; 
+    actualMovesCount = 0; 
+    moveHistory = [];
+    
+    document.getElementById("info").innerText = "Peli valmis! Onnea matkaan.";
+    updateUI();
+}
+
+function updateUI() {
+    drawTable();
+    updatePossibleMoves();
+    document.getElementById("stockBtn").innerText = `VARA (${stock.length})`;
+    document.getElementById("actualMovesUI").innerText = actualMovesCount;
+}
+
+function drawTable() {
+    const table = document.getElementById("table");
+    if (!table) return;
+    table.innerHTML = "";
+    
+    columns.forEach((col, cIdx) => {
+        let colDiv = document.createElement("div");
+        colDiv.className = "column";
+        colDiv.onclick = () => handleColumnClick(cIdx);
+        
+        col.forEach((card, rIdx) => {
+            let cardDiv = document.createElement("div");
+            cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
+            if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
+            
+            if (card.faceUp) {
+                cardDiv.classList.add(getSuitClass(card.suit));
+                cardDiv.innerHTML = `
+                    <div>${getRankName(card.rank)}<span class="mini-suit">${card.suit}</span></div>
+                    <div class="card-suit-large">${card.suit}</div>
+                `;
+                cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
+            }
+            colDiv.appendChild(cardDiv);
+        });
+        table.appendChild(colDiv);
+    });
+}
+
+function handleCardClick(cIdx, rIdx) {
+    if (selectedCol !== -1 && selectedCol !== cIdx) { 
+        handleColumnClick(cIdx); 
+        return; 
+    }
+    if (selectedCol === cIdx && selectedIdx === rIdx) {
+        selectedCol = -1;
+        selectedIdx = -1;
+    } else {
+        selectedCol = cIdx;
+        selectedIdx = rIdx;
+    }
+    drawTable();
+}
+
+function handleColumnClick(targetCol) {
+    if (selectedCol === -1) return;
+    
+    const movingCard = columns[selectedCol][selectedIdx];
+    const targetColCards = columns[targetCol];
+    let canMove = false;
+    let shouldCountMove = false;
+
+    if (targetColCards.length === 0) {
+        if (movingCard.rank === 13) {
+            canMove = true;
+            // EI lasketa siirtoa, jos kuningas on jo sarakkeen ylin (index 0)
+            if (selectedIdx !== 0) shouldCountMove = true;
+        }
+    } else {
+        const lastCard = targetColCards[targetColCards.length - 1];
+        if (lastCard.rank === movingCard.rank + 1 && lastCard.suit === movingCard.suit) {
+            canMove = true;
+            shouldCountMove = true;
+        }
+    }
+
+    if (canMove && selectedCol !== targetCol) {
+        // Tallenna historia ennen siirtoa
+        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock, moves: actualMovesCount})));
+        
+        if (shouldCountMove) actualMovesCount++;
+        
+        const cardsToMove = columns[selectedCol].splice(selectedIdx);
+        columns[targetCol] = [...columns[targetCol], ...cardsToMove];
+        
+        // Käännetään edellinen kortti jos se jäi selkäpuoli ylöspäin
+        if (columns[selectedCol].length > 0) {
+            columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
+        }
+        
+        checkSequence(targetCol);
+    }
+    
+    selectedCol = -1; 
+    selectedIdx = -1; 
+    updateUI();
+}
+
+function updatePossibleMoves() {
+    let count = 0;
+    columns.forEach((col, c) => {
+        col.forEach((card, r) => {
+            if (!card.faceUp) return;
+            if (r > 0 && col[r-1].rank === card.rank + 1 && col[r-1].suit === card.suit) return;
+            
+            columns.forEach((tCol, t) => {
+                if (c === t) return;
+                if (tCol.length === 0) {
+                    if (card.rank === 13 && r !== 0) count++;
+                } else {
+                    const last = tCol[tCol.length - 1];
+                    if (last.rank === card.rank + 1 && last.suit === card.suit) count++;
+                }
+            });
+        });
+    });
+    document.getElementById("moveCount").innerText = count;
+}
+
+function checkSequence(cIdx) {
+    const col = columns[cIdx];
+    if (col.length < 13) return;
+    for (let i = 0; i <= col.length - 13; i++) {
+        let sub = col.slice(i, i + 13);
+        if (sub.every((c, idx) => c.faceUp && c.rank === (13 - idx) && c.suit === sub[0].suit)) {
+            col.splice(i, 13);
+            if (col.length > 0) col[col.length - 1].faceUp = true;
+            break;
+        }
+    }
+}
+
+function dealStock() {
+    if (stock.length > 0) {
+        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, stock: stock, moves: actualMovesCount})));
+        for (let i = 0; i < 3; i++) { 
+            if(stock.length) { 
+                let c = stock.pop(); 
+                c.faceUp = true; 
+                columns[i].push(c); 
+            } 
+        }
+        actualMovesCount++;
+        updateUI();
+    }
+}
+
+function undoMove() {
+    if (moveHistory.length > 0) {
+        let prev = moveHistory.pop();
+        columns = prev.cols; 
+        stock = prev.stock; 
+        actualMovesCount = prev.moves || 0;
+        selectedCol = -1; 
+        updateUI();
+    }
+}
+
+function getSuitClass(s) { return {'♠':'suit-spade','♣':'suit-club','♥':'suit-heart','♦':'suit-diamond'}[s]; }
+function getRankName(r) { return {1:'A',11:'J',12:'Q',13:'K'}[r] || r; }
+
+// Käynnistetään peli heti kun mahdollista
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+} else {
+    init();
+}
+window.onload = init;
+</script>
+</body>
+</html>
