@@ -1,68 +1,71 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Golf Solitaire - Opettaja</title>
-  <style>
-    body { font-family: sans-serif; background: #0d4a3a; color: white; text-align: center; margin: 0; }
-    .controls { padding: 10px; background: rgba(0,0,0,0.2); }
-    button { padding: 10px; background: #2a8b6f; color: white; border: none; border-radius: 5px; font-weight: bold; }
-    #info-box { background: #fcf8e3; color: #8a6d3b; padding: 10px; margin: 5px; border-radius: 5px; font-size: 14px; border: 1px solid #faebcc; min-height: 40px; }
-    #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 5px; }
-    .card { background: white; color: black; border: 1px solid #333; border-radius: 4px; height: 60px; margin-bottom: -40px; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; }
-    /* Opettajan korostusväri */
-    .hint { box-shadow: 0 0 12px #00ff00; border: 2px solid #00ff00 !important; transform: scale(1.05); z-index: 5; }
-    .waste-area { margin-top: 60px; display: flex; justify-content: center; gap: 40px; padding: 20px; }
-    .current-card { background: white; color: black; width: 60px; height: 85px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-  </style>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-N8Z8Z9M6');</script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walking Golf</title>
+    <style>
+        body { font-family: sans-serif; background: #072b22; color: white; text-align: center; margin: 0; padding: 10px; }
+        #table { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; max-width: 600px; margin: 20px auto; }
+        .card { background: white; color: black; border-radius: 5px; padding: 10px 0; font-weight: bold; aspect-ratio: 1/1.4; cursor: pointer; }
+        .waste { margin-top: 30px; display: flex; justify-content: center; gap: 20px; align-items: center; }
+        .card.suit-red { color: red; }
+        button { padding: 10px; background: #1e6b54; color: white; border: none; border-radius: 5px; font-weight: bold; }
+    </style>
 </head>
 <body>
-  <div class="controls"><button onclick="initGame()">Uusi Golf</button> <button onclick="location.href='index.html'">Valikkoon</button></div>
-  <div id="info-box">Opettaja: Tervetuloa! Etsi sarakkeista kortti, joka on yhtä suurempi tai pienempi kuin alhaalla oleva.</div>
-  <div id="table"></div>
-  <div class="waste-area"><div style="background:#1a5f4a; width:60px; height:85px; border-radius:5px;" onclick="drawFromDeck()">PAKKA</div><div id="waste" class="current-card">-</div></div>
-<script>
-let deck = [], columns = [], wasteCard = null;
-function initGame() {
-  deck = []; for(let r=1; r<=13; r++) for(let s=0; s<4; s++) deck.push(r);
-  deck.sort(() => Math.random() - 0.5);
-  columns = Array.from({length: 7}, () => []);
-  for(let i=0; i<35; i++) columns[i % 7].push(deck.pop());
-  wasteCard = deck.pop(); drawTable();
-}
-function drawTable() {
-  const table = document.getElementById("table"); table.innerHTML = "";
-  columns.forEach((col, cIdx) => {
-    let div = document.createElement("div"); div.style.display="flex"; div.style.flexDirection="column";
-    col.forEach((rank, rIdx) => {
-      let cDiv = document.createElement("div"); cDiv.className = "card"; cDiv.innerText = getRankName(rank);
-      if(rIdx === col.length - 1) {
-        cDiv.onclick = () => playCard(cIdx);
-        // OPETTAJA: Näytetäänkö vihreä valo?
-        if (Math.abs(rank - wasteCard) === 1 || (wasteCard===13 && rank===1) || (wasteCard===1 && rank===13)) {
-          cDiv.classList.add("hint");
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N8Z8Z9M6" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <h2>⛳ Golf Solitaire</h2>
+    <div id="table"></div>
+    <div class="waste">
+        <div id="stock" class="card" style="background: #134537; color: white;" onclick="draw()">PAKKA</div>
+        <div id="waste" class="card"></div>
+    </div>
+    <br><button onclick="newGame()">Uusi peli</button>
+
+    <script>
+        let deck = [], columns = [[],[],[],[],[],[],[]], waste = null;
+        function newGame() {
+            deck = [];
+            const suits = ['♠', '♣', '♥', '♦'];
+            for(let s of suits) for(let r=1; r<=13; r++) deck.push({r, s});
+            deck.sort(() => Math.random() - 0.5);
+            columns = [[],[],[],[],[],[],[]];
+            for(let i=0; i<35; i++) columns[i%7].push(deck.pop());
+            waste = deck.pop();
+            render();
         }
-      }
-      div.appendChild(cDiv);
-    });
-    table.appendChild(div);
-  });
-  document.getElementById("waste").innerText = getRankName(wasteCard);
-}
-function playCard(cIdx) {
-  let card = columns[cIdx][columns[cIdx].length - 1];
-  if(Math.abs(card - wasteCard) === 1 || (wasteCard===13 && card===1) || (wasteCard===1 && card===13)) {
-    wasteCard = columns[cIdx].pop();
-    document.getElementById("info-box").innerText = "Opettaja: Hienoa! Seuraavaksi sopii " + getRankName(wasteCard-1||13) + " tai " + getRankName(wasteCard+1===14?1:wasteCard+1);
-    drawTable();
-  } else {
-    document.getElementById("info-box").innerText = "Opettaja: Ei käy. " + getRankName(card) + " ei sovi kortin " + getRankName(wasteCard) + " päälle. Kokeile vihreällä hohtavia!";
-  }
-}
-function drawFromDeck() { if(deck.length > 0) { wasteCard = deck.pop(); drawTable(); } }
-function getRankName(r) { const n = {1:'A', 11:'J', 12:'Q', 13:'K'}; return n[r] || r; }
-initGame();
-</script>
+        function render() {
+            const t = document.getElementById("table"); t.innerHTML = "";
+            columns.forEach((col, ci) => {
+                const div = document.createElement("div");
+                if(col.length > 0) {
+                    const c = col[col.length-1];
+                    div.className = "card" + (c.s === '♥' || c.s === '♦' ? " suit-red" : "");
+                    div.innerHTML = (c.r===1?'A':c.r===11?'J':c.r===12?'Q':c.r===13?'K':c.r)+c.s;
+                    div.onclick = () => play(ci);
+                } else { div.style.visibility = "hidden"; }
+                t.appendChild(div);
+            });
+            const w = document.getElementById("waste");
+            w.className = "card" + (waste.s === '♥' || waste.s === '♦' ? " suit-red" : "");
+            w.innerHTML = (waste.r===1?'A':waste.r===11?'J':waste.r===12?'Q':waste.r===13?'K':waste.r)+waste.s;
+            document.getElementById("stock").innerText = "PAKKA ("+deck.length+")";
+        }
+        function play(ci) {
+            const c = columns[ci][columns[ci].length-1];
+            if(Math.abs(c.r - waste.r) === 1 || (waste.r===13 && c.r===1) || (waste.r===1 && c.r===13)) {
+                waste = columns[ci].pop(); render();
+            }
+        }
+        function draw() { if(deck.length) { waste = deck.pop(); render(); } }
+        newGame();
+    </script>
 </body>
 </html>
+ 
