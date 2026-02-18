@@ -1,172 +1,68 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-N8Z8Z9M6');</script>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Solitaire & Taukokone</title>
+    <title>Walking Memory</title>
     <style>
         :root { --bg: #072b22; --accent: #1e6b54; --card-back: #134537; --text: #78ffc8; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; text-align: center; user-select: none; }
         
         .hidden { display: none !important; }
-        .menu-btn { padding: 15px; margin: 10px; background: var(--accent); border: 1px solid var(--text); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; width: 80%; max-width: 300px; }
+        .box { background: rgba(0,0,0,0.8); padding: 25px; border-radius: 20px; border: 1px solid var(--text); max-width: 400px; margin: 20px auto; }
+        
+        h1, h2 { color: var(--text); font-weight: 300; }
+        
+        .menu-btn { padding: 15px; margin: 10px auto; background: var(--accent); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 12px; cursor: pointer; font-weight: bold; width: 90%; display: block; transition: 0.3s; }
+        .menu-btn:hover { background: #2a8a6d; border-color: var(--text); }
         
         #game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: 20px auto; }
-        .card { aspect-ratio: 1/1.4; background: white; border-radius: 5px; color: black; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; position: relative; }
+        .card { aspect-ratio: 1/1.4; background: white; border-radius: 8px; color: black; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
         .card.back { background: var(--card-back); color: transparent; border: 1px solid rgba(255,255,255,0.2); }
         
-        #target-info { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--text); }
-        .timer-bar { width: 100%; height: 10px; background: #222; margin-top: 10px; border-radius: 5px; overflow: hidden; }
-        #timer-fill { width: 100%; height: 100%; background: var(--text); transition: width 0.1s linear; }
-
+        #target-info { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--text); text-align: left; }
+        
         /* Taukokone / Espanja */
-        #teacher-box { background: #fdf6e3; color: #333; padding: 20px; border-radius: 15px; border: 3px solid #d32f2f; margin: 20px auto; max-width: 400px; position: relative; }
-        .speech-bubble { font-style: italic; font-size: 18px; margin-bottom: 15px; }
-        input[type="text"] { padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 80%; }
+        #teacher-box { background: #fdf6e3; color: #333; padding: 25px; border-radius: 20px; border: 3px solid #d32f2f; margin: 20px auto; position: relative; }
+        .speech-bubble { font-style: italic; font-size: 18px; margin-bottom: 15px; font-weight: bold; }
+        input[type="text"] { padding: 12px; border-radius: 8px; border: 2px solid #ccc; width: 85%; font-size: 16px; outline: none; margin-bottom: 10px; }
+        input[type="text"]:focus { border-color: #d32f2f; }
+        .feedback-text { font-weight: bold; margin-top: 10px; min-height: 1.2em; }
     </style>
 </head>
 <body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N8Z8Z9M6" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-<div id="main-menu">
-    <h1>🧠 Memory Solitaire</h1>
-    <button class="menu-btn" onclick="startMode('normal')">Normaali (Numerosarjat)</button>
+<div id="main-menu" class="box">
+    <h1>🧠 Memory</h1>
+    <button class="menu-btn" onclick="startMode('normal')">Normaali (Sarjat)</button>
     <button class="menu-btn" onclick="startMode('vittumainen')">Vittumainen (Etsi arvottu)</button>
-    <button class="menu-btn" onclick="startMode('ilkea')">Ilkeä (Muistitasot)</button>
-    <button class="menu-btn" onclick="openTeacher()">🇪🇸 Taukokone: Espanjan opettaja</button>
+    <button class="menu-btn" onclick="startMode('ilkea')">Ilkeä (Tasot)</button>
+    <button class="menu-btn" onclick="openTeacher()" style="background: #444;">🇪🇸 Taukokone</button>
+    <a href="index.html" style="color: var(--text); text-decoration: none; font-size: 12px; display: block; margin-top: 15px;">Palaa valikkoon</a>
 </div>
 
 <div id="game-container" class="hidden">
     <div id="target-info">
         <div id="status-text">Valmistellaan...</div>
-        <div class="timer-bar" id="t-bar"><div id="timer-fill"></div></div>
     </div>
     <div id="game-board"></div>
-    <button onclick="location.reload()" style="background:#444; color:white; border:none; padding:10px; border-radius:5px;">Lopeta</button>
+    <button onclick="location.reload()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Keskeytä</button>
 </div>
 
-<div id="teacher-container" class="hidden">
+<div id="teacher-container" class="hidden box" style="background: transparent; border: none;">
     <div id="teacher-box">
-        <div style="font-size: 40px;">👨‍🏫</div>
-        <div class="speech-bubble" id="question-text">¡Hola! ¿Cómo se dice "minä söin" (comer)?</div>
-        <input type="text" id="answer-input" placeholder="Vastaus tähän...">
-        <br><br>
-        <button onclick="checkAnswer()" style="padding:10px; background:#d32f2f; color:white; border:none; border-radius:5px;">Vastaa</button>
-        <p id="feedback"></p>
+        <div style="font-size: 40px; margin-bottom: 10px;">👨‍🏫</div>
+        <div class="speech-bubble" id="question-text">¡Hola!</div>
+        <input type="text" id="answer-input" placeholder="Vastaus..." onkeypress="if(event.key==='Enter') checkAnswer()">
+        <br>
+        <button onclick="checkAnswer()" style="padding:12px 25px; background:#d32f2f; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Vastaa</button>
+        <p id="feedback" class="feedback-text"></p>
     </div>
-    <button onclick="location.reload()" style="background:#444; color:white; border:none; padding:10px; border-radius:5px;">Takaisin</button>
-</div>
-
-<script>
-// SUOJAUS: Tarkista kirjautuminen
-if (sessionStorage.getItem('isLoggedIn') !== 'true') {
-    window.location.href = 'index.html';
-}
-
-let cards = [];
-let currentTarget = null;
-let level = 1;
-let timer = null;
-
-const suits = ['♠', '♣', '♥', '♦'];
-const spanishVerbs = [
-    { q: 'minä söin (comer)', a: 'comí' },
-    { q: 'hän puhui (hablar)', a: 'habló' },
-    { q: 'me olimme (ser)', a: 'fuimos' },
-    { q: 'sinä teit (hacer)', a: 'hiciste' },
-    { q: 'he menivät (ir)', a: 'fueron' }
-];
-
-function startMode(mode) {
-    document.getElementById('main-menu').classList.add('hidden');
-    document.getElementById('game-container').classList.remove('hidden');
-    
-    if (mode === 'vittumainen') {
-        setupVittumainen();
-    } else if (mode === 'ilkea') {
-        setupIlkea();
-    }
-}
-
-// VITTUMAINEN: Etsi arvottu kortti nurinpäin olevista
-function setupVittumainen() {
-    const board = document.getElementById('game-board');
-    board.innerHTML = '';
-    let deck = [];
-    suits.forEach(s => [1,2,3,4,5].forEach(r => deck.push({r, s}))); // Pienempi pakka alkuun
-    deck.sort(() => Math.random() - 0.5);
-    
-    currentTarget = deck[Math.floor(Math.random() * deck.length)];
-    document.getElementById('status-text').innerText = `ETSI: ${getRankName(currentTarget.r)}${currentTarget.s}`;
-    
-    deck.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'card back';
-        div.onclick = () => {
-            div.classList.remove('back');
-            div.innerText = `${getRankName(c.r)}${c.s}`;
-            if (c.r === currentTarget.r && c.s === currentTarget.s) {
-                alert("Löytyi! Arvotaan uusi...");
-                setupVittumainen();
-            } else {
-                setTimeout(() => { div.classList.add('back'); div.innerText = ''; }, 1000);
-            }
-        };
-        board.appendChild(div);
-    });
-}
-
-// ILKEÄ: Muistitasot
-function setupIlkea() {
-    const board = document.getElementById('game-board');
-    board.innerHTML = '';
-    document.getElementById('status-text').innerText = `Taso ${level}: Paina mieleen!`;
-    
-    let displayCards = [];
-    for(let i=0; i<level+1; i++) {
-        displayCards.push({r: Math.ceil(Math.random()*13), s: suits[Math.floor(Math.random()*4)]});
-    }
-
-    displayCards.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `${getRankName(c.r)}<br>${c.s}`;
-        board.appendChild(div);
-    });
-
-    setTimeout(() => {
-        Array.from(board.children).forEach(c => { c.classList.add('back'); c.innerText = '?'; });
-        const correct = displayCards[Math.floor(Math.random()*displayCards.length)];
-        document.getElementById('status-text').innerText = `Oliko mukana: ${getRankName(correct.r)}${correct.s}?`;
-        // Tähän lisättäisiin logiikka kyllä/ei vastauksille
-    }, 2000);
-}
-
-// ESPANJAN OPETTAJA
-let currentQ = 0;
-function openTeacher() {
-    document.getElementById('main-menu').classList.add('hidden');
-    document.getElementById('teacher-container').classList.remove('hidden');
-    nextQuestion();
-}
-
-function nextQuestion() {
-    currentQ = Math.floor(Math.random() * spanishVerbs.length);
-    document.getElementById('question-text').innerText = `¡Hola! ¿Cómo se dice "${spanishVerbs[currentQ].q}"?`;
-    document.getElementById('answer-input').value = '';
-    document.getElementById('feedback').innerText = '';
-}
-
-function checkAnswer() {
-    const user = document.getElementById('answer-input').value.toLowerCase().trim();
-    if (user === spanishVerbs[currentQ].a) {
-        document.getElementById('feedback').innerText = "¡Muy bien! ✅";
-        setTimeout(nextQuestion, 1500);
-    } else {
-        document.getElementById('feedback').innerText = `Ei aivan. Oikea vastaus: ${spanishVerbs[currentQ].a}`;
-    }
-}
-
-function getRankName(r) { return {1:'A',11:'J',12:'Q',13:'K'}[r] || r; }
-</script>
-</body>
-</html>
+    <button onclick="location.reload()" style="background:rgba(255,255,2
