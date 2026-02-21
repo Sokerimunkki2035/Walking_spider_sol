@@ -1,136 +1,421 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fi">
 <head>
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-54P5D7QS');</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spider Solitaire (2–4 maata) – sarjasiirto</title>
 
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Walking Spider - 2-4 maata</title>
-  
   <style>
-    :root { --card-aspect-ratio: 1.35; --bg: #072b22; --accent: #1e6b54; --text-light: #78ffc8; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 10px; margin: 0; user-select: none; }
-    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .pill { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; font-weight: bold; }
-    .controls { margin-bottom: 15px; display: flex; gap: 8px; }
-    button { padding: 10px 14px; cursor: pointer; background: var(--accent); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; }
-    #table { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
-    .column { background: rgba(255,255,255,0.03); min-height: 70vh; position: relative; }
-    .card { background: white; border: 1px solid #222; border-radius: 4px; padding: 2px; margin-bottom: -32px; aspect-ratio: 1 / var(--card-aspect-ratio); color: black; position: relative; }
-    .card.face-down { background: #134537; color: transparent; }
-    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; }
-    .suit-heart, .suit-diamond { color: #d32f2f; }
+    body{
+      font-family: Arial, sans-serif;
+      background:#006633;
+      color:#fff;
+      margin:0;
+      padding:14px;
+    }
+    h1{ text-align:center; margin:8px 0 10px; }
+
+    .toprow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      margin-bottom:12px;
+    }
+    .btn{
+      border:0;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:800;
+      cursor:pointer;
+      background:rgba(255,255,255,.18);
+      color:#fff;
+    }
+    .btn.primary{ background:rgba(120,255,200,.22); }
+    .pill{
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.15);
+      font-weight:800;
+    }
+
+    /* ⭐ 10 saraketta aina yhdessä rivissä (vaaka-scroll) */
+    #game-board{
+      display:flex;
+      flex-wrap:nowrap;
+      gap:10px;
+      overflow-x:auto;
+      padding:10px 8px 14px;
+      border-radius:16px;
+      background:rgba(0,0,0,.14);
+      border:1px solid rgba(255,255,255,.14);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .column{
+      flex:0 0 auto;
+      width:78px;
+      position:relative;
+      height:420px;
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding-top:24px;
+    }
+    .coltitle{
+      position:absolute;
+      top:6px; left:0; right:0;
+      text-align:center;
+      font-size:12px;
+      font-weight:900;
+      opacity:.95;
+      pointer-events:none;
+    }
+
+    /* Kortit pinossa: absolute + top-offset => yläreunat näkyy */
+    .card{
+      width:72px;
+      height:104px;
+      background:#fff;
+      color:#000;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.20);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:8px 8px;
+      user-select:none;
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      box-shadow:0 10px 18px rgba(0,0,0,.35);
+      cursor:grab;
+      touch-action: manipulation;
+    }
+    .card.red{ color:#c51818; }
+
+    .card.dragging{ opacity:.7; cursor:grabbing; }
+    .card.sel{
+      outline:3px solid rgba(255,215,120,.95);
+      box-shadow:0 16px 28px rgba(0,0,0,.45);
+    }
+    .card.locked{
+      opacity:.92;
+      filter:saturate(.9);
+      cursor:default;
+    }
+
+    .rank{ font-weight:900; font-size:18px; line-height:1; }
+    .suit{ font-size:16px; align-self:flex-end; }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:14px;
+      background:rgba(0,0,0,.75);
+      border:1px solid rgba(255,255,255,.15);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      max-width:min(92vw,520px);
+      text-align:center;
+      z-index:999;
+    }
+
+    .note{
+      max-width:980px;
+      margin:10px auto 0;
+      opacity:.95;
+      font-size:13px;
+      line-height:1.35;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 12px;
+      border-radius:14px;
+    }
   </style>
 </head>
+
 <body>
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-54P5D7QS" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <h1>Spider Solitaire (2–4 maata) – sarjasiirto</h1>
 
-<div class="header-row">
-    <h2 style="margin:0; color:var(--text-light);">🕷️ Spider 2-4 maata</h2>
-    <div class="pill">🔄 Siirrot: <span id="actualMovesUI">0</span></div>
-</div>
+  <div class="toprow">
+    <button class="btn primary" onclick="initGame(2)">Uusi peli (2 maata)</button>
+    <button class="btn" onclick="initGame(3)">Uusi peli (3 maata)</button>
+    <button class="btn" onclick="initGame(4)">Uusi peli (4 maata)</button>
+    <button class="btn" onclick="undoMove()">↩ Undo</button>
+    <div class="pill">Siirrot: <span id="moves">0</span></div>
+  </div>
 
-<div class="controls">
-  <button onclick="newGame()">Uusi peli</button>
-  <button onclick="undoMove()">Peru</button>
-</div>
+  <div id="game-board" aria-label="Pöytä"></div>
 
-<div id="table"></div>
+  <div class="note">
+    ✅ Sarjasiirto: voit siirtää <b>koko sarjan</b> vain jos se on <b>laskeva + samaa maata</b> (♠♠♠...).<br>
+    ✅ Muuten saat siirtää vain <b>päällimmäisen</b> kortin (se “lukitusfiilis”).<br>
+    ✅ Siirto toimii myös ilman dragia: <b>napauta</b> korttia (valitse) → <b>napauta</b> kohdepinoa (siirtää).<br>
+    ✅ Pinoon saa laittaa eri maata: vain järjestys ratkaisee (7 → 8).
+  </div>
+
+  <div class="toast" id="toast"></div>
 
 <script>
-let columns = [[],[],[],[],[],[],[],[],[],[]], deck = [], moveHistory = [], actualMovesCount = 0;
-let selectedCol = -1, selectedIdx = -1;
+  const suitsAll = ['♠','♥','♣','♦'];
+  const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-function newGame() {
-    deck = []; actualMovesCount = 0; moveHistory = [];
-    const suits = ['♠', '♥', '♣', '♦'];
-    // 104 korttia (2 pakkaa)
-    for(let i=0; i<2; i++) {
-        suits.forEach(s => {
-            for(let r=1; r<=13; r++) deck.push({rank: r, suit: s, faceUp: false});
-        });
-    }
-    deck.sort(() => Math.random() - 0.5);
-    
-    columns = [[],[],[],[],[],[],[],[],[],[]];
-    for(let i=0; i<54; i++) {
-        let card = deck.pop();
-        columns[i % 10].push(card);
-    }
-    columns.forEach(col => { if(col.length > 0) col[col.length-1].faceUp = true; });
-    updateUI();
-}
+  const STACK_GAP = 22;
 
-function updateUI() {
-    const table = document.getElementById("table");
-    table.innerHTML = "";
-    columns.forEach((col, cIdx) => {
-        let colDiv = document.createElement("div");
-        colDiv.className = "column";
-        colDiv.onclick = () => handleColumnClick(cIdx);
-        col.forEach((card, rIdx) => {
-            let cardDiv = document.createElement("div");
-            cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
-            if(card.suit === '♥' || card.suit === '♦') cardDiv.classList.add("suit-heart");
-            if(cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
-            if(card.faceUp) {
-                let r = card.rank === 1 ? 'A' : card.rank === 11 ? 'J' : card.rank === 12 ? 'Q' : card.rank === 13 ? 'K' : card.rank;
-                cardDiv.innerHTML = `<div>${r}${card.suit}</div>`;
-                cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
-            }
-            colDiv.appendChild(cardDiv);
+  let columns = [];
+  let moves = 0;
+let undoStack = []; // UNDO-historia (viimeisin viimeisenä)
+  // dragged stack info (for drag/drop)
+  let dragged = null; // {fromCol, startIndex, count}
+
+  // tap-select info (works on mobile reliably)
+  let selected = null; // {fromCol, startIndex, count}
+
+  function toast(msg, ms=1300){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display='block';
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(()=>t.style.display='none', ms);
+  }
+
+  function buildDeck(suitsCount){
+    // Always 104 cards.
+    const used = suitsAll.slice(0, Math.max(1, Math.min(4, suitsCount)));
+    const deck = [];
+    while(deck.length < 104){
+      for(const s of used){
+        for(const r of ranks){
+          deck.push({ rank:r, suit:s });
+          if(deck.length >= 104) break;
+        }
+        if(deck.length >= 104) break;
+      }
+    }
+    return deck;
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+  }
+
+  function dealSpider(deck){
+    const cols = Array.from({length:10}, ()=>[]);
+    for(let c=0;c<10;c++){
+      const n = (c<4)?6:5;
+      for(let k=0;k<n;k++){
+        cols[c].push(deck.pop());
+      }
+    }
+    return cols;
+  }
+
+  function initGame(suitsCount=2){
+    moves = 0;
+    document.getElementById('moves').textContent = moves;
+    dragged = null;
+    selected = null;
+
+    const deck = buildDeck(suitsCount);
+    shuffle(deck);
+    columns = dealSpider(deck);
+
+    render();
+    toast(`Uusi peli: ${suitsCount} maata (104 korttia)`);
+  }
+
+  function rankValue(rank){
+    if(rank==='A') return 1;
+    if(rank==='J') return 11;
+    if(rank==='Q') return 12;
+    if(rank==='K') return 13;
+    return parseInt(rank,10);
+  }
+
+  // Placement rule: allow different suits; only order matters (7 onto 8)
+  function canPlace(movingTopCard, targetTop){
+    if(!targetTop) return true;
+    return rankValue(movingTopCard.rank) === rankValue(targetTop.rank) - 1;
+  }
+
+  // Can move as a STACK starting at index i?
+  // Rule: must be descending by 1 AND same suit across the whole run to bottom
+  function stackCountIfMovable(col, i){
+    const last = col.length - 1;
+    if(i === last) return 1; // top card always movable
+    // if not top, must be a perfect same-suit descending run from i..end
+    for(let k=i; k<last; k++){
+      const a = col[k];
+      const b = col[k+1];
+      if(rankValue(a.rank) !== rankValue(b.rank) + 1) return 0;
+      if(a.suit !== b.suit) return 0;
+    }
+    return col.length - i;
+  }
+
+  function clearSelection(){
+    selected = null;
+    render();
+  }
+  function tryMoveStack(fromCol, startIndex, count, toCol){
+    if(fromCol === toCol) return false;
+
+    const from = columns[fromCol];
+    const to = columns[toCol];
+    const moving = from.slice(startIndex, startIndex + count);
+    if(moving.length !== count) return false;
+
+    const movingTop = moving[0];
+    const targetTop = to.length ? to[to.length-1] : null;
+
+    if(!canPlace(movingTop, targetTop)) return false;
+undoStack.push({
+  columns: JSON.parse(JSON.stringify(columns)),
+  moves
+});
+
+if (undoStack.length > 30) undoStack.shift();
+    // perform move
+    from.splice(startIndex, count);
+    to.push(...moving);
+    moves++;
+    document.getElementById('moves').textContent = moves;
+    return true;
+  }
+
+  function render(){
+    const board = document.getElementById('game-board');
+    board.innerHTML = '';
+
+    columns.forEach((col, colIndex)=>{
+      const colEl = document.createElement('div');
+      colEl.className='column';
+      colEl.dataset.col = colIndex;
+
+      const title = document.createElement('div');
+      title.className='coltitle';
+      title.textContent = `Pino ${colIndex+1}`;
+      colEl.appendChild(title);
+
+      // Drop (drag)
+      colEl.addEventListener('dragover', (e)=>e.preventDefault());
+      colEl.addEventListener('drop', (e)=>{
+        e.preventDefault();
+        if(!dragged) return;
+
+        const ok = tryMoveStack(dragged.fromCol, dragged.startIndex, dragged.count, colIndex);
+        dragged = null;
+        selected = null;
+
+        if(!ok) toast("Ei voi siirtää tuohon (järjestys)");
+        render();
+      });
+
+      // Tap destination (works even if drag is annoying)
+      colEl.addEventListener('click', (e)=>{
+        // ignore if clicking a card (card handles itself)
+        if(e.target && e.target.classList && e.target.classList.contains('card')) return;
+        if(!selected) return;
+
+        const ok = tryMoveStack(selected.fromCol, selected.startIndex, selected.count, colIndex);
+        if(!ok){
+          toast("Ei voi siirtää tuohon (järjestys)");
+        }
+        selected = null;
+        render();
+      });
+
+      // Cards
+      col.forEach((card, i)=>{
+        const cardEl = document.createElement('div');
+        const isRed = (card.suit==='♥' || card.suit==='♦');
+        cardEl.className = 'card' + (isRed ? ' red' : '');
+        cardEl.style.top = (i * STACK_GAP) + 'px';
+
+        const count = stackCountIfMovable(col, i);
+        const draggable = (count > 0);
+        cardEl.draggable = draggable;
+
+        // Mark “locked” cards visually (not draggable)
+        if(!draggable) cardEl.classList.add('locked');
+
+        // highlight selection
+        if(selected && selected.fromCol === colIndex){
+          if(i >= selected.startIndex && i < selected.startIndex + selected.count){
+            cardEl.classList.add('sel');
+          }
+        }
+
+        cardEl.innerHTML = `
+          <div class="rank">${card.rank}</div>
+          <div class="suit">${card.suit}</div>
+        `;
+
+        // Tap-select
+        cardEl.addEventListener('click', (e)=>{
+          e.stopPropagation();
+
+          // If already selected -> toggle off
+          if(selected && selected.fromCol === colIndex && selected.startIndex === i){
+            clearSelection();
+            toast("Valinta pois");
+            return;
+          }
+
+          const c = stackCountIfMovable(col, i);
+          if(c === 0){
+            toast("Sarjasiirto vain samaa maata + laskeva. Muuten vain päällimmäinen.");
+            return;
+          }
+          selected = { fromCol: colIndex, startIndex: i, count: c };
+          toast(c > 1 ? `Valittu sarja (${c} korttia)` : "Valittu 1 kortti");
+          render();
         });
-        table.appendChild(colDiv);
+
+        // Drag start
+        cardEl.addEventListener('dragstart', (e)=>{
+          const c = stackCountIfMovable(col, i);
+          if(c === 0){
+            e.preventDefault();
+            toast("Et voi raahata tästä: vain samaa maata oleva sarja tai päällimmäinen.");
+            return;
+          }
+          dragged = { fromCol: colIndex, startIndex: i, count: c };
+          cardEl.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', `${colIndex}:${i}:${c}`);
+        });
+        cardEl.addEventListener('dragend', ()=>{
+          cardEl.classList.remove('dragging');
+        });
+
+        colEl.appendChild(cardEl);
+      });
+
+      board.appendChild(colEl);
     });
-    document.getElementById("actualMovesUI").innerText = actualMovesCount;
+  }
+function undoMove(){
+  if(undoStack.length === 0){
+    toast("Ei peruttavaa");
+    return;
+  }
+  const prev = undoStack.pop();
+  columns = prev.columns;
+  moves = prev.moves;
+  document.getElementById('moves').textContent = moves;
+  render();
+  toast("Siirto peruttu");
 }
-
-function handleCardClick(cIdx, rIdx) {
-    if(!columns[cIdx][rIdx].faceUp) return;
-    // Spider-sääntö: Vain samaa maata olevia värisuoria voi siirtää yhtenä nippuna
-    const movingCards = columns[cIdx].slice(rIdx);
-    for(let i=0; i<movingCards.length-1; i++) {
-        if(movingCards[i].suit !== movingCards[i+1].suit || movingCards[i].rank !== movingCards[i+1].rank + 1) return;
-    }
-    selectedCol = cIdx; selectedIdx = rIdx; updateUI();
-}
-
-function handleColumnClick(tIdx) {
-    if(selectedCol === -1) return;
-    let canMove = false;
-    let shouldCount = true;
-    const movingCards = columns[selectedCol].slice(selectedIdx);
-    const firstMoving = movingCards[0];
-
-    if(columns[tIdx].length === 0) {
-        canMove = true;
-        if(firstMoving.rank === 13 && selectedIdx === 0) shouldCount = false;
-    } else {
-        const lastTarget = columns[tIdx][columns[tIdx].length - 1];
-        if(lastTarget.rank === firstMoving.rank + 1) canMove = true;
-    }
-
-    if(canMove && selectedCol !== tIdx) {
-        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, count: actualMovesCount})));
-        if(shouldCount) actualMovesCount++;
-        columns[tIdx].push(...columns[selectedCol].splice(selectedIdx));
-        if(columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length-1].faceUp = true;
-    }
-    selectedCol = -1; updateUI();
-}
-
-function undoMove() {
-    if(moveHistory.length > 0) {
-        let prev = moveHistory.pop();
-        columns = prev.cols; actualMovesCount = prev.count; updateUI();
-    }
-}
-
-newGame();
+  window.onload = ()=> initGame(2);
 </script>
 </body>
-</html>
+</html> 
