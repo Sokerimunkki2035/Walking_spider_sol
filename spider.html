@@ -1,133 +1,144 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-54P5D7QS');</script>
-
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Walking Spider - 1 maa</title>
+  <title>Walking Spider Solitaire</title>
   
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7652525244986434" crossorigin="anonymous"></script>
+
   <style>
-    :root { --card-aspect-ratio: 1.35; --bg: #072b22; --accent: #1e6b54; --text-light: #78ffc8; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 10px; margin: 0; user-select: none; }
-    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-    .pill { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; gap: 5px; }
+    :root { --card-aspect-ratio: 1.4; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0d4a3a; color: white; padding: 10px; margin: 0; user-select: none; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .active-pill { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(255,255,255,0.1); }
     .controls { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px; }
-    button { padding: 10px 14px; cursor: pointer; background: var(--accent); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; }
+    button, select { padding: 10px 14px; cursor: pointer; background: #2a8b6f; color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; }
+    #info { margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 13px; min-height: 1.2em; }
     #table { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-width: 1000px; margin: 0 auto; }
-    .column { background: rgba(255,255,255,0.03); border-radius: 4px; min-height: 70vh; position: relative; padding-bottom: 50px; }
-    .card { background: white; border: 1px solid #222; border-radius: 4px; padding: 4px; margin-bottom: -32px; aspect-ratio: 1 / var(--card-aspect-ratio); font-size: 14px; font-weight: bold; cursor: pointer; position: relative; color: black; box-sizing: border-box; }
-    .card.face-down { background: #134537; color: transparent; border: 1px solid rgba(255,255,255,0.1); }
-    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; transform: translateY(-3px); }
-    .suit-spade { color: black; }
+    .column { background: rgba(255,255,255,0.03); border-radius: 4px; min-height: 60vh; position: relative; }
+    .card { background: white; color: black; border: 1px solid #333; border-radius: 4px; padding: 4px; margin-bottom: -25px; aspect-ratio: 0.8 / var(--card-aspect-ratio); font-size: 16px; font-weight: bold; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; flex-direction: column; box-sizing: border-box; }
+    @media (max-width: 600px) { .card { margin-bottom: -15px; font-size: 12px; } }
+    .card.face-down { background: #1a5f4a; color: transparent; border: 1px solid rgba(255,255,255,0.2); }
+    .card.selected { outline: 3px solid #ffeb3b; z-index: 100; transform: translateY(-4px); }
   </style>
 </head>
 <body>
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-54P5D7QS" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div class="header-row">
-    <h2 style="margin:0; color:var(--text-light);">🕷️ Spider 1 maa</h2>
-    <div class="pill">🔄 Siirrot: <span id="actualMovesUI">0</span></div>
+    <h2 style="margin:0; font-size: 20px;">🕷️ Walking Spider</h2>
+    <div class="active-pill">🚶 <span id="activeClock">00:00</span></div>
 </div>
 
 <div class="controls">
   <button onclick="newGame()">Uusi peli</button>
-  <button id="undoBtn" onclick="undoMove()">Peru</button>
+  <button onclick="dealStock()" style="background: #1a5f4a;">JAA PAKKA</button>
+  <select id="timeSelect" onchange="updateTargetTime()">
+      <option value="15">Tauko: 15 min</option>
+      <option value="25" selected>Tauko: 25 min</option>
+      <option value="45">Tauko: 45 min</option>
+  </select>
+  <button onclick="undoMove()" style="background: #444;">Peru</button>
 </div>
 
+<div id="info">Ladataan...</div>
 <div id="table"></div>
 
 <script>
-let columns = [[],[],[],[],[],[],[],[],[],[]], deck = [], moveHistory = [], actualMovesCount = 0;
-let selectedCol = -1, selectedIdx = -1;
+let stockDeck = [], columns = [], selectedCol = -1, selectedIdx = -1, moveHistory = [];
 
 function newGame() {
-    deck = [];
-    actualMovesCount = 0;
-    moveHistory = [];
-    // 1 maa (Pata): 8 sarjaa ässästä kuninkaaseen
-    for(let i=0; i<8; i++) {
-        for(let r=1; r<=13; r++) deck.push({rank: r, suit: '♠', faceUp: false});
-    }
-    deck.sort(() => Math.random() - 0.5);
-    
-    columns = [[],[],[],[],[],[],[],[],[],[]];
-    for(let i=0; i<54; i++) {
-        let card = deck.pop();
-        let col = i % 10;
-        columns[col].push(card);
-    }
-    columns.forEach(col => { if(col.length > 0) col[col.length-1].faceUp = true; });
-    updateUI();
+  let deck = [];
+  for (let p = 0; p < 8; p++) { for (let r = 1; r <= 13; r++) { deck.push({rank: r, faceUp: false}); } }
+  deck.sort(() => Math.random() - 0.5);
+  columns = Array.from({ length: 10 }, () => []);
+  for (let c = 0; c < 10; c++) {
+    let count = c < 4 ? 6 : 5;
+    for (let i = 0; i < count; i++) { columns[c].push(deck.pop()); }
+    columns[c][columns[c].length - 1].faceUp = true;
+  }
+  stockDeck = deck; selectedCol = -1; selectedIdx = -1; moveHistory = [];
+  drawTable(); updateInfo("Spider alkanut! (Vain pata)");
 }
 
-function updateUI() {
-    const table = document.getElementById("table");
-    table.innerHTML = "";
-    columns.forEach((col, cIdx) => {
-        let colDiv = document.createElement("div");
-        colDiv.className = "column";
-        colDiv.onclick = () => handleColumnClick(cIdx);
-        col.forEach((card, rIdx) => {
-            let cardDiv = document.createElement("div");
-            cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
-            if(cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
-            if(card.faceUp) {
-                cardDiv.innerHTML = card.rank === 1 ? 'A♠' : card.rank === 11 ? 'J♠' : card.rank === 12 ? 'Q♠' : card.rank === 13 ? 'K♠' : card.rank + '♠';
-                cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
-            }
-            colDiv.appendChild(cardDiv);
-        });
-        table.appendChild(colDiv);
+function drawTable() {
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+  columns.forEach((col, cIdx) => {
+    let colDiv = document.createElement("div");
+    colDiv.className = "column";
+    colDiv.onclick = () => handleColumnClick(cIdx);
+    col.forEach((card, rIdx) => {
+      let cardDiv = document.createElement("div");
+      cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
+      if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
+      if (card.faceUp) {
+        cardDiv.innerHTML = `<div style="text-align:left">${getRankName(card.rank)}</div><div style="text-align:right; font-size:1.2em; margin-top:auto">♠</div>`;
+        cardDiv.onclick = (e) => { e.stopPropagation(); handleCardClick(cIdx, rIdx); };
+      }
+      colDiv.appendChild(cardDiv);
     });
-    document.getElementById("actualMovesUI").innerText = actualMovesCount;
+    table.appendChild(colDiv);
+  });
 }
 
 function handleCardClick(cIdx, rIdx) {
-    if(!columns[cIdx][rIdx].faceUp) return;
-    if(selectedCol === cIdx && selectedIdx === rIdx) { selectedCol = -1; selectedIdx = -1; }
-    else { selectedCol = cIdx; selectedIdx = rIdx; }
-    updateUI();
+  if (selectedCol !== -1 && selectedCol !== cIdx) { handleColumnClick(cIdx); return; }
+  const col = columns[cIdx];
+  let validSequence = true;
+  for (let i = rIdx; i < col.length - 1; i++) {
+    if (col[i].rank !== col[i+1].rank + 1) { validSequence = false; break; }
+  }
+  if (!validSequence) { updateInfo("Vain laskeva pino siirtyy."); return; }
+  selectedCol = (selectedCol === cIdx && selectedIdx === rIdx) ? -1 : cIdx;
+  selectedIdx = (selectedCol === -1) ? -1 : rIdx;
+  drawTable();
 }
 
-function handleColumnClick(tIdx) {
-    if(selectedCol === -1) return;
-    let canMove = false;
-    let shouldCount = true;
-    const movingCards = columns[selectedCol].slice(selectedIdx);
-    const firstMoving = movingCards[0];
-    
-    if(columns[tIdx].length === 0) {
-        canMove = true;
-        // KUNINGAS-SÄÄNTÖ: Jos kuningas on jo pinon ylin, ei lasketa
-        if(firstMoving.rank === 13 && selectedIdx === 0) shouldCount = false;
-    } else {
-        const lastTarget = columns[tIdx][columns[tIdx].length - 1];
-        if(lastTarget.rank === firstMoving.rank + 1) canMove = true;
-    }
-
-    if(canMove && selectedCol !== tIdx) {
-        moveHistory.push(JSON.parse(JSON.stringify({cols: columns, count: actualMovesCount})));
-        if(shouldCount) actualMovesCount++;
-        columns[tIdx].push(...columns[selectedCol].splice(selectedIdx));
-        if(columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length-1].faceUp = true;
-    }
-    selectedCol = -1; updateUI();
+function handleColumnClick(targetCol) {
+  if (selectedCol === -1) return;
+  const movingCard = columns[selectedCol][selectedIdx];
+  const targetColCards = columns[targetCol];
+  let canMove = targetColCards.length === 0 || targetColCards[targetColCards.length - 1].rank === movingCard.rank + 1;
+  if (canMove && selectedCol !== targetCol) {
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    const cardsToMove = columns[selectedCol].splice(selectedIdx);
+    columns[targetCol] = [...columns[targetCol], ...cardsToMove];
+    if (columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
+    checkAndRemoveSequence(targetCol);
+  }
+  selectedCol = -1; selectedIdx = -1; drawTable();
 }
 
-function undoMove() {
-    if(moveHistory.length > 0) {
-        let prev = moveHistory.pop();
-        columns = prev.cols; actualMovesCount = prev.count; updateUI();
+function dealStock() {
+  if (columns.some(col => col.length === 0)) { updateInfo("Täytä tyhjät sarakkeet!"); return; }
+  if (stockDeck.length > 0) {
+    moveHistory.push(JSON.parse(JSON.stringify(columns)));
+    for (let c = 0; c < 10; c++) {
+      let card = stockDeck.pop();
+      if(card) { card.faceUp = true; columns[c].push(card); }
     }
+    drawTable();
+  }
 }
+
+function checkAndRemoveSequence(cIdx) {
+  const col = columns[cIdx];
+  for (let i = 0; i <= col.length - 13; i++) {
+    let sub = col.slice(i, i + 13);
+    if (sub.every((card, idx) => card.faceUp && card.rank === (13 - idx))) {
+      col.splice(i, 13);
+      if (col.length > 0) col[col.length - 1].faceUp = true;
+      updateInfo("SARJA VALMIS!"); drawTable(); break;
+    }
+  }
+}
+
+function undoMove() { if (moveHistory.length > 0) { columns = moveHistory.pop(); drawTable(); } }
+function getRankName(r) { const names = {1:'A', 11:'J', 12:'Q', 13:'K'}; return names[r] || r; }
+function updateInfo(msg) { document.getElementById("info").innerText = msg; }
 
 newGame();
 </script>
 </body>
-</html>
- 
+</html> 
