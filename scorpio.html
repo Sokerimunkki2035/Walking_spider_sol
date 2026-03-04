@@ -8,7 +8,7 @@
   })(window,document,'script','dataLayer','GTM-N8Z8Z9M6');</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Walking Scorpio - Pelaa Scorpion Pasianssia</title>
+  <title>Walking Scorpio</title>
   
   <style>
     :root { --card-aspect-ratio: 1.35; --bg: #072b22; --accent: #1e6b54; --text-light: #78ffc8; }
@@ -38,7 +38,6 @@
     .card.face-down { background: #134537; color: transparent; border: 1px solid rgba(255,255,255,0.1); }
     .card.selected { outline: 4px solid #ffeb3b; z-index: 100; transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.5); }
 
-    .content-section { max-width: 800px; margin: 20px auto; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: left; font-size: 14px; line-height: 1.5; }
     footer { margin-top: 40px; padding: 20px; opacity: 0.6; font-size: 12px; border-top: 1px solid var(--accent); text-align: center; }
   </style>
 </head>
@@ -48,8 +47,7 @@
 <div class="header-row">
     <h2 style="margin:0; color:var(--text-light);">🦂 Walking Scorpio</h2>
     <div class="status-group" style="display:flex; gap:8px;">
-        <div class="pill">💡 Siirtoja: <span id="moveCount">0</span></div>
-        <div class="pill">🔄 Tehdyt: <span id="actualMovesUI">0</span></div>
+        <div class="pill">🔄 Tehdyt siirrot: <span id="actualMovesUI">0</span></div>
     </div>
 </div>
 
@@ -59,17 +57,8 @@
   <button onclick="undoMove()" style="background: #444;">Peru</button>
 </div>
 
-<div id="info">Ladataan peliä...</div>
+<div id="info">Ladataan...</div>
 <div id="table"></div>
-
-<section class="content-section">
-    <h3>Pelaa Scorpion Pasianssia Ilmaiseksi</h3>
-    <p>Scorpion Solitaire on älyllinen haaste. Tyhjään paikkaan saa siirtää vain kuninkaan (K).</p>
-    <ul>
-        <li><strong>Samat maat:</strong> Vain samaa maata ja yhtä pienempi kortti suuremman päälle.</li>
-        <li><strong>Voitto:</strong> Kerää kaikki maat sarjoiksi (K -> A) poistaaksesi ne laudalta.</li>
-    </ul>
-</section>
 
 <footer>&copy; 2026 Walking Games - Itsmyid Oy</footer>
 
@@ -94,18 +83,13 @@ function newGame() {
     }
     
     stock = deck; 
-    selectedCol = -1; 
-    selectedIdx = -1; 
-    actualMovesCount = 0; 
-    moveHistory = [];
-    
+    selectedCol = -1; selectedIdx = -1; actualMovesCount = 0; moveHistory = [];
     document.getElementById("info").innerText = "Peli valmis! Onnea matkaan.";
     updateUI();
 }
 
 function updateUI() {
     drawTable();
-    updatePossibleMoves();
     document.getElementById("stockBtn").innerText = `VARA (${stock.length})`;
     document.getElementById("actualMovesUI").innerText = actualMovesCount;
     checkWin();
@@ -113,19 +97,15 @@ function updateUI() {
 
 function drawTable() {
     const table = document.getElementById("table");
-    if (!table) return;
     table.innerHTML = "";
-    
     columns.forEach((col, cIdx) => {
         let colDiv = document.createElement("div");
         colDiv.className = "column";
         colDiv.onclick = () => handleColumnClick(cIdx);
-        
         col.forEach((card, rIdx) => {
             let cardDiv = document.createElement("div");
             cardDiv.className = "card" + (!card.faceUp ? " face-down" : "");
             if (cIdx === selectedCol && rIdx >= selectedIdx) cardDiv.classList.add("selected");
-            
             if (card.faceUp) {
                 cardDiv.classList.add(getSuitClass(card.suit));
                 cardDiv.innerHTML = `<div>${getRankName(card.rank)}<span class="mini-suit">${card.suit}</span></div><div class="card-suit-large">${card.suit}</div>`;
@@ -146,7 +126,6 @@ function handleCardClick(cIdx, rIdx) {
 
 function handleColumnClick(targetCol) {
     if (selectedCol === -1) return;
-    
     const movingCard = columns[selectedCol][selectedIdx];
     const targetColCards = columns[targetCol];
     let canMove = false;
@@ -173,32 +152,7 @@ function handleColumnClick(targetCol) {
         if (columns[selectedCol].length > 0) columns[selectedCol][columns[selectedCol].length - 1].faceUp = true;
         checkSequence(targetCol);
     }
-    
-    selectedCol = -1; selectedIdx = -1; 
-    updateUI();
-}
-
-function updatePossibleMoves() {
-    let count = 0;
-    columns.forEach((col, c) => {
-        col.forEach((card, r) => {
-            if (!card.faceUp) return;
-            // Estetään turha laskeminen jos kortti on jo oikean kortin päällä
-            if (r > 0 && col[r-1].rank === card.rank + 1 && col[r-1].suit === card.suit) return;
-            
-            columns.forEach((tCol, t) => {
-                if (c === t) return;
-                if (tCol.length === 0) {
-                    // MUOKATTU: Lasketaan siirto vain jos kuningas EI ole jo sarakkeen ylin kortti
-                    if (card.rank === 13 && r !== 0) count++;
-                } else {
-                    const last = tCol[tCol.length - 1];
-                    if (last.rank === card.rank + 1 && last.suit === card.suit) count++;
-                }
-            });
-        });
-    });
-    document.getElementById("moveCount").innerText = count;
+    selectedCol = -1; selectedIdx = -1; updateUI();
 }
 
 function checkSequence(cIdx) {
@@ -215,9 +169,8 @@ function checkSequence(cIdx) {
 }
 
 function checkWin() {
-    const isTableEmpty = columns.every(col => col.length === 0);
-    if (isTableEmpty && stock.length === 0) {
-        document.getElementById("info").innerHTML = "<span style='color:#78ffc8; font-size: 20px; font-weight: bold;'>🎉 Onneksi olkoon! Pelilauta on tyhjä! 🎉</span>";
+    if (columns.every(col => col.length === 0) && stock.length === 0) {
+        document.getElementById("info").innerHTML = "<span style='color:#78ffc8; font-size: 18px; font-weight: bold;'>🎉 Onneksi olkoon! Lauta on tyhjä! 🎉</span>";
     }
 }
 
@@ -241,8 +194,7 @@ function undoMove() {
 function getSuitClass(s) { return {'♠':'suit-spade','♣':'suit-club','♥':'suit-heart','♦':'suit-diamond'}[s]; }
 function getRankName(r) { return {1:'A',11:'J',12:'Q',13:'K'}[r] || r; }
 
-if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", init); } else { init(); }
 window.onload = init;
 </script>
 </body>
-</html> 
+</html>
